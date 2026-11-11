@@ -7,8 +7,8 @@ Thư mục này lưu trữ toàn bộ minh chứng thiết lập môi trường 
 - **Họ tên:** Nguyễn Minh Phượng _(cập nhật nếu cần)_
 - **Mã sinh viên:** `<MãSinhViên>`
 - **Lớp:** FIT4110 – Dịch vụ kết nối và Công nghệ nền tảng
-- **Nhóm:** Nhóm A7 – Product A _(hoặc B7 – Product B)_
-- **Service phụ trách:** Notification Service (Dịch vụ gửi cảnh báo đa kênh)
+- **Nhóm:** Nhóm 6 _(hoặc A7 / B7)_ – Phụ trách **Notification Service**
+- **Service phụ trách:** Notification Service (Dịch vụ gửi cảnh báo đa kênh — Subscribe `campus.alerts` tại `mqtt://192.168.1.51:1883`)
 - **Vai trò dự kiến trong nhóm:** Service Lead / Backend & DevOps Owner _(cập nhật theo phân công nhóm)_
 - **Hệ điều hành:** Windows 11 (PowerShell + Docker Desktop WSL2 backend)
 - **Ghi chú:** Đã hoàn thành kiểm tra công cụ, tải bộ Docker image chuẩn, chạy smoke test thành công và đặc tả đầy đủ `service-boundary.md` cho Notification Service.

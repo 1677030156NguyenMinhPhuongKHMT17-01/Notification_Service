@@ -1,4 +1,5 @@
+efac0ef lab01: update git-log.txt with synced contract commit
+99cb6ab lab01: sync Notification Service boundary with event-contract-04-core-notification.md and MQTT broker config
+289ee04 lab01: refresh git-log.txt after service boundary update
 2bad77e lab01: align Notification Service boundary with Pair #4 (Queue async) in pairing-matrix.md
 36dcf61 lab01: update git-log.txt with lab01 commit history
-e202588 lab01: complete environment setup, smoke test, and Notification Service boundary
-fee80f7 Initial commit: create FIT4110 semester portfolio
