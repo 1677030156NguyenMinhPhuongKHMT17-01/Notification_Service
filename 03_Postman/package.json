@@ -1,0 +1,25 @@
+{
+  "name": "fit4110_lab03_notification_contract_testing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FIT4110 Lab 03 - Notification Service (Team 6): Queue Async Event Contract Testing (Ajv) + REST Fallback Postman/Newman/Prism CI",
+  "scripts": {
+    "mock:notify": "prism mock contracts/notification.openapi.yaml -p 4010 --host 0.0.0.0",
+    "mock:core": "prism mock contracts/core-business.openapi.yaml -p 4011 --host 0.0.0.0",
+    "lint:contracts": "spectral lint contracts/*.yaml --fail-severity error",
+    "test:queue": "node queue-contract-tests/pair-04-core-notification/scripts/test-event-contract.js",
+    "test:mock": "newman run postman/collections/FIT4110_lab03_notification.postman_collection.json -e postman/environments/FIT4110_lab03_mock.postman_environment.json --reporters cli,junit --reporter-junit-export reports/newman-report.xml",
+    "test:local": "newman run postman/collections/FIT4110_lab03_notification.postman_collection.json -e postman/environments/FIT4110_lab03_local.postman_environment.json --reporters cli,junit --reporter-junit-export reports/newman-report-local.xml",
+    "test:html": "newman run postman/collections/FIT4110_lab03_notification.postman_collection.json -e postman/environments/FIT4110_lab03_mock.postman_environment.json --reporters cli,htmlextra --reporter-htmlextra-export reports/newman-report.html",
+    "test:ci": "npm run test:queue && npm run lint:contracts && npm run test:mock"
+  },
+  "devDependencies": {
+    "@stoplight/prism-cli": "^5.14.2",
+    "@stoplight/spectral-cli": "^6.11.1",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "newman": "^6.2.1",
+    "newman-reporter-htmlextra": "^1.23.1",
+    "wait-on": "^7.2.0"
+  }
+}

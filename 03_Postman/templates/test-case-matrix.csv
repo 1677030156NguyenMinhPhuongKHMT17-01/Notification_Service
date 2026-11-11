@@ -1,0 +1,17 @@
+ID,Folder,Endpoint,Method,Scenario,Input file/body,Expected status,Expected response check,Type,Pass/Fail,Evidence
+TC01,00_Health,/health,GET,Service is alive,-,200,"status=ok, service=notification-service",functional,PASS,reports/newman-report.xml
+TC02,01_Functional,/notifications,POST,Send notification happy path,mock-data/notification-valid.json,201,"has notification_id, event_id, alert_id=ALT-001, sent=true, status=delivered",functional,PASS,reports/newman-report.xml
+TC03,01_Functional,/notifications?limit=10,GET,List notification logs with cursor,-,200,"items is array, has_more present",functional,PASS,reports/newman-report.xml
+TC04,01_Functional,/notifications/recent?limit=5,GET,List recent notifications,-,200,"items is array, valid channel enum",functional,PASS,reports/newman-report.xml
+TC05,01_Functional,/notifications/0196fb3e-9999-7d1e-9f49-5d5148d2c001,GET,Get notification delivery detail,-,200,"has notification_id, retry_count, error_detail",functional,PASS,reports/newman-report.xml
+TC06,01_Functional,/notifications/0196fb3e-9999-7d1e-9f49-5d5148d2c001/retry,POST,Manual retry failed notification,-,200,"has notification_id, retry_count >= 1",functional,PASS,reports/newman-report.xml
+TC07,02_Auth,/notifications/recent?limit=1,GET,Valid Bearer token is accepted,-,200,status code 200,auth,PASS,reports/newman-report.xml
+TC08,02_Auth,/notifications,POST,Missing Authorization header is rejected,mock-data/notification-valid.json,401,"status 401/403, ProblemDetails",auth,PASS,reports/newman-report.xml
+TC09,02_Auth,/notifications,POST,Invalid token rejected on real service,mock-data/notification-valid.json,401/403,controlled skip on mock / 401-403 on local,auth,PASS,reports/newman-report.xml
+TC10,03_Negative,/notifications,POST,Missing required message and bad alert_id,inline JSON missing message,422,"status 400/422, RFC 9457 ProblemDetails",negative,PASS,reports/newman-report.xml
+TC11,03_Negative,/notifications,POST,Invalid channel enum zalo,mock-data/notification-invalid-channel.json,422,"status 400/422, ProblemDetails has detail",negative,PASS,reports/newman-report.xml
+TC12,04_Boundary_Reliability,/notifications,POST,Auto-route channels when target_channels omitted,mock-data/notification-boundary.json,201,"sent=true, target_channels present",boundary,PASS,reports/newman-report.xml
+TC13,04_Boundary_Reliability,/notifications/recent?limit=101,GET,Limit above max 100 is rejected,-,400,"status 400/422, ProblemDetails",boundary,PASS,reports/newman-report.xml
+TC14,04_Boundary_Reliability,/notifications,POST,Duplicate event_id returns 409 Conflict,mock-data/notification-valid.json,409,"status 409, ProblemDetails",reliability,PASS,reports/newman-report.xml
+TC15,05_Consumer_side_Smoke,/alerts/0196fb3d-4ad7-7d1e-9f49-5d5148d2babc,GET,Notification queries Alert Detail from Core Business Mock,-,200,"sourceService=core-business, severity, status",consumer-smoke,PASS,reports/newman-report.xml
+TC16,06_Local_only_NonFunctional,/notifications,POST,Local response time < 1000ms,mock-data/notification-valid.json,201,responseTime < 1000ms on local,non-functional,PASS,reports/newman-report.xml

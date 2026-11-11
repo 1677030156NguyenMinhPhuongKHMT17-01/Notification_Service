@@ -34,7 +34,7 @@ FIT4110_<MãSinhViên>/
 |---|---|---|---|
 | **Buổi 1 (Lab 01)** | [`01_Setup/`](./01_Setup/) | Kiểm tra toolchain, pull Docker images, chạy smoke test, thu thập minh chứng môi trường (`evidence/buoi-01/`) và đặc tả **Service Boundary** cho **Notification Service** (đồng bộ 100% với `event-contract-04-core-notification.md`) | Đã hoàn thành |
 | **Buổi 2 (Lab 02)** | [`02_OpenAPI/`](./02_OpenAPI/) | Đàm phán hợp đồng **Pair #4 (`Core Business → Notification`)**, hoàn thiện Event Contract, `openapi.yaml` 3.1, `negotiation-log.md` và minh chứng Spectral + Prism | Đã hoàn thành |
-| **Buổi 3 (Lab 03)** | `03_Postman/` | Xây dựng Postman Collection (`mock` & `local`), Newman report, đặc tả AsyncAPI cho `campus.alerts` và Reliability Checklist | Dự kiến |
+| **Buổi 3 (Lab 03)** | [`03_Postman/`](./03_Postman/) | Kiểm thử Hợp đồng Queue Async Pair 04 (`queue-contract-tests/pair-04-core-notification/` với Ajv JSON Schema Draft 2020-12 + Semantic Stub `Q05–Q09`) và bộ kiểm thử Postman/Newman + Prism Mock (`TC01–TC16`) | Đã hoàn thành |
 | **Buổi 4 (Lab 04)** | `04_Docker/` | Viết `Dockerfile` (non-root, `/health`, `.env`), build image và chạy lại Newman test trên container | Dự kiến |
 | **Buổi 5 (Lab 05)** | `05_Compose/` | Viết `docker-compose.yml` kết nối Notification Service với Database & MQTT/Queue Broker và kiểm thử end-to-end | Dự kiến |
 | **Buổi 6 (Lab 06)** | `06_Plugathon/` | Tích hợp thực tế với `Core Business Service` qua MQTT Broker `mqtt://192.168.1.51:1883` (`campus.alerts`), hoàn thiện Demo Pack | Dự kiến |

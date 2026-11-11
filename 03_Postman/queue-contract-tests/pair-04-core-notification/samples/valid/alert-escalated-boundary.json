@@ -1,0 +1,13 @@
+{
+  "event_id": "123e4567-e89b-12d3-a456-426614174011",
+  "event_name": "alert.escalated",
+  "correlationId": "req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc",
+  "source": "core-business",
+  "alert_id": "ALT-001",
+  "escalation_level": 5,
+  "severity": "critical",
+  "message": "Leo thang mức tối đa (cấp 5) do chưa có phản hồi sau 30 phút",
+  "target_channels": ["telegram", "email", "discord", "sms"],
+  "timestamp": "2026-08-27T16:00:00Z"
+}
+

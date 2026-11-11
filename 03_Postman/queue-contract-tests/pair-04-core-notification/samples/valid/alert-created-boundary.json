@@ -1,0 +1,11 @@
+{
+  "event_id": "123e4567-e89b-12d3-a456-426614174010",
+  "event_name": "alert.created",
+  "correlationId": "req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd",
+  "source": "core-business",
+  "alert_id": "ALT-999",
+  "severity": "critical",
+  "message": "Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự động định tuyến kênh theo severity)",
+  "timestamp": "2026-08-27T15:31:00+07:00"
+}
+

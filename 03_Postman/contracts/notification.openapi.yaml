@@ -1,0 +1,926 @@
+openapi: 3.1.0
+info:
+  title: Smart Campus — Notification Service API (Nhóm 6)
+  version: 1.0.0
+  description: |
+    Hợp đồng API (OpenAPI 3.1.0) của **Notification Service (Nhóm 6)** trong hệ thống **Smart Campus Operations Platform**.
+    
+    - **Luồng chính (Async Pub/Sub — Pair #4):** Subscribe vào **MQTT Broker `mqtt://192.168.1.51:1883` (Anonymous)** trên topic `campus.alerts` để nhận 3 sự kiện bất đồng bộ từ `Core Business Service`: `alert.created`, `alert.escalated`, `alert.resolved` (theo convention `snake_case` đã chốt trong `event-contract-04-core-notification.md`).
+    - **Luồng phụ (REST Sync Fallback & Log Query):** Cung cấp các endpoint REST chuẩn OpenAPI 3.1 (`POST /notifications`, `GET /notifications`, `GET /notifications/recent`, `GET /notifications/{notification_id}`, `GET /health`) để gửi thông báo thủ công (fallback/test), tra cứu lịch sử gửi cho Analytics/Admin và kiểm tra trạng thái sống của service.
+  contact:
+    name: Nhóm 6 — Notification Service Team
+    email: notification-team@campus.local
+servers:
+  - url: http://localhost:4010
+    description: Prism mock server (Lab 02 & Lab 03)
+  - url: http://localhost:8000
+    description: Local Notification Service container (Lab 03, Lab 04 & Lab 05)
+  - url: https://api.campus.local
+    description: Class network gateway placeholder
+tags:
+  - name: health
+    description: Kiểm tra trạng thái hoạt động của Notification Service và kết nối MQTT/Database
+  - name: notifications
+    description: Gửi thông báo đa kênh (REST sync fallback) và truy vấn lịch sử chuyển phát thông báo
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Kiểm tra trạng thái sống của Notification Service
+      description: |
+        Endpoint công khai dùng cho Docker Healthcheck, API Gateway và hệ thống giám sát.
+        Trả về trạng thái hoạt động của service và kết nối tới MQTT Broker (`campus.alerts`).
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Notification Service đang hoạt động bình thường
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    service: notification-service
+                    mqtt_broker: mqtt://192.168.1.51:1883
+                    subscribed_topic: campus.alerts
+                    time: '2026-08-27T15:30:00Z'
+
+  /notifications:
+    post:
+      operationId: sendNotification
+      summary: Gửi thông báo thủ công hoặc kích hoạt sự kiện cảnh báo qua REST (Sync Fallback)
+      description: |
+        Endpoint REST sync fallback cho phép `Core Business Service`, Admin hoặc công cụ kiểm thử gửi trực tiếp một sự kiện cảnh báo (`alert.created`, `alert.escalated`, `alert.resolved`) để Notification Service chuyển phát qua các kênh (`telegram`, `email`, `discord`, `sms`).
+        
+        - Hỗ trợ **polymorphism (`oneOf` + `discriminator` theo `event_name`)** khớp hoàn toàn với cấu trúc JSON `snake_case` trên topic `campus.alerts`.
+        - Đảm bảo **idempotent theo `event_id`**: nếu `event_id` bị gửi trùng lặp, trả về `409 Conflict` (hoặc trạng thái đã xử lý).
+      tags: [notifications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationEventRequest'
+            examples:
+              alertCreated:
+                summary: Sự kiện alert.created từ Core Business
+                value:
+                  event_id: 123e4567-e89b-12d3-a456-426614174000
+                  event_name: alert.created
+                  correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                  source: core-business
+                  alert_id: ALT-001
+                  severity: high
+                  message: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+                  target_channels:
+                    - telegram
+                    - email
+                    - sms
+                  timestamp: '2026-08-27T15:30:00Z'
+              alertEscalated:
+                summary: Sự kiện alert.escalated khi cảnh báo leo thang
+                value:
+                  event_id: 123e4567-e89b-12d3-a456-426614174001
+                  event_name: alert.escalated
+                  correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                  source: core-business
+                  alert_id: ALT-001
+                  escalation_level: 2
+                  timestamp: '2026-08-27T16:10:00Z'
+              alertResolved:
+                summary: Sự kiện alert.resolved khi cảnh báo đã xử lý xong
+                value:
+                  event_id: 123e4567-e89b-12d3-a456-426614174002
+                  event_name: alert.resolved
+                  correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                  source: core-business
+                  alert_id: ALT-001
+                  resolution_note: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.
+                  timestamp: '2026-08-27T16:30:00Z'
+      responses:
+        '201':
+          description: Thông báo đã được tiếp nhận và gửi thành công
+          headers:
+            Location:
+              description: URI tra cứu bản ghi log thông báo vừa tạo.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationLog'
+              examples:
+                delivered:
+                  value:
+                    notification_id: 0196fb3e-9999-7d1e-9f49-5d5148d2c001
+                    event_id: 123e4567-e89b-12d3-a456-426614174000
+                    event_name: alert.created
+                    correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                    source: core-business
+                    alert_id: ALT-001
+                    severity: high
+                    message: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+                    channel: telegram
+                    target_channels:
+                      - telegram
+                      - email
+                      - sms
+                    sent: true
+                    status: delivered
+                    retry_count: 0
+                    error_detail: null
+                    created_at: '2026-08-27T15:30:00Z'
+                    delivered_at: '2026-08-27T15:30:01Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      operationId: listNotifications
+      summary: Lấy danh sách lịch sử thông báo đã gửi (Cursor-based pagination)
+      description: |
+        Trả về danh sách các bản ghi log thông báo đã xử lý (từ cả luồng MQTT `campus.alerts` và luồng REST fallback).
+        Hỗ trợ phân trang dựa trên con trỏ (`cursor`, `limit`) và lọc theo `alert_id`, `status`, `channel`.
+      tags: [notifications]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: alert_id
+          in: query
+          required: false
+          description: Lọc theo mã cảnh báo nghiệp vụ (ví dụ ALT-001).
+          schema:
+            type: string
+            pattern: '^ALT-[0-9]{3,6}$'
+        - name: status
+          in: query
+          required: false
+          description: Lọc theo trạng thái gửi thông báo.
+          schema:
+            $ref: '#/components/schemas/DeliveryStatus'
+        - name: channel
+          in: query
+          required: false
+          description: Lọc theo kênh gửi thông báo.
+          schema:
+            $ref: '#/components/schemas/NotificationChannel'
+      responses:
+        '200':
+          description: Trang danh sách lịch sử thông báo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPage'
+              examples:
+                firstPage:
+                  value:
+                    items:
+                      - notification_id: 0196fb3e-9999-7d1e-9f49-5d5148d2c001
+                        event_id: 123e4567-e89b-12d3-a456-426614174000
+                        event_name: alert.created
+                        correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                        source: core-business
+                        alert_id: ALT-001
+                        severity: high
+                        message: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+                        channel: telegram
+                        target_channels:
+                          - telegram
+                          - email
+                          - sms
+                        sent: true
+                        status: delivered
+                        retry_count: 0
+                        error_detail: null
+                        created_at: '2026-08-27T15:30:00Z'
+                        delivered_at: '2026-08-27T15:30:01Z'
+                    next_cursor: null
+                    has_more: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /notifications/recent:
+    get:
+      operationId: getRecentNotifications
+      summary: Lấy danh sách các thông báo vừa gửi gần đây (Cursor-based pagination)
+      description: |
+        Endpoint phục vụ Dashboard vận hành và Analytics Service lấy nhanh các thông báo mới nhất, có hỗ trợ cursor-based pagination (`cursor`, `limit`).
+      tags: [notifications]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Danh sách thông báo gần đây
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPage'
+              examples:
+                recentNotifications:
+                  value:
+                    items:
+                      - notification_id: 0196fb3e-9999-7d1e-9f49-5d5148d2c001
+                        event_id: 123e4567-e89b-12d3-a456-426614174000
+                        event_name: alert.created
+                        correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                        source: core-business
+                        alert_id: ALT-001
+                        severity: high
+                        message: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+                        channel: telegram
+                        target_channels:
+                          - telegram
+                          - email
+                          - sms
+                        sent: true
+                        status: delivered
+                        retry_count: 0
+                        error_detail: null
+                        created_at: '2026-08-27T15:30:00Z'
+                        delivered_at: '2026-08-27T15:30:01Z'
+                    next_cursor: null
+                    has_more: false
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /notifications/{notification_id}:
+    get:
+      operationId: getNotificationById
+      summary: Lấy chi tiết trạng thái chuyển phát của một thông báo
+      description: Tra cứu chi tiết log gửi thông báo, số lần retry (`retry_count`) và lỗi chi tiết (`error_detail`) theo UUID `notification_id`.
+      tags: [notifications]
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '200':
+          description: Chi tiết bản ghi thông báo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationLog'
+              examples:
+                notificationDetail:
+                  value:
+                    notification_id: 0196fb3e-9999-7d1e-9f49-5d5148d2c001
+                    event_id: 123e4567-e89b-12d3-a456-426614174000
+                    event_name: alert.created
+                    correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                    source: core-business
+                    alert_id: ALT-001
+                    severity: high
+                    message: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+                    channel: telegram
+                    target_channels:
+                      - telegram
+                      - email
+                      - sms
+                    sent: true
+                    status: delivered
+                    retry_count: 0
+                    error_detail: null
+                    created_at: '2026-08-27T15:30:00Z'
+                    delivered_at: '2026-08-27T15:30:01Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /notifications/{notification_id}/retry:
+    post:
+      operationId: retryNotification
+      summary: Yêu cầu gửi lại (retry) một thông báo bị lỗi
+      description: Kích hoạt gửi lại thủ công đối với bản ghi thông báo đang ở trạng thái `failed` hoặc trong DLQ.
+      tags: [notifications]
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '200':
+          description: Đã thực hiện retry thông báo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationLog'
+              examples:
+                retriedNotification:
+                  value:
+                    notification_id: 0196fb3e-9999-7d1e-9f49-5d5148d2c001
+                    event_id: 123e4567-e89b-12d3-a456-426614174000
+                    event_name: alert.created
+                    correlationId: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+                    source: core-business
+                    alert_id: ALT-001
+                    severity: high
+                    message: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+                    channel: telegram
+                    target_channels:
+                      - telegram
+                      - email
+                      - sms
+                    sent: true
+                    status: delivered
+                    retry_count: 1
+                    error_detail: null
+                    created_at: '2026-08-27T15:30:00Z'
+                    delivered_at: '2026-08-27T15:30:06Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+webhooks:
+  notificationDeliveryUpdated:
+    post:
+      operationId: onNotificationDeliveryUpdated
+      summary: Webhook phát thông báo khi trạng thái chuyển phát hoàn tất hoặc thất bại sau 3 lần retry
+      description: |
+        Notification Service gọi webhook này (nếu Consumer đăng ký callback URL) khi một thông báo chuyển sang trạng thái `delivered` hoặc `failed` (đẩy vào DLQ sau 3 lần retry, mỗi lần cách nhau 5s).
+      tags: [notifications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationLog'
+      responses:
+        '200':
+          description: Consumer đã nhận thông tin cập nhật trạng thái thông báo
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    NotificationId:
+      name: notification_id
+      in: path
+      required: true
+      description: UUID của bản ghi thông báo.
+      schema:
+        type: string
+        format: uuid
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Con trỏ cursor dùng để lấy trang dữ liệu tiếp theo.
+      schema:
+        type: [string, 'null']
+        minLength: 1
+        maxLength: 200
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Số lượng bản ghi tối đa trên mỗi trang.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    HealthStatus:
+      type: object
+      additionalProperties: false
+      required: [status, service, mqtt_broker, subscribed_topic, time]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+          description: Trạng thái hoạt động của service.
+          example: ok
+        service:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Tên định danh service.
+          example: notification-service
+        mqtt_broker:
+          type: string
+          minLength: 5
+          maxLength: 120
+          description: Địa chỉ MQTT Broker đang kết nối.
+          example: mqtt://192.168.1.51:1883
+        subscribed_topic:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Topic đang lắng nghe sự kiện từ Core Business.
+          example: campus.alerts
+        time:
+          type: string
+          format: date-time
+          description: Thời điểm kiểm tra trạng thái.
+          example: '2026-08-27T15:30:00Z'
+
+    SeverityLevel:
+      type: string
+      enum: [low, medium, high, critical]
+      description: Mức độ nghiêm trọng của cảnh báo (chữ thường theo event-contract-04-core-notification.md).
+      example: high
+
+    NotificationChannel:
+      type: string
+      enum: [telegram, email, discord, sms]
+      description: Các kênh gửi thông báo được Notification Service hỗ trợ.
+      example: telegram
+
+    DeliveryStatus:
+      type: string
+      enum: [queued, delivered, retrying, failed, duplicate_ignored]
+      description: Trạng thái xử lý và chuyển phát thông báo.
+      example: delivered
+
+    NotificationEventRequest:
+      oneOf:
+        - $ref: '#/components/schemas/AlertCreatedEvent'
+        - $ref: '#/components/schemas/AlertEscalatedEvent'
+        - $ref: '#/components/schemas/AlertResolvedEvent'
+      discriminator:
+        propertyName: event_name
+        mapping:
+          alert.created: '#/components/schemas/AlertCreatedEvent'
+          alert.escalated: '#/components/schemas/AlertEscalatedEvent'
+          alert.resolved: '#/components/schemas/AlertResolvedEvent'
+
+    AlertCreatedEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - event_id
+        - event_name
+        - correlationId
+        - source
+        - alert_id
+        - severity
+        - message
+        - timestamp
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: UUID duy nhất của sự kiện, dùng làm idempotency key.
+          example: 123e4567-e89b-12d3-a456-426614174000
+        event_name:
+          type: string
+          const: alert.created
+          description: Tên sự kiện khi cảnh báo mới được tạo.
+          example: alert.created
+        correlationId:
+          type: string
+          minLength: 4
+          maxLength: 100
+          description: Mã truy vết xuyên suốt giữa các service.
+          example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+        source:
+          type: string
+          enum: [core-business]
+          description: Service phát sự kiện.
+          example: core-business
+        alert_id:
+          type: string
+          pattern: '^ALT-[0-9]{3,6}$'
+          description: Mã cảnh báo từ Core Business.
+          example: ALT-001
+        severity:
+          $ref: '#/components/schemas/SeverityLevel'
+        message:
+          type: string
+          minLength: 5
+          maxLength: 500
+          description: Nội dung thông báo cảnh báo.
+          example: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+        target_channels:
+          type: array
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+          description: Danh sách kênh gửi mong muốn (nếu bỏ trống sẽ tự định tuyến theo severity).
+          example: [telegram, email, sms]
+        timestamp:
+          type: string
+          format: date-time
+          description: Thời điểm phát sinh sự kiện (ISO 8601).
+          example: '2026-08-27T15:30:00Z'
+
+    AlertEscalatedEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - event_id
+        - event_name
+        - correlationId
+        - source
+        - alert_id
+        - escalation_level
+        - timestamp
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: UUID duy nhất của sự kiện leo thang.
+          example: 123e4567-e89b-12d3-a456-426614174001
+        event_name:
+          type: string
+          const: alert.escalated
+          description: Tên sự kiện khi cảnh báo được leo thang.
+          example: alert.escalated
+        correlationId:
+          type: string
+          minLength: 4
+          maxLength: 100
+          description: Mã truy vết xuyên suốt giữa các service.
+          example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+        source:
+          type: string
+          enum: [core-business]
+          description: Service phát sự kiện.
+          example: core-business
+        alert_id:
+          type: string
+          pattern: '^ALT-[0-9]{3,6}$'
+          description: Mã cảnh báo được leo thang.
+          example: ALT-001
+        escalation_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Cấp độ leo thang của cảnh báo.
+          example: 2
+        target_channels:
+          type: array
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+          description: Danh sách kênh gửi bổ sung khi leo thang.
+        timestamp:
+          type: string
+          format: date-time
+          description: Thời điểm leo thang cảnh báo (ISO 8601).
+          example: '2026-08-13T08:40:00+07:00'
+
+    AlertResolvedEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - event_id
+        - event_name
+        - correlationId
+        - source
+        - alert_id
+        - resolution_note
+        - timestamp
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: UUID duy nhất của sự kiện giải quyết cảnh báo.
+          example: 123e4567-e89b-12d3-a456-426614174002
+        event_name:
+          type: string
+          const: alert.resolved
+          description: Tên sự kiện khi cảnh báo đã được giải quyết.
+          example: alert.resolved
+        correlationId:
+          type: string
+          minLength: 4
+          maxLength: 100
+          description: Mã truy vết xuyên suốt giữa các service.
+          example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+        source:
+          type: string
+          enum: [core-business]
+          description: Service phát sự kiện.
+          example: core-business
+        alert_id:
+          type: string
+          pattern: '^ALT-[0-9]{3,6}$'
+          description: Mã cảnh báo đã được giải quyết.
+          example: ALT-001
+        resolution_note:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Ghi chú kết quả xử lý sự cố.
+          example: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.
+        timestamp:
+          type: string
+          format: date-time
+          description: Thời điểm giải quyết xong cảnh báo (ISO 8601).
+          example: '2026-08-13T09:00:00+07:00'
+
+    NotificationLog:
+      type: object
+      additionalProperties: false
+      required:
+        - notification_id
+        - event_id
+        - event_name
+        - correlationId
+        - source
+        - alert_id
+        - channel
+        - sent
+        - status
+        - retry_count
+        - error_detail
+        - created_at
+        - delivered_at
+      properties:
+        notification_id:
+          type: string
+          format: uuid
+          description: UUID của bản ghi log thông báo.
+          example: 0196fb3e-9999-7d1e-9f49-5d5148d2c001
+        event_id:
+          type: string
+          format: uuid
+          description: UUID của sự kiện gốc từ Core Business.
+          example: 123e4567-e89b-12d3-a456-426614174000
+        event_name:
+          type: string
+          enum: [alert.created, alert.escalated, alert.resolved]
+          description: Loại sự kiện đã kích hoạt thông báo.
+          example: alert.created
+        correlationId:
+          type: string
+          minLength: 4
+          maxLength: 100
+          description: Mã truy vết xuyên service.
+          example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+        source:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Service nguồn phát sự kiện.
+          example: core-business
+        alert_id:
+          type: string
+          pattern: '^ALT-[0-9]{3,6}$'
+          description: Mã cảnh báo nghiệp vụ.
+          example: ALT-001
+        severity:
+          $ref: '#/components/schemas/SeverityLevel'
+        message:
+          type: [string, 'null']
+          maxLength: 500
+          description: Nội dung thông báo đã gửi.
+          example: Phát hiện sự cố an ninh khẩn cấp từ Core Business
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        target_channels:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+          description: Các kênh mục tiêu của thông báo.
+          example: [telegram, email, sms]
+        sent:
+          type: boolean
+          description: Cho biết thông báo đã được gửi đi thành công hay chưa.
+          example: true
+        status:
+          $ref: '#/components/schemas/DeliveryStatus'
+        retry_count:
+          type: integer
+          minimum: 0
+          maximum: 3
+          description: Số lần đã thử lại (tối đa 3 lần, interval 5s).
+          example: 0
+        error_detail:
+          type: [string, 'null']
+          maxLength: 500
+          description: Chi tiết lỗi nếu gửi thất bại, null nếu gửi thành công (dùng union type chuẩn OpenAPI 3.1).
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          description: Thời điểm tiếp nhận sự kiện.
+          example: '2026-08-27T15:30:00Z'
+        delivered_at:
+          type: [string, 'null']
+          format: date-time
+          description: Thời điểm gửi thành công, null nếu chưa gửi được.
+          example: '2026-08-27T15:30:01Z'
+
+    NotificationPage:
+      type: object
+      additionalProperties: false
+      required: [items, next_cursor, has_more]
+      properties:
+        items:
+          type: array
+          minItems: 0
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/NotificationLog'
+        next_cursor:
+          type: [string, 'null']
+          description: Cursor của trang tiếp theo, null nếu đã ở trang cuối.
+          example: null
+        has_more:
+          type: boolean
+          description: Cho biết còn trang dữ liệu tiếp theo hay không.
+          example: false
+
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI định danh loại lỗi theo chuẩn RFC 9457 Problem Details.
+          example: https://campus.local/errors/validation
+        title:
+          type: string
+          minLength: 3
+          maxLength: 120
+          description: Tiêu đề lỗi ngắn gọn.
+          example: Dữ liệu không hợp lệ
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+          description: HTTP status code.
+          example: 400
+        detail:
+          type: [string, 'null']
+          maxLength: 500
+          description: Mô tả chi tiết lỗi.
+          example: Field severity không đúng giá trị enum cho phép
+        instance:
+          type: [string, 'null']
+          format: uri
+          description: URI của request gây lỗi.
+          example: https://api.campus.local/notifications
+        errors:
+          type: array
+          minItems: 0
+          maxItems: 50
+          items:
+            type: object
+            additionalProperties: false
+            required: [field, code, message]
+            properties:
+              field:
+                type: string
+                minLength: 1
+                maxLength: 80
+                example: severity
+              code:
+                type: string
+                minLength: 2
+                maxLength: 80
+                example: ENUM_MISMATCH
+              message:
+                type: string
+                minLength: 3
+                maxLength: 200
+                example: severity phải thuộc low, medium, high hoặc critical
+
+  responses:
+    BadRequest:
+      description: Dữ liệu sai định dạng JSON hoặc thiếu trường bắt buộc
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/validation
+            title: Dữ liệu không hợp lệ
+            status: 400
+            detail: Payload không đúng JSON Schema của sự kiện thông báo
+            instance: https://api.campus.local/notifications
+            errors:
+              - field: event_name
+                code: ENUM_MISMATCH
+                message: event_name phải là alert.created, alert.escalated hoặc alert.resolved
+
+    Unauthorized:
+      description: Thiếu hoặc sai Bearer token xác thực
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/unauthorized
+            title: Chưa xác thực
+            status: 401
+            detail: Thiếu header Authorization Bearer token hợp lệ
+            instance: https://api.campus.local/notifications/recent
+            errors: []
+
+    Forbidden:
+      description: Không có quyền truy cập tài nguyên thông báo này
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/forbidden
+            title: Không đủ quyền truy cập
+            status: 403
+            detail: Token hiện tại không có quyền xem log thông báo hệ thống
+            instance: https://api.campus.local/notifications/recent
+            errors: []
+
+    NotFound:
+      description: Không tìm thấy bản ghi thông báo theo notification_id
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/not-found
+            title: Không tìm thấy tài nguyên
+            status: 404
+            detail: Không tồn tại thông báo với notification_id đã yêu cầu
+            instance: https://api.campus.local/notifications/00000000-0000-0000-0000-000000000000
+            errors: []
+
+    Conflict:
+      description: Sự kiện bị trùng lặp idempotency key (event_id đã được xử lý trước đó)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/duplicate-event
+            title: Trùng lặp sự kiện thông báo
+            status: 409
+            detail: Sự kiện có event_id 123e4567-e89b-12d3-a456-426614174000 đã được xử lý trước đó
+            instance: https://api.campus.local/notifications
+            errors: []
+
+    UnprocessableEntity:
+      description: Payload đúng cú pháp JSON nhưng vi phạm quy tắc nghiệp vụ
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/unprocessable
+            title: Vi phạm ràng buộc nghiệp vụ
+            status: 422
+            detail: Trường alert_id không đúng định dạng ALT-XXX hoặc severity không hợp lệ
+            instance: https://api.campus.local/notifications
+            errors:
+              - field: alert_id
+                code: PATTERN_MISMATCH
+                message: alert_id phải có định dạng ALT-001
+
+    InternalServerError:
+      description: Lỗi hệ thống hoặc lỗi kết nối kênh thông báo bên ngoài
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/internal-server-error
+            title: Lỗi máy chủ nội bộ
+            status: 500
+            detail: Không thể kết nối tới kênh gửi thông báo sau 3 lần retry
+            instance: https://api.campus.local/notifications
+            errors: []

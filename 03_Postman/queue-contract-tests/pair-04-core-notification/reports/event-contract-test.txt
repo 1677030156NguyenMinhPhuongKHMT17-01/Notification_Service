@@ -1,0 +1,19 @@
+[PASS] alert-created-boundary.json
+[PASS] alert-created-valid.json
+[PASS] alert-escalated-boundary.json
+[PASS] alert-escalated-valid.json
+[PASS] alert-resolved-boundary.json
+[PASS] alert-resolved-valid.json
+[PASS expected-invalid] invalid-event-name.json
+[PASS expected-invalid] invalid-severity.json
+[PASS expected-invalid] invalid-source.json
+[PASS expected-invalid] invalid-target-channel.json
+[PASS expected-invalid] invalid-timestamp.json
+[PASS expected-invalid] missing-escalation-level.json
+[PASS expected-invalid] missing-eventId.json
+[PASS expected-invalid] missing-resolution-note.json
+[PASS semantic-stub] Q05-duplicate-eventId-idempotency
+[PASS semantic-stub] Q06-consumer-retry-within-limit
+[PASS semantic-stub] Q07-dlq-after-3-retries
+[PASS semantic-stub] Q08-unsupported-event-rejected
+[PASS semantic-stub] Q09-out-of-order-event-suppressed

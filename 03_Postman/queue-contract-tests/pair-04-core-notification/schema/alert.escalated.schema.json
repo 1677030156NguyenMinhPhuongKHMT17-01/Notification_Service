@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campus.local/schemas/pair-04/alert.escalated.schema.json",
+  "title": "AlertEscalatedEvent",
+  "description": "Canonical JSON Schema cho event alert.escalated trên topic campus.alerts (Pair 04: Core Business -> Notification Service)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_name",
+    "correlationId",
+    "source",
+    "alert_id",
+    "escalation_level",
+    "timestamp"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID định danh duy nhất của event, dùng làm idempotency key"
+    },
+    "event_name": {
+      "const": "alert.escalated",
+      "description": "Loại sự kiện cố định là alert.escalated"
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Mã truy vết xuyên service"
+    },
+    "source": {
+      "const": "core-business",
+      "description": "Service phát sự kiện"
+    },
+    "alert_id": {
+      "type": "string",
+      "pattern": "^ALT-[0-9]{3,}$",
+      "description": "Mã định danh cảnh báo nghiệp vụ"
+    },
+    "escalation_level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Cấp độ leo thang cảnh báo (1..5)"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Mức độ nghiêm trọng cập nhật khi leo thang (tùy chọn)"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 500,
+      "description": "Thông điệp leo thang bổ sung (tùy chọn)"
+    },
+    "target_channels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["telegram", "email", "discord", "sms"]
+      },
+      "description": "Danh sách kênh gửi khi leo thang (tùy chọn)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Thời điểm leo thang theo chuẩn ISO 8601"
+    }
+  }
+}
+

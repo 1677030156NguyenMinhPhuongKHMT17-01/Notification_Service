@@ -1,0 +1,57 @@
+name: Queue Async & Newman Contract Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Queue Async Event Contract Tests (Pair 04)
+        run: npm run test:queue
+
+      - name: Lint OpenAPI contracts
+        run: npm run lint:contracts
+
+      - name: Start Prism mock servers
+        run: |
+          nohup npm run mock:notify > prism-notify.log 2>&1 &
+          nohup npm run mock:core > prism-core.log 2>&1 &
+
+      - name: Wait for mock servers
+        run: npx wait-on http://localhost:4010/health http://localhost:4011/health --timeout 30000
+
+      - name: Run Newman contract tests
+        run: |
+          npm run test:mock
+          npm run test:html
+
+      - name: Show Prism logs on failure
+        if: failure()
+        run: |
+          cat prism-notify.log || true
+          cat prism-core.log || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab03-reports
+          path: |
+            reports/
+            queue-contract-tests/pair-04-core-notification/reports/

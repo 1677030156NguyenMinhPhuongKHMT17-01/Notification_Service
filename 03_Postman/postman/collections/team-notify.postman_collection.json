@@ -1,0 +1,663 @@
+{
+  "info": {
+    "_postman_id": "fit4110-lab03-notification-service",
+    "name": "FIT4110 Lab03 - Notification Service Contract & Consumer Smoke Tests",
+    "description": "Postman Collection cho Nhóm 6 (Notification Service): kiểm thử REST Fallback & Admin Query API theo OpenAPI 3.1.0 và Consumer-side Smoke Test với Core Business Mock Server. (Lưu ý: Luồng Queue Async campus.alerts được kiểm thử riêng bằng Ajv JSON Schema tại queue-contract-tests/pair-04-core-notification/).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const prefix = pm.environment.get('tracePrefix') || 'fit4110-lab03-notify';",
+          "pm.variables.set('traceId', prefix + '-' + Date.now());",
+          "pm.request.headers.upsert({ key: 'X-Trace-Id', value: pm.variables.get('traceId') });"
+        ]
+      }
+    }
+  ],
+  "variable": [],
+  "item": [
+    {
+      "name": "00_Health",
+      "item": [
+        {
+          "name": "TC01 - GET /health - service is alive",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Kiểm tra trạng thái hoạt động của Notification Service (public endpoint)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response has status=ok and service=notification-service', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 'ok');",
+                  "  pm.expect(json).to.have.property('service', 'notification-service');",
+                  "  pm.expect(json).to.have.property('time');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01_Functional",
+      "item": [
+        {
+          "name": "TC02 - POST /notifications - happy path sends notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Gửi thông báo thủ công (REST fallback/test) theo đúng payload snake_case.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-001\",\n  \"severity\": \"high\",\n  \"message\": \"Phát hiện sự cố an ninh khẩn cấp từ Core Business\",\n  \"target_channels\": [\"telegram\", \"email\", \"sms\"],\n  \"timestamp\": \"2026-08-27T15:30:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Response has NotificationLog fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('notification_id');",
+                  "  pm.expect(json).to.have.property('event_id');",
+                  "  pm.expect(json).to.have.property('alert_id', 'ALT-001');",
+                  "  pm.expect(json).to.have.property('sent', true);",
+                  "  pm.expect(json).to.have.property('status', 'delivered');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC03 - GET /notifications - list notification logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Tra cứu danh sách lịch sử thông báo đã gửi có phân trang cursor."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response contains items array and cursor fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  pm.expect(json).to.have.property('has_more');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC04 - GET /notifications/recent - list recent notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/recent?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "recent"],
+              "query": [
+                { "key": "limit", "value": "5" }
+              ]
+            },
+            "description": "Lấy nhanh các bản ghi thông báo mới nhất cho Dashboard/Analytics."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response contains items array with valid channel enum', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('items');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  if (json.items.length > 0) {",
+                  "    pm.expect(['telegram', 'email', 'discord', 'sms']).to.include(json.items[0].channel);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC05 - GET /notifications/{id} - get notification detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/0196fb3e-9999-7d1e-9f49-5d5148d2c001",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "0196fb3e-9999-7d1e-9f49-5d5148d2c001"]
+            },
+            "description": "Lấy chi tiết trạng thái chuyển phát của một bản ghi thông báo theo UUID."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response contains delivery tracking fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('notification_id');",
+                  "  pm.expect(json).to.have.property('retry_count');",
+                  "  pm.expect(json).to.have.property('error_detail');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC06 - POST /notifications/{id}/retry - manual retry notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/0196fb3e-9999-7d1e-9f49-5d5148d2c001/retry",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "0196fb3e-9999-7d1e-9f49-5d5148d2c001", "retry"]
+            },
+            "description": "Kích hoạt gửi lại thủ công một bản ghi thông báo lỗi."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Retried notification returns updated log', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('notification_id');",
+                  "  pm.expect(json).to.have.property('retry_count');",
+                  "  pm.expect(json.retry_count).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02_Auth",
+      "item": [
+        {
+          "name": "TC07 - GET /notifications/recent - valid token is accepted",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/recent?limit=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "recent"],
+              "query": [
+                { "key": "limit", "value": "1" }
+              ]
+            },
+            "description": "Kiểm tra request có Bearer token hợp lệ được chấp nhận."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Valid token request returns 200', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC08 - POST /notifications - missing token is rejected with 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Auth test thật: gửi request không có header Authorization (không dùng Prefer: code=401). Prism và service thật đều từ chối với 401.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-001\",\n  \"severity\": \"high\",\n  \"message\": \"Phát hiện sự cố an ninh khẩn cấp từ Core Business\",\n  \"target_channels\": [\"telegram\"],\n  \"timestamp\": \"2026-08-27T15:30:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing token returns 401 or 403', function () {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Unauthorized response follows ProblemDetails', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status');",
+                  "  pm.expect(json.status).to.be.within(400, 499);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC09 - POST /notifications - invalid token is rejected on real service",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer invalid-token" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Auth test với token không hợp lệ: service local từ chối với 401/403; trên mock được ghi chú rõ vì Prism chỉ kiểm tra sự tồn tại của Bearer header.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-001\",\n  \"severity\": \"high\",\n  \"message\": \"Phát hiện sự cố an ninh khẩn cấp từ Core Business\",\n  \"target_channels\": [\"telegram\"],\n  \"timestamp\": \"2026-08-27T15:30:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const env = pm.environment.get('env') || 'mock';",
+                  "if (env === 'mock') {",
+                  "  pm.test('Skipped on mock: invalid token value requires real JWT/Bearer verification middleware', function () {",
+                  "    pm.expect(true).to.eql(true);",
+                  "  });",
+                  "} else {",
+                  "  pm.test('Invalid token returns 401 or 403', function () {",
+                  "    pm.expect([401, 403]).to.include(pm.response.code);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03_Negative",
+      "item": [
+        {
+          "name": "TC10 - POST /notifications - missing required message returns validation error",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Prefer", "value": "code=422" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Negative test: thiếu trường bắt buộc message và alert_id sai pattern.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174090\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"BAD_ID\",\n  \"severity\": \"high\",\n  \"timestamp\": \"2026-08-27T15:30:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing required field returns 400 or 422', function () {",
+                  "  pm.expect([400, 422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Error response follows RFC 9457 ProblemDetails', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('title');",
+                  "  pm.expect(json).to.have.property('status');",
+                  "  pm.expect(json.status).to.be.within(400, 599);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC11 - POST /notifications - invalid channel enum returns validation error",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Prefer", "value": "code=422" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Negative test: target_channels chứa kênh zalo nằm ngoài enum [telegram, email, discord, sms].",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174095\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-001\",\n  \"severity\": \"high\",\n  \"message\": \"Kênh gửi zalo không nằm trong enum hỗ trợ\",\n  \"target_channels\": [\"zalo\"],\n  \"timestamp\": \"2026-08-27T15:30:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid channel enum returns 400 or 422', function () {",
+                  "  pm.expect([400, 422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Error response includes detail message', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04_Boundary_Reliability",
+      "item": [
+        {
+          "name": "TC12 - POST /notifications - boundary auto-routing when target_channels omitted",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Boundary test: không truyền target_channels với severity=critical, hệ thống chấp nhận và tự định tuyến kênh.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174010\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-999\",\n  \"severity\": \"critical\",\n  \"message\": \"Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)\",\n  \"timestamp\": \"2026-08-27T15:31:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Boundary payload without target_channels returns 201', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "pm.test('Response confirms notification accepted', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('sent', true);",
+                  "  pm.expect(json).to.have.property('target_channels');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC13 - GET /notifications/recent - limit above max 100 is rejected",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Prefer", "value": "code=400" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/recent?limit=101",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "recent"],
+              "query": [
+                { "key": "limit", "value": "101" }
+              ]
+            },
+            "description": "Boundary test: tham số limit=101 vượt quá maximum=100 phải bị từ chối với 400/422."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Limit above 100 returns 400 or 422', function () {",
+                  "  pm.expect([400, 422]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Boundary check validates server error response', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status');",
+                  "  pm.expect(json.status).to.be.within(400, 599);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC14 - POST /notifications - duplicate event_id returns 409 Conflict",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" },
+              { "key": "Prefer", "value": "code=409" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Reliability / Dedupe test: gửi trùng event_id đã xử lý trả về 409 Conflict theo ProblemDetails.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-001\",\n  \"severity\": \"high\",\n  \"message\": \"Phát hiện sự cố an ninh khẩn cấp từ Core Business\",\n  \"target_channels\": [\"telegram\", \"email\", \"sms\"],\n  \"timestamp\": \"2026-08-27T15:30:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate event_id returns 409 Conflict', function () {",
+                  "  pm.expect(pm.response.code).to.eql(409);",
+                  "});",
+                  "pm.test('Conflict response follows ProblemDetails', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 409);",
+                  "  pm.expect(json).to.have.property('title');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05_Consumer_side_Smoke",
+      "item": [
+        {
+          "name": "TC15 - Consumer smoke - Notification queries Alert Detail from Core Business Mock",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{coreBusinessMockUrl}}/alerts/0196fb3d-4ad7-7d1e-9f49-5d5148d2babc",
+              "host": ["{{coreBusinessMockUrl}}"],
+              "path": ["alerts", "0196fb3d-4ad7-7d1e-9f49-5d5148d2babc"]
+            },
+            "description": "Consumer-side smoke test: Notification Service gọi sang Core Business Mock Server (core-business.openapi.yaml) để đối chiếu trạng thái alert."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Core Business mock returns 200 OK', function () {",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test('Notification can parse alert status and severity from Core Business', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.expect(json).to.have.property('sourceService', 'core-business');",
+                  "  pm.expect(json).to.have.property('severity');",
+                  "  pm.expect(json).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06_Local_only_NonFunctional",
+      "item": [
+        {
+          "name": "TC16 - POST /notifications - local response time threshold < 1000ms",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Kiểm tra SLA latency < 1000ms trên môi trường service thật (local).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174088\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-002\",\n  \"severity\": \"medium\",\n  \"message\": \"Kiểm tra thời gian phản hồi gửi thông báo\",\n  \"target_channels\": [\"telegram\"],\n  \"timestamp\": \"2026-08-27T15:35:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const env = pm.environment.get('env') || 'mock';",
+                  "if (env === 'local') {",
+                  "  pm.test('Local service responds under 1000ms', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "  });",
+                  "} else {",
+                  "  pm.test('Skipped on mock: mock latency is not evidence of real service reliability', function () {",
+                  "    pm.expect(true).to.eql(true);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
