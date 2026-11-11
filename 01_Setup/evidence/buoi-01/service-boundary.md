@@ -4,37 +4,39 @@
 
 - **Tên Service:** **Notification Service** (`notification-service`)
 - **Tên nhóm:** Nhóm A7 — Product A *(hoặc B7 — Product B)*
+- **Cặp phụ thuộc chính (theo `pairing-matrix.md`):** **Pair #4: Core Business (A6/B6) → Notification (A7/B7)**
 - **Lớp:** FIT4110 – Dịch vụ kết nối và Công nghệ nền tảng
 - **Thành viên nhóm:**
   1. `<Họ tên TV 1>` – `<MSSV 1>` (Service Lead)
-  2. `<Họ tên TV 2>` – `<MSSV 2>` (API/Contract Owner)
+  2. `<Họ tên TV 2>` – `<MSSV 2>` (API & Event Contract Owner)
   3. `<Họ tên TV 3>` – `<MSSV 3>` (Backend Developer)
   4. `<Họ tên TV 4>` – `<MSSV 4>` (Test & DevOps Owner)
 - **Sản phẩm tổng thể của lớp:** **Smart Campus Operations Platform** (Nền tảng vận hành khuôn viên trường đại học thông minh)
-- **Công nghệ dự kiến:** Python 3.11 + FastAPI, SQLite / PostgreSQL, `httpx` (gọi Telegram Bot API), Docker & Docker Compose.
+- **Công nghệ dự kiến:** Python 3.11 + FastAPI, RabbitMQ (`aio-pika` cho Queue async), SQLite / PostgreSQL, `httpx` (gọi Telegram Bot API), Docker & Docker Compose.
 
 ---
 
 ## 2. Bài toán Service giải quyết (Problem Statement)
 
-Trong hệ thống **Smart Campus Operations Platform**, khi các sự kiện bất thường xảy ra (nhiệt độ phòng máy vượt ngưỡng, phát hiện người lạ ở khu vực cấm qua AI Vision, hoặc quẹt thẻ RFID trái phép ngoài giờ), `Core Business Service` sẽ đánh giá luật nghiệp vụ và sinh ra cảnh báo (`alert`).
+Trong hệ thống **Smart Campus Operations Platform**, khi các sự kiện bất thường xảy ra (nhiệt độ phòng vượt ngưỡng, phát hiện người lạ qua AI Vision, hoặc quẹt thẻ RFID trái phép ngoài giờ), `Core Business Service` sẽ đánh giá luật nghiệp vụ và phát sinh sự kiện cảnh báo (`alert.created`, `alert.escalated`, `alert.resolved`).
 
-Tuy nhiên, `Core Business Service` chỉ tập trung vào logic quyết định nghiệp vụ chứ không trực tiếp quản lý kết nối tới từng nền tảng nhắn tin bên ngoài hay xử lý việc gửi lại khi mạng lỗi. **Notification Service** giải quyết bài toán này bằng cách:
-- Đóng vai trò là cổng điều phối và gửi thông báo tập trung (đa kênh: **Telegram Bot API** kết hợp **Console/Database Log** làm kênh dự phòng/kiểm toán).
-- Đảm bảo tính tin cậy khi gửi thông báo thông qua cơ chế **chống gửi trùng (idempotency / deduplication theo `alert_id` hoặc `idempotency_key`)** và **thử lại đơn giản (retry với backoff)** khi kênh bên ngoài tạm thời gián đoạn.
-- Lưu trữ lịch sử và trạng thái gửi (`delivered`, `failed`, `retrying`, `duplicate_ignored`) để phục vụ tra cứu vận hành và cung cấp số liệu thống kê cho `Analytics Service`.
+Vì việc gửi tin nhắn ra các dịch vụ bên thứ ba (như Telegram, Email, Webhook) có độ trễ mạng cao và dễ gặp lỗi tạm thời, nếu `Core Business Service` gọi đồng bộ và tự chờ gửi thông báo thì luồng xử lý nghiệp vụ trung tâm sẽ bị nghẽn. **Notification Service** giải quyết bài toán này bằng cách:
+- Tiếp nhận sự kiện cảnh báo từ `Core Business Service` theo cơ chế **Queue bất đồng bộ (`Queue async` — Pair #4 trong `pairing-matrix.md`)** để tách rời (decouple) quá trình ra quyết định nghiệp vụ với quá trình chuyển phát thông báo đa kênh.
+- Thực hiện định tuyến và gửi thông báo qua **Telegram Bot API** kết hợp **Console/Database Log** (làm kênh dự phòng khi môi trường lab không có kết nối ngoài).
+- Đảm bảo tính tin cậy thông qua cơ chế **chống gửi trùng (idempotency theo `eventId` / `alertId`)**, xử lý sự kiện đến lệch thứ tự (out-of-order), **thử lại có kiểm soát (retry với backoff)** và chuyển sang **Dead-Letter Queue (DLQ)** khi lỗi vượt ngưỡng.
+- Cung cấp thêm các endpoint **REST API** (`/health`, `/notifications`...) để kiểm tra trạng thái sống, tra cứu lịch sử chuyển phát và hỗ trợ kiểm thử trực tiếp (Postman/Newman) ở các buổi sau.
 
 ---
 
 ## 3. Actor (Các tác nhân tương tác)
 
-| Actor / Hệ thống | Vai trò | Mô tả tương tác với Notification Service |
-|---|---|---|
-| **Core Business Service** | Upstream Service (Consumer của Notification API) | Gửi yêu cầu phát cảnh báo (`POST /api/v1/notifications/send` hoặc `POST /notifications`) ngay khi phát hiện sự kiện bất thường. |
-| **Analytics Service** | Upstream Consumer (Đọc dữ liệu thống kê) | Gọi API của Notification Service (`GET /api/v1/notifications/logs` hoặc `GET /api/v1/notifications/stats`) để tổng hợp số lượng thông báo đã gửi, tỷ lệ thành công/thất bại theo ngày và theo mức độ nghiêm trọng. |
-| **External Notification Providers (Telegram Bot API / Webhook)** | Downstream External Dependency | Nền tảng bên thứ ba nhận HTTP request từ Notification Service để chuyển tin nhắn thực tế tới nhóm trực ban. |
-| **Đội bảo vệ / Quản trị viên (Security Team / Campus Admin)** | End-user (Người nhận cuối) | Nhận tin nhắn cảnh báo thời gian thực trên Telegram / kênh thông báo để xử lý sự cố tại hiện trường. |
-| **API Gateway / Operations** | Platform Component | Gọi `GET /health` để giám sát trạng thái sẵn sàng của container và định tuyến request. |
+| Actor / Hệ thống | Vai trò | Cơ chế giao tiếp | Mô tả tương tác với Notification Service |
+|---|---|---|---|
+| **Core Business Service (A6/B6)** | Upstream Partner (**Pair #4**) — Event Producer / Service Consumer | **Queue async** (RabbitMQ) *(chính)* + REST API *(dự phòng/test)* | Phát các sự kiện `alert.created`, `alert.escalated`, `alert.resolved` vào Message Queue để kích hoạt Notification Service gửi cảnh báo đa kênh. |
+| **Message Broker (RabbitMQ)** | Platform Component (Trung gian truyền thông điệp) | AMQP (`Queue async`) | Nhận message từ `Core Business`, phân phối tới queue của `Notification Service` và quản lý Retry / Dead-Letter Queue (DLQ). |
+| **External Notification Providers (Telegram Bot API)** | Downstream External Dependency | HTTPS REST (`POST /bot<token>/sendMessage`) | Nhận lệnh từ Notification Service để đẩy tin nhắn cảnh báo tới nhóm trực ban. |
+| **Đội bảo vệ / Quản trị viên (Security Team / Campus Admin)** | End-user (Người nhận cuối) | Telegram App / Console Log | Nhận thông báo khi có cảnh báo mới (`alert.created`), leo thang (`alert.escalated`) hoặc đã xử lý xong (`alert.resolved`). |
+| **API Gateway / Operations / Analytics** | Platform Component / Internal Caller | HTTP REST (`GET /health`, `GET /notifications`) | Kiểm tra trạng thái sẵn sàng của container (`GET /health`) và truy vấn lịch sử/trạng thái gửi thông báo khi cần đối soát. |
 
 ---
 
@@ -42,128 +44,145 @@ Tuy nhiên, `Core Business Service` chỉ tập trung vào logic quyết định
 
 ### 4.1. System Boundary (Phạm vi trong toàn hệ thống Smart Campus)
 - **Phần nhóm kiểm soát (We Own):**
-  - Toàn bộ mã nguồn, hợp đồng API (`openapi.yaml`), cơ sở dữ liệu lưu lịch sử gửi thông báo (`notification_logs`) và cấu hình kết nối kênh gửi của **Notification Service**.
-  - Logic kiểm tra hợp lệ payload cảnh báo, chống gửi trùng (`alert_id`), cơ chế retry khi gọi Telegram API lỗi, và ghi log trạng thái gửi.
+  - Toàn bộ mã nguồn của **Notification Service** (cả Worker lắng nghe Queue async và tầng FastAPI REST).
+  - Hợp đồng sự kiện (**Event Contract** cho Pair #4 `Core Business → Notification`) và tài liệu **OpenAPI (`openapi.yaml`)** cho các endpoint REST của Notification Service.
+  - Cơ sở dữ liệu riêng (`notification_logs` / `processed_events`) để lưu vết trạng thái gửi và kiểm tra chống trùng (`idempotency`).
 - **Phần nhóm chỉ tích hợp (Integrated Only):**
-  - Nhận request cảnh báo từ `Core Business Service` theo hợp đồng REST API đã thống nhất.
-  - Cung cấp API truy vấn lịch sử/thống kê thông báo cho `Analytics Service`.
-  - Gọi ra dịch vụ ngoài `Telegram Bot API` (hoặc mock/console fallback khi chạy ở môi trường cô lập không có Internet).
+  - Nhận sự kiện cảnh báo từ `Core Business Service` (A6/B6) qua Message Queue theo đúng hợp đồng Pair #4 trong `pairing-matrix.md`.
+  - Kết nối tới `Telegram Bot API` bên ngoài thông qua biến môi trường (`.env`), có chế độ fallback sang Console/DB Log.
 
 ### 4.2. Responsibility (Trách nhiệm của Notification Service)
-1. **Tiếp nhận yêu cầu gửi cảnh báo** từ `Core Business Service` qua HTTP REST API.
-2. **Kiểm tra tính hợp lệ (Validation)** của dữ liệu đầu vào (`alert_id`, `severity`, `message`, `target`, `channel`).
-3. **Chống gửi trùng (Deduplication / Idempotency):** Kiểm tra xem `alert_id` đã được gửi thành công trong khoảng thời gian cấu hình (hoặc theo khoá `alert_id`) chưa để tránh spam nhiều tin nhắn giống hệt nhau cho đội bảo vệ.
-4. **Định tuyến & Gửi thông báo (Channel Dispatch):** Chuyển đổi nội dung cảnh báo thành định dạng phù hợp và gửi qua kênh được cấu hình (**Telegram Bot API** và/hoặc **Console/DB Log**).
-5. **Xử lý lỗi & Retry đơn giản:** Nếu gọi Telegram API gặp lỗi mạng hoặc timeout (`5xx` / network error), tự động thử lại tối đa $N$ lần (ví dụ 2–3 lần) và chuyển sang fallback ghi log cảnh báo nếu vẫn thất bại.
-6. **Ghi nhận lịch sử (Audit Logging):** Lưu toàn bộ trạng thái gửi (`queued`, `delivered`, `failed`, `duplicate_ignored`), thời gian gửi, kênh gửi và mã lỗi (nếu có) vào Database.
-7. **Cung cấp dữ liệu cho Analytics:** Mở các endpoint cho phép tra cứu danh sách log thông báo và thống kê tổng hợp theo ngày/kênh/mức độ nghiêm trọng.
+1. **Tiếp nhận sự kiện cảnh báo bất đồng bộ (Queue Consumer):** Lắng nghe 3 sự kiện trọng tâm từ `Core Business Service`:
+   - `alert.created`: Cảnh báo mới phát sinh → gửi thông báo khẩn theo mức `severity`.
+   - `alert.escalated`: Cảnh báo chưa được xử lý, bị nâng mức độ nghiêm trọng → gửi thông báo nhắc nhở/leo thang tới cấp quản lý.
+   - `alert.resolved`: Sự cố đã được giải quyết → gửi thông báo đóng cảnh báo để đội bảo vệ nắm trạng thái.
+2. **Kiểm tra hợp lệ & Chống xử lý lặp (Validation & Idempotency):** Kiểm tra schema của event (`eventId`, `eventType`, `occurredAt`, `correlationId`, `data`); từ chối hoặc bỏ qua an toàn các event bị lặp (`eventId` đã xử lý thành công).
+3. **Định tuyến kênh gửi (Channel Routing):** Xác định kênh gửi (`telegram`, `console`, `email/webhook` mock) dựa trên danh sách kênh yêu cầu hoặc tự động ánh xạ theo `severity` và `target` (ví dụ: `HIGH`/`CRITICAL` gửi ngay qua Telegram `security_team`).
+4. **Cơ chế Retry & Dead-Letter Handling:** Khi kênh gửi bên ngoài (Telegram API) bị lỗi mạng hoặc timeout (`5xx`, `429`), thực hiện retry tối đa $N$ lần với exponential backoff; nếu vẫn thất bại thì đánh dấu `failed` và chuyển vào Dead-Letter Queue (hoặc fallback log) để không làm mất sự kiện.
+5. **Ghi log trạng thái gửi (Delivery Audit Log):** Lưu lịch sử mỗi lần gửi (`notificationId`, `eventId`, `alertId`, `channel`, `status`, `retryCount`, `deliveredAt`, `errorMessage`).
+6. **Cung cấp REST API quản trị & kiểm thử:** Mở endpoint `/health` cho Docker healthcheck và các endpoint REST (`/notifications`, `/notifications/{notificationId}`) để phục vụ tra cứu, kiểm thử tích hợp (Postman/Newman) và gửi thông báo trực tiếp khi cần.
 
 ### 4.3. Out of Scope (Những việc Notification Service KHÔNG làm)
-- **KHÔNG** nhận dữ liệu thô trực tiếp từ cảm biến IoT (ESP32), Camera IP hay đầu đọc thẻ RFID.
-- **KHÔNG** chạy mô hình AI nhận diện hình ảnh hay phân tích video frame.
-- **KHÔNG** tự đánh giá luật nghiệp vụ (ví dụ: không tự quyết định nhiệt độ $31.5^\circ\text{C}$ có vượt ngưỡng hay không, không kiểm tra giờ mở cửa cổng). Việc ra quyết định khi nào tạo cảnh báo thuộc toàn quyền của `Core Business Service`.
-- **KHÔNG** quản lý danh tính sinh viên/nhân viên hoặc phân quyền ra/vào cổng (`Access Gate Service`).
+- **KHÔNG** nhận dữ liệu thô trực tiếp từ cảm biến IoT (ESP32), Camera Stream hay đầu đọc thẻ Access Gate.
+- **KHÔNG** chạy mô hình AI phân tích hình ảnh (`AI Vision Service`).
+- **KHÔNG** đánh giá luật nghiệp vụ để quyết định khi nào tạo cảnh báo hay khi nào leo thang cảnh báo (việc sinh event `alert.created`, `alert.escalated`, `alert.resolved` thuộc trách nhiệm của `Core Business Service`).
+- **KHÔNG** chịu trách nhiệm tính toán KPI tổng thể toàn trường (theo `pairing-matrix.md` Pair #8, `Core Business` đẩy trực tiếp event alert/policy sang `Analytics Service`).
 
 ---
 
 ## 5. Input / Output Contract
 
-### 5.1. Dữ liệu đầu vào (Input — Nhận từ Core Business Service)
+### 5.1. Dữ liệu đầu vào chính: Event Payload qua Queue Async (Pair #4: `Core Business → Notification`)
+
+Theo chuẩn `docs/event-contract-template.md` và `user-stories/pair-04-core-notification-async.md`, mỗi message trên Queue có cấu trúc Envelope + Data như sau:
 
 | Field | Type | Required | Ý nghĩa & Ràng buộc |
 |---|---|---|---|
-| `alert_id` | `string` | Có | Mã định danh duy nhất của cảnh báo từ Core Business (ví dụ: `"ALT-001"`), dùng để truy vết và chống gửi trùng. |
-| `type` | `string` | Không | Loại sự kiện cảnh báo (ví dụ: `"unauthorized_access"`, `"high_temperature"`, `"intrusion_detected"`). |
-| `severity` | `string` (enum) | Có | Mức độ nghiêm trọng: `"low"`, `"medium"`, `"high"`, `"critical"`. |
-| `message` | `string` | Có | Nội dung thông báo chi tiết cần gửi tới người phụ trách (tối thiểu 1 ký tự, tối đa 1000 ký tự). |
-| `target` | `string` | Có | Nhóm hoặc người nhận mục tiêu (ví dụ: `"security_team"`, `"facility_manager"`, `"admin"`). |
-| `channel` | `string` (enum) | Không | Kênh chỉ định: `"telegram"`, `"console"`, `"webhook"` (mặc định: `"telegram"` kèm `"console"` fallback). |
-| `timestamp` | `string` (ISO 8601) | Không | Thời điểm phát sinh cảnh báo (ví dụ: `"2026-05-02T09:10:00Z"`). |
+| `eventId` | `string` (UUID) | Có | Định danh duy nhất của sự kiện, dùng làm **Idempotency Key** để chống gửi trùng khi retry. |
+| `eventType` | `string` (enum) | Có | Loại sự kiện: `"alert.created"`, `"alert.escalated"`, `"alert.resolved"`. |
+| `occurredAt` | `string` (ISO 8601) | Có | Thời điểm `Core Business` phát sinh sự kiện (ví dụ: `"2026-05-10T08:30:00Z"`). |
+| `correlationId` | `string` (UUID) | Có | Mã truy vết xuyên suốt từ sự kiện gốc (IoT/Camera/Gate → Core → Notification). |
+| `source` | `string` | Có | Tên service phát sự kiện (`"core-business"`). |
+| `data.alertId` | `string` | Có | Mã định danh cảnh báo (ví dụ: `"ALT-001"` hoặc UUID). |
+| `data.alertType` | `string` | Có | Phân loại cảnh báo (`"UNAUTHORIZED_ACCESS"`, `"SENSOR_THRESHOLD_EXCEEDED"`, `"UNKNOWN_PERSON"`). |
+| `data.severity` | `string` (enum) | Có | Mức độ nghiêm trọng: `"LOW"`, `"MEDIUM"`, `"HIGH"`, `"CRITICAL"`. |
+| `data.message` | `string` | Có | Nội dung thông báo cần gửi tới người phụ trách (5–500 ký tự). |
+| `data.target` | `string` | Có | Nhóm nhận mục tiêu (ví dụ: `"security_team"`, `"facility_manager"`, `"campus_admin"`). |
+| `data.channels` | `array<string>` | Không | Danh sách kênh gợi ý (`["telegram", "console"]`). Nếu bỏ trống, Notification tự định tuyến theo `severity`. |
 
-**Ví dụ JSON Request Body (`POST /api/v1/notifications/send`):**
+**Ví dụ JSON Event Payload (`alert.created`):**
 ```json
 {
-  "alert_id": "ALT-001",
-  "type": "intrusion_detected",
-  "severity": "high",
-  "message": "Unknown person detected near main gate",
-  "target": "security_team",
-  "channel": "telegram",
-  "timestamp": "2026-05-02T09:10:00Z"
+  "eventId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2babc",
+  "eventType": "alert.created",
+  "occurredAt": "2026-05-10T08:30:00Z",
+  "correlationId": "0196fb3d-1111-7a00-8000-000000000001",
+  "source": "core-business",
+  "data": {
+    "alertId": "ALT-001",
+    "alertType": "UNKNOWN_PERSON",
+    "severity": "HIGH",
+    "message": "Unknown person detected near main gate",
+    "target": "security_team",
+    "channels": ["telegram"]
+  }
 }
 ```
 
-### 5.2. Dữ liệu đầu ra (Output — Trả về cho Core Business & Analytics)
+### 5.2. Dữ liệu đầu ra (Output — Kết quả xử lý & REST API Response)
 
-**Ví dụ JSON Response khi gửi thành công (`200 OK` / `201 Created`):**
+**Kết quả ghi nhận chuyển phát thông báo (`NotificationDelivery`):**
 ```json
 {
-  "notification_id": "NTF-20260502-0001",
-  "alert_id": "ALT-001",
+  "notificationId": "0196fb3e-9999-7d1e-9f49-5d5148d2c001",
+  "eventId": "0196fb3d-4ad7-7d1e-9f49-5d5148d2babc",
+  "alertId": "ALT-001",
+  "eventType": "alert.created",
   "sent": true,
   "channel": "telegram",
-  "status": "delivered",
-  "retry_count": 0,
-  "delivered_at": "2026-05-02T09:10:01Z"
+  "target": "security_team",
+  "status": "DELIVERED",
+  "retryCount": 0,
+  "deliveredAt": "2026-05-10T08:30:01Z",
+  "errorDetail": null
 }
 ```
 
-**Ví dụ JSON Response khi phát hiện gửi trùng (`200 OK` — Idempotent response):**
+**Response lỗi chuẩn cho REST API (`application/problem+json` — Problem Details):**
 ```json
 {
-  "notification_id": "NTF-20260502-0001",
-  "alert_id": "ALT-001",
-  "sent": false,
-  "channel": "telegram",
-  "status": "duplicate_ignored",
-  "message": "Alert ALT-001 was already delivered previously",
-  "delivered_at": "2026-05-02T09:10:01Z"
-}
-```
-
-**Ví dụ JSON Error Response khi dữ liệu không hợp lệ (`400 Bad Request` / `422 Unprocessable Entity` theo chuẩn Problem Details):**
-```json
-{
-  "type": "https://smartcampus.edu.vn/errors/invalid-notification-payload",
-  "title": "Invalid notification request payload",
+  "type": "https://campus.local/errors/validation",
+  "title": "Dữ liệu không hợp lệ",
   "status": 400,
-  "detail": "Field 'severity' must be one of: low, medium, high, critical."
+  "detail": "Field severity phải thuộc một trong các giá trị: LOW, MEDIUM, HIGH, CRITICAL",
+  "instance": "/notifications"
 }
 ```
 
 ---
 
-## 6. Provider / Consumer & Upstream / Downstream (Bảng "Ai gọi ai")
+## 6. Provider / Consumer & Upstream / Downstream (Bảng "Ai gọi ai" theo `pairing-matrix.md`)
 
-| Quan hệ | Tên Service / Thành phần | Vai trò trong giao tiếp | Giao thức | Mục đích kết nối |
+| Cặp # | Bên gửi / Gọi (Upstream) | Bên nhận / Xử lý (Downstream) | Cơ chế | Mục đích kết nối |
 |---|---|---|---|---|
-| **Upstream Caller** | `Core Business Service` (A6/B6) | **Consumer** gọi vào **Provider** (`Notification Service`) | HTTP REST (`POST`) | Gửi cảnh báo (`alert`) sang Notification Service khi phát hiện vi phạm quy tắc nghiệp vụ. |
-| **Upstream Caller** | `Analytics Service` (A5/B5) | **Consumer** gọi vào **Provider** (`Notification Service`) | HTTP REST (`GET`) | Lấy danh sách log thông báo và số liệu thống kê (tổng số thông báo, phân bổ theo kênh/mức độ) để lên báo cáo. |
-| **Upstream Caller** | `API Gateway` (nếu có) | **Reverse Proxy / Caller** | HTTP REST | Chuyển tiếp request từ hệ thống chung và kiểm tra `GET /health`. |
-| **Downstream Dependency** | `Telegram Bot API` (`api.telegram.org`) | **External Provider** được `Notification Service` gọi tới | HTTPS REST (`POST /bot<token>/sendMessage`) | Chuyển phát tin nhắn cảnh báo thực tế tới nhóm Telegram của đội bảo vệ/vận hành. |
-| **Internal Dependency** | `Notification Database` (SQLite / PostgreSQL) | **Owned Data Store** của `Notification Service` | SQL | Lưu trữ bảng `notification_logs` để đảm bảo idempotency (`alert_id`) và phục vụ truy vấn lịch sử. |
+| **Pair #4 (Chính)** | `Core Business Service` (A6/B6) *(Vai Consumer nghiệp vụ / Event Producer)* | `Notification Service` (A7/B7) *(Vai Provider năng lực thông báo / Event Consumer)* | **Queue async** (RabbitMQ) | `Core Business` phát event `alert.created`, `alert.escalated`, `alert.resolved` vào Queue; `Notification Service` tiêu thụ event để gửi thông báo đa kênh. |
+| **External Call** | `Notification Service` (A7/B7) | `Telegram Bot API` / Webhook | HTTPS REST (`POST`) | Gửi tin nhắn cảnh báo thực tế tới kênh Telegram của đội bảo vệ / quản trị viên. |
+| **Internal / Test / Ops** | API Gateway / Postman / Admin / Analytics | `Notification Service` (A7/B7) | HTTP REST (`GET`, `POST`) | Kiểm tra `/health`, tra cứu log chuyển phát (`GET /notifications`), hoặc kích hoạt gửi thông báo qua REST (`POST /notifications`) khi test. |
+| **Owned Store** | `Notification Service` (A7/B7) | `Notification DB` (SQLite / PostgreSQL) | SQL | Lưu trạng thái gửi (`DELIVERED`, `FAILED`, `DUPLICATE_IGNORED`) và khoá chống trùng `eventId`. |
 
 ---
 
-## 7. Danh sách API dự kiến (Candidate API)
+## 7. Event dự kiến & API dự kiến (Candidate Events & REST API)
 
-| Method | Endpoint | Mục đích | Caller (Consumer) | Status Codes chính |
+### 7.1. Event dự kiến nhận qua Queue Async (Pair #4)
+
+| Event Name | Topic / Routing Key dự kiến | Producer | Consumer | Hành động của Notification Service |
 |---|---|---|---|---|
-| `GET` | `/health` | Kiểm tra trạng thái sống và kết nối DB của service | Docker Healthcheck, API Gateway, Operations | `200 OK`, `503 Service Unavailable` |
-| `POST` | `/api/v1/notifications/send` | Nhận cảnh báo từ Core Business và gửi thông báo qua kênh đích | `Core Business Service` | `201 Created`, `200 OK` (trùng `alert_id`), `400 Bad Request`, `401 Unauthorized`, `502 Bad Gateway` |
-| `GET` | `/api/v1/notifications/logs` | Truy vấn lịch sử gửi thông báo (hỗ trợ lọc theo `date`, `severity`, `status`, `alert_id`) | `Analytics Service`, Admin | `200 OK`, `400 Bad Request` |
-| `GET` | `/api/v1/notifications/logs/{notification_id}` | Xem chi tiết trạng thái gửi và số lần retry của một thông báo cụ thể | `Core Business Service`, Admin | `200 OK`, `404 Not Found` |
-| `GET` | `/api/v1/notifications/stats` | Trả về thống kê tổng hợp số lượng thông báo theo trạng thái và mức độ nghiêm trọng | `Analytics Service` | `200 OK` |
+| `alert.created` | `campus.alert.created` | `Core Business (A6/B6)` | `Notification (A7/B7)` | Kiểm tra idempotency (`eventId`), định tuyến kênh theo `severity`/`target`, gửi cảnh báo mới và lưu log. |
+| `alert.escalated` | `campus.alert.escalated` | `Core Business (A6/B6)` | `Notification (A7/B7)` | Gửi thông báo leo thang khẩn cấp (kèm số lần nhắc/mức độ mới) tới nhóm phụ trách hoặc cấp quản lý. |
+| `alert.resolved` | `campus.alert.resolved` | `Core Business (A6/B6)` | `Notification (A7/B7)` | Gửi thông báo xác nhận sự cố đã được xử lý xong và cập nhật trạng thái kết thúc theo `alertId`. |
+
+### 7.2. Danh sách REST API dự kiến của Notification Service (`openapi.yaml`)
+
+Bên cạnh Queue Consumer cho Pair #4, service cung cấp bộ REST API chuẩn OpenAPI 3.1 để phục vụ kiểm tra sức khỏe, tra cứu log và kiểm thử hợp đồng (Prism / Postman / Newman):
+
+| Method | Endpoint | Mục đích | Caller | Status Codes chính |
+|---|---|---|---|---|
+| `GET` | `/health` | Kiểm tra trạng thái hoạt động của service và kết nối Queue/DB | Docker Healthcheck, Operations | `200 OK`, `503 Service Unavailable` |
+| `POST` | `/notifications` | Gửi thông báo trực tiếp qua REST (dùng cho test độc lập, manual trigger hoặc HTTP fallback) | Admin, Test Runner, Core Business (fallback) | `201 Created`, `200 OK`, `400 Bad Request`, `401 Unauthorized`, `409 Conflict`, `422 Unprocessable Entity` |
+| `GET` | `/notifications` | Lấy danh sách lịch sử gửi thông báo (hỗ trợ cursor-based pagination `cursor`, `limit`) | Admin, Operations, Analytics | `200 OK`, `401 Unauthorized` |
+| `GET` | `/notifications/recent` | Lấy danh sách các thông báo vừa gửi gần đây | Dashboard, Operations | `200 OK`, `401 Unauthorized`, `403 Forbidden` |
+| `GET` | `/notifications/{notificationId}` | Xem chi tiết trạng thái gửi, kênh gửi và số lần retry của một thông báo theo UUID | Admin, Operations | `200 OK`, `401 Unauthorized`, `404 Not Found` |
 
 ---
 
-## 8. Event dự kiến & Hành vi khi lỗi (Failure & Degraded-Mode Behavior)
+## 8. Hành vi khi lỗi (Failure, Retry & Degraded-Mode Behavior)
 
-- **Event dự kiến (nếu mở rộng kết hợp Message Queue ở Buổi 5):**
-  - Có thể lắng nghe thêm sự kiện `alert.created` trên exchange/queue của RabbitMQ từ `Core Business Service` và phát sự kiện `notification.delivery_updated` cho `Analytics Service`.
-- **Hành vi khi lỗi (Failure & Degraded Mode):**
-  - **Khi thiếu cấu hình `TELEGRAM_BOT_TOKEN` hoặc mất kết nối Internet ra Telegram:** Service không bị crash mà tự động chuyển sang chế độ **Fallback (`console` / `mock` log)**, ghi nhận đầy đủ nội dung cảnh báo vào Database + stdout với trạng thái `delivered_fallback` (hoặc `failed` kèm lý do rõ ràng tuỳ cấu hình `ALLOW_CONSOLE_FALLBACK=true`), giúp hệ thống vẫn demo và kiểm thử độc lập được trong phòng lab.
-  - **Khi Telegram trả lỗi tạm thời (`429 Too Many Requests` hoặc `5xx`):** Thực hiện retry tối đa `MAX_RETRIES=2` lần với khoảng nghỉ ngắn trước khi ghi nhận trạng thái cuối cùng.
+1. **Chống xử lý lặp (Idempotency):** Nếu nhận lại một message có cùng `eventId` đã ở trạng thái `DELIVERED`, Notification Service sẽ bỏ qua việc gọi lại Telegram API, ghi nhận `DUPLICATE_IGNORED` và gửi `ACK` cho Queue để tránh spam tin nhắn.
+2. **Cơ chế Retry & Dead-Letter Queue (DLQ):**
+   - Nếu dữ liệu sai định dạng JSON hoặc thiếu trường bắt buộc (lỗi vĩnh viễn / Poison Message): Không retry vô hạn mà từ chối message (`NACK` với `requeue=false`), đẩy thẳng sang **Dead-Letter Queue (`campus.notification.dlq`)** và ghi log lỗi.
+   - Nếu gọi Telegram Bot API gặp lỗi tạm thời (timeout, mạng chập chờn, HTTP `429`/`5xx`): Thực hiện retry tối đa `MAX_RETRIES=3` lần với exponential backoff. Nếu sau 3 lần vẫn lỗi, ghi trạng thái `FAILED` vào DB và chuyển message sang DLQ (hoặc chuyển sang kênh dự phòng Console Log).
+3. **Chế độ Degraded Mode trong phòng Lab:** Khi chạy trong môi trường local/container không cấu hình `TELEGRAM_BOT_TOKEN` thật, service tự động dùng `console/mock dispatcher` để ghi nhận nội dung tin nhắn và trả trạng thái `DELIVERED`, đảm bảo luồng tích hợp không bị chặn bởi dịch vụ bên ngoài.
 
 ---
 
@@ -171,43 +190,49 @@ Tuy nhiên, `Core Business Service` chỉ tập trung vào logic quyết định
 
 ```mermaid
 flowchart LR
-    subgraph Upstream ["Upstream Services (Callers)"]
-        CORE["Core Business Service<br/>(A6 / B6)"]
-        ANALYTICS["Analytics Service<br/>(A5 / B5)"]
+    subgraph Upstream ["Upstream Producer (A6 / B6)"]
+        CORE["Core Business Service"]
+    end
+
+    subgraph Broker ["Message Broker (Async Channel - Pair #4)"]
+        MQ[["RabbitMQ Exchange: campus.alerts<br/>Events:<br/>- alert.created<br/>- alert.escalated<br/>- alert.resolved"]]
+        DLQ[["Dead-Letter Queue<br/>(campus.notification.dlq)"]]
     end
 
     subgraph Boundary ["Service Boundary: Notification Service (A7 / B7)"]
         direction TB
-        API["FastAPI REST Layer<br/>POST /api/v1/notifications/send<br/>GET /api/v1/notifications/logs<br/>GET /api/v1/notifications/stats<br/>GET /health"]
-        DEDUP["Validation, Idempotency<br/>(Check alert_id) & Retry Engine"]
-        DISPATCH["Multi-Channel Dispatcher<br/>(Telegram + Console Fallback)"]
-        DB[("Notification DB<br/>(SQLite / PostgreSQL)<br/>Owned Data Store")]
+        WORKER["Queue Consumer Worker<br/>(Validate Schema & Check Idempotency)"]
+        API["FastAPI REST Interface<br/>GET /health<br/>POST /notifications<br/>GET /notifications<br/>GET /notifications/{id}"]
+        ROUTER["Channel Router & Retry Engine<br/>(Severity/Target Mapping + Backoff)"]
+        DB[("Notification DB<br/>(SQLite / PostgreSQL)<br/>Processed Events & Delivery Logs")]
 
-        API --> DEDUP
-        DEDUP <--> DB
-        DEDUP --> DISPATCH
-        DISPATCH --> DB
+        WORKER --> ROUTER
+        API --> ROUTER
+        WORKER <--> DB
+        ROUTER --> DB
     end
 
     subgraph Downstream ["Downstream External Channels"]
-        TG["Telegram Bot API<br/>(Security Team Chat)"]
-        CONSOLE["Console / Audit Log<br/>(Local & Lab Fallback)"]
+        TG["Telegram Bot API<br/>(Security Team / Admin)"]
+        CONSOLE["Console / Mock Channel<br/>(Local Fallback & Audit)"]
     end
 
-    CORE -->|"1. POST Alert JSON<br/>(alert_id, severity, message, target)"| API
-    API -.->|"2. Ack Response<br/>(sent, channel, status)"| CORE
-    ANALYTICS -->|"3. GET Logs / Stats"| API
-    DISPATCH -->|"4a. HTTPS sendMessage"| TG
-    DISPATCH -->|"4b. Fallback / Audit"| CONSOLE
+    CORE -->|"1. Publish Alert Events<br/>(Queue async)"| MQ
+    MQ -->|"2. Consume Event"| WORKER
+    WORKER -.->|"Poison / Max Retries Exceeded"| DLQ
+    ROUTER -->|"3a. HTTPS sendMessage"| TG
+    ROUTER -->|"3b. Fallback / Local Mode"| CONSOLE
 ```
 
 ---
 
-## 10. Vấn đề cần đàm phán ở Buổi 2 (Open Questions for Contract Negotiation)
+## 10. Vấn đề cần đàm phán ở Buổi 2 (6 Issues cho Pair #4: `Core Business → Notification`)
 
-1. **Chuẩn hóa danh sách `severity` và `target` với nhóm Core Business (A6/B6):** Thống nhất chính xác các giá trị enum của `severity` (`low | medium | high | critical`) và danh sách `target` (`security_team`, `facility_manager`, `it_support`) để ánh xạ đúng sang `chat_id` trên Telegram.
-2. **Cơ chế chống gửi trùng (Idempotency):** Thống nhất với `Core Business Service` xem khi `alert_id` bị gửi lặp lại, `Notification Service` sẽ trả về `200 OK` (kèm `"status": "duplicate_ignored"`) hay `409 Conflict` để `Core Business` không coi đó là lỗi hệ thống.
-3. **Đồng bộ hay Bất đồng bộ khi gọi `/notifications/send`:** Thống nhất thời gian timeout tối đa (ví dụ `3s`) khi `Core Business` gọi sang `Notification Service` (trả về `201 Created` sau khi gửi xong hay `202 Accepted` khi đưa vào hàng đợi xử lý nền).
-4. **Hợp đồng dữ liệu thống kê với nhóm Analytics (A5/B5):** Thống nhất cấu trúc query parameter (`?date=YYYY-MM-DD`) và JSON response của `GET /api/v1/notifications/stats` để khớp với báo cáo tổng hợp của `Analytics Service`.
-5. **Cơ chế xác thực liên service (Authentication):** Thống nhất dùng header `X-API-Key` hay `Authorization: Bearer <token>` đặt trong file `.env` khi `Core Business` và `Analytics` gọi sang `Notification Service`.
-6. **Chuẩn định dạng lỗi (Error Model):** Thống nhất sử dụng chuẩn RFC 9457 / RFC 7807 (`application/problem+json` gồm `type`, `title`, `status`, `detail`) cho mọi phản hồi `4xx`/`5xx`.
+Bám sát `docs/pairing-matrix.md` và `user-stories/pair-04-core-notification-async.md`, nhóm chuẩn bị 6 vấn đề trọng tâm để đàm phán với nhóm **Core Business (A6/B6)** ở Buổi 2:
+
+1. **Tên Event, Topic/Routing Key và cấu trúc Envelope:** Thống nhất tên 3 sự kiện (`alert.created`, `alert.escalated`, `alert.resolved`), tên exchange/queue trên RabbitMQ và cấu trúc envelope chuẩn (`eventId`, `eventType`, `occurredAt`, `correlationId`, `source`, `data`).
+2. **Bắt buộc trường `severity` và chuẩn hóa Enum:** Trả lời câu hỏi gợi ý #1 trong user story — bắt buộc `alert.created` và `alert.escalated` phải có field `severity` (`LOW | MEDIUM | HIGH | CRITICAL`) để Notification Service quyết định mức độ ưu tiên.
+3. **Cơ chế định tuyến kênh gửi (`channels` vs Auto-routing):** Trả lời câu hỏi gợi ý #2 — `Core Business` sẽ truyền mảng `channels` mong muốn hay chỉ truyền `severity` + `target` (`security_team`, `facility_manager`) để `Notification Service` tự định tuyến sang kênh (Telegram/Email/Console) tương ứng.
+4. **Phân định trách nhiệm Retry và Dead-Letter Queue (DLQ):** Trả lời câu hỏi gợi ý #3 — khi gửi Telegram thất bại tạm thời, `Notification Service` tự retry nội bộ (ví dụ tối đa 3 lần với backoff) hay dùng cơ chế retry/requeue của Message Queue và khi nào thì đẩy vào DLQ.
+5. **Chống gửi trùng (Idempotency) khi Queue giao lặp (At-least-once delivery):** Thống nhất `Core Business` gắn `eventId` (UUID duy nhất cho mỗi lần phát sự kiện) và `alertId` (mã cảnh báo nghiệp vụ) để `Notification Service` lọc trùng, đảm bảo không gửi lặp tin nhắn cho cùng một `eventId`.
+6. **Xử lý sự kiện đến sai thứ tự (Out-of-order events):** Thống nhất cách xử lý dựa trên `occurredAt` khi event `alert.resolved` đến trước hoặc gần như đồng thời với `alert.created` / `alert.escalated` của cùng một `alertId`.
