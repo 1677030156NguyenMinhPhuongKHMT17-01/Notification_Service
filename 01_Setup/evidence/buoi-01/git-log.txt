@@ -1,1 +1,2 @@
+e202588 lab01: complete environment setup, smoke test, and Notification Service boundary
 fee80f7 Initial commit: create FIT4110 semester portfolio
