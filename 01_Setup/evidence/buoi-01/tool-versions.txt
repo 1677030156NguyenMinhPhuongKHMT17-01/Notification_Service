@@ -1,0 +1,12 @@
+# Tool versions
+
+Wednesday, November 11, 2026 3:41:49 PM
+
+git version 2.56.1.windows.1
+Docker version 29.9.3, build 5457199
+Docker Compose version v5.7.0
+v26.13.0
+11.20.0
+Python 3.15.2
+pip 26.2.2 from C:\Users\Admin\AppData\Local\Python\pythoncore-3.15-64\Lib\site-packages\pip (python 3.15)
+

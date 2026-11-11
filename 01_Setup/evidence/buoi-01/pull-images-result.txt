@@ -1,0 +1,374 @@
+
+==> Pulling registry:2
+2: Pulling from library/registry
+Digest: sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
+Status: Image is up to date for registry:2
+docker.io/library/registry:2
+[PASS] registry:2
+
+==> Pulling python:3.11-slim
+3.11-slim: Pulling from library/python
+bbe7053e6def: Pulling fs layer
+53daecf7856e: Pulling fs layer
+37fb86c2a767: Pulling fs layer
+7efbce397249: Pulling fs layer
+53daecf7856e: Download complete
+bbe7053e6def: Download complete
+e0063bf9ebd8: Download complete
+50e2aab0fb81: Download complete
+37fb86c2a767: Download complete
+7efbce397249: Download complete
+37fb86c2a767: Pull complete
+53daecf7856e: Pull complete
+bbe7053e6def: Pull complete
+7efbce397249: Pull complete
+Digest: sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535
+Status: Downloaded newer image for python:3.11-slim
+docker.io/library/python:3.11-slim
+[PASS] python:3.11-slim
+
+==> Pulling node:20-alpine
+20-alpine: Pulling from library/node
+fff4e2c1b189: Pulling fs layer
+4feea04c1543: Pulling fs layer
+6a0ac1617861: Pulling fs layer
+b2cbbfe903b0: Pulling fs layer
+fff4e2c1b189: Download complete
+b2cbbfe903b0: Download complete
+6a0ac1617861: Download complete
+6a0ac1617861: Pull complete
+0f92261bcd1c: Download complete
+14f8540414db: Download complete
+4feea04c1543: Download complete
+fff4e2c1b189: Pull complete
+b2cbbfe903b0: Pull complete
+4feea04c1543: Pull complete
+Digest: sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+Status: Downloaded newer image for node:20-alpine
+docker.io/library/node:20-alpine
+[PASS] node:20-alpine
+
+==> Pulling postgres:15-alpine
+15-alpine: Pulling from library/postgres
+0d50bc038339: Pulling fs layer
+9811ab1f28ec: Pulling fs layer
+5792fedd3c23: Pulling fs layer
+f1d41b22a7fd: Pulling fs layer
+3e433f8cf12a: Pulling fs layer
+881fc932939e: Pulling fs layer
+9e10f0364807: Pulling fs layer
+06df7229da11: Pulling fs layer
+a6bb307d0c9d: Pulling fs layer
+f7cba1195a43: Pulling fs layer
+705b53abb1f1: Pulling fs layer
+881fc932939e: Already exists
+0d50bc038339: Download complete
+06df7229da11: Download complete
+9e10f0364807: Download complete
+a6bb307d0c9d: Download complete
+9811ab1f28ec: Download complete
+f7cba1195a43: Download complete
+5792fedd3c23: Download complete
+f1d41b22a7fd: Download complete
+705b53abb1f1: Download complete
+9e10f0364807: Pull complete
+06df7229da11: Pull complete
+9811ab1f28ec: Pull complete
+705b53abb1f1: Pull complete
+a62c1ca3447c: Download complete
+a033a8a3696d: Download complete
+3e433f8cf12a: Download complete
+a6bb307d0c9d: Pull complete
+f7cba1195a43: Pull complete
+5792fedd3c23: Pull complete
+3e433f8cf12a: Pull complete
+0d50bc038339: Pull complete
+f1d41b22a7fd: Pull complete
+Digest: sha256:aae6554de426ae1990f1a939ff183a0299146cf7142a6f4c379c3357af9cc2d8
+Status: Downloaded newer image for postgres:15-alpine
+docker.io/library/postgres:15-alpine
+[PASS] postgres:15-alpine
+
+==> Pulling rabbitmq:3-management
+3-management: Pulling from library/rabbitmq
+d686b50ce172: Pulling fs layer
+beb0d870d438: Pulling fs layer
+3fadc669ef11: Pulling fs layer
+efa05c660812: Pulling fs layer
+7084ac8f4ab6: Pulling fs layer
+f4e7f62f4b80: Pulling fs layer
+5e1c03b67a78: Pulling fs layer
+14e6209d5fa8: Pulling fs layer
+d63c4408fdb7: Pulling fs layer
+20043066d3d5: Pulling fs layer
+efa05c660812: Download complete
+5e1c03b67a78: Download complete
+f4e7f62f4b80: Download complete
+7084ac8f4ab6: Download complete
+beb0d870d438: Download complete
+14e6209d5fa8: Download complete
+d686b50ce172: Download complete
+20043066d3d5: Download complete
+20043066d3d5: Pull complete
+d63c4408fdb7: Download complete
+7ec4c696b8bb: Download complete
+16ef6b12768c: Download complete
+3fadc669ef11: Download complete
+3fadc669ef11: Pull complete
+7084ac8f4ab6: Pull complete
+beb0d870d438: Pull complete
+d63c4408fdb7: Pull complete
+efa05c660812: Pull complete
+5e1c03b67a78: Pull complete
+f4e7f62f4b80: Pull complete
+14e6209d5fa8: Pull complete
+d686b50ce172: Pull complete
+Digest: sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69
+Status: Downloaded newer image for rabbitmq:3-management
+docker.io/library/rabbitmq:3-management
+[PASS] rabbitmq:3-management
+
+==> Pulling eclipse-mosquitto:2
+2: Pulling from library/eclipse-mosquitto
+36dcb4467a6b: Pulling fs layer
+b3f31af66d50: Pulling fs layer
+74c614fb2c68: Pulling fs layer
+36dcb4467a6b: Download complete
+66065e9a3dfc: Download complete
+b54efe654f1e: Download complete
+74c614fb2c68: Download complete
+74c614fb2c68: Pull complete
+b3f31af66d50: Download complete
+36dcb4467a6b: Pull complete
+b3f31af66d50: Pull complete
+Digest: sha256:75d6662dee52c947dc9dd9c29f1d8d7ffef78ddaf38001caa09755681e8bbc98
+Status: Downloaded newer image for eclipse-mosquitto:2
+docker.io/library/eclipse-mosquitto:2
+[PASS] eclipse-mosquitto:2
+
+==> Pulling nginx:alpine
+alpine: Pulling from library/nginx
+Digest: sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11
+Status: Image is up to date for nginx:alpine
+docker.io/library/nginx:alpine
+[PASS] nginx:alpine
+
+==> Pulling traefik:v3.1
+v3.1: Pulling from library/traefik
+da9db072f522: Pulling fs layer
+2f2dc5ed6642: Pulling fs layer
+b7bc362d9483: Pulling fs layer
+2e42f1fa21f1: Pulling fs layer
+2f2dc5ed6642: Download complete
+b7bc362d9483: Download complete
+bcaabc15990f: Download complete
+7322488b1128: Download complete
+da9db072f522: Download complete
+da9db072f522: Pull complete
+b7bc362d9483: Pull complete
+2e42f1fa21f1: Download complete
+2f2dc5ed6642: Pull complete
+2e42f1fa21f1: Pull complete
+Digest: sha256:74d72c7a1345984f186bddbabcc462b2128d0d8054177dc84afaeac4db1f0f56
+Status: Downloaded newer image for traefik:v3.1
+docker.io/library/traefik:v3.1
+[PASS] traefik:v3.1
+
+==> Pulling prom/prometheus:v2.54.1
+v2.54.1: Pulling from prom/prometheus
+b09316e948c6: Pulling fs layer
+9fa9226be034: Pulling fs layer
+ceaeea15c1bf: Pulling fs layer
+1617e25568b2: Pulling fs layer
+1afe4a0d7329: Pulling fs layer
+564720d6ed13: Pulling fs layer
+8be4b7271108: Pulling fs layer
+1fd5d47e09da: Pulling fs layer
+54f884861fc1: Pulling fs layer
+8becc689631f: Pulling fs layer
+bd55ccfa5aad: Pulling fs layer
+02203e3d6934: Pulling fs layer
+564720d6ed13: Download complete
+1afe4a0d7329: Download complete
+54f884861fc1: Download complete
+b09316e948c6: Download complete
+bd55ccfa5aad: Download complete
+ceaeea15c1bf: Download complete
+8becc689631f: Download complete
+1617e25568b2: Download complete
+1fd5d47e09da: Download complete
+9fa9226be034: Download complete
+9fa9226be034: Pull complete
+1617e25568b2: Pull complete
+02203e3d6934: Download complete
+02203e3d6934: Pull complete
+8be4b7271108: Download complete
+564720d6ed13: Pull complete
+ceaeea15c1bf: Pull complete
+8becc689631f: Pull complete
+1fd5d47e09da: Pull complete
+8be4b7271108: Pull complete
+1afe4a0d7329: Pull complete
+54f884861fc1: Pull complete
+b09316e948c6: Pull complete
+bd55ccfa5aad: Pull complete
+Digest: sha256:f6639335d34a77d9d9db382b92eeb7fc00934be8eae81dbc03b31cfe90411a94
+Status: Downloaded newer image for prom/prometheus:v2.54.1
+docker.io/prom/prometheus:v2.54.1
+[PASS] prom/prometheus:v2.54.1
+
+==> Pulling grafana/grafana:11.2.0
+11.2.0: Pulling from grafana/grafana
+bde37282dfba: Pulling fs layer
+27a3c8ebdfbf: Pulling fs layer
+b6982d0733af: Pulling fs layer
+ab3c28da242b: Pulling fs layer
+e4892977d944: Pulling fs layer
+ef2b3f3f597e: Pulling fs layer
+592f1e71407c: Pulling fs layer
+4abcf2066143: Pulling fs layer
+39aee5fd3406: Pulling fs layer
+66aec874ce0c: Pulling fs layer
+bde37282dfba: Download complete
+27a3c8ebdfbf: Download complete
+b6982d0733af: Download complete
+66aec874ce0c: Download complete
+4abcf2066143: Download complete
+4abcf2066143: Pull complete
+ef2b3f3f597e: Download complete
+39aee5fd3406: Download complete
+39aee5fd3406: Pull complete
+592f1e71407c: Download complete
+66aec874ce0c: Pull complete
+592f1e71407c: Pull complete
+bde37282dfba: Pull complete
+b6982d0733af: Pull complete
+e4892977d944: Download complete
+ab3c28da242b: Download complete
+ab3c28da242b: Pull complete
+e4892977d944: Pull complete
+27a3c8ebdfbf: Pull complete
+ef2b3f3f597e: Pull complete
+Digest: sha256:408afb9726de5122b00a2576763a8a57a3c86d5b0eff5305bc994ceb3eb96c3f
+Status: Downloaded newer image for grafana/grafana:11.2.0
+docker.io/grafana/grafana:11.2.0
+[PASS] grafana/grafana:11.2.0
+
+==> Pulling redis:7-alpine
+7-alpine: Pulling from library/redis
+Digest: sha256:7b1753b4c5ad8458906c272a8132b8c15f5557b000379eb115fb239706a384b7
+Status: Image is up to date for redis:7-alpine
+docker.io/library/redis:7-alpine
+[PASS] redis:7-alpine
+
+==> Pulling swaggerapi/swagger-ui:v5.17.14
+v5.17.14: Pulling from swaggerapi/swagger-ui
+98679bd10007: Pulling fs layer
+4abcf2066143: Pulling fs layer
+27b4ece6aebb: Pulling fs layer
+72a7766f51c7: Pulling fs layer
+929bb7365cb3: Pulling fs layer
+984accb9bb08: Pulling fs layer
+b1a0e0d8fc1d: Pulling fs layer
+1f6741cdef32: Pulling fs layer
+ddd8d697b5e9: Pulling fs layer
+097adf26662d: Pulling fs layer
+d885e54a3282: Pulling fs layer
+3129a53fcac0: Pulling fs layer
+51c6306186bf: Pulling fs layer
+7101c7574452: Pulling fs layer
+4abcf2066143: Already exists
+1f6741cdef32: Download complete
+98679bd10007: Download complete
+27b4ece6aebb: Download complete
+984accb9bb08: Download complete
+929bb7365cb3: Download complete
+7101c7574452: Download complete
+3129a53fcac0: Download complete
+3129a53fcac0: Pull complete
+d885e54a3282: Download complete
+ddd8d697b5e9: Download complete
+b1a0e0d8fc1d: Download complete
+51c6306186bf: Download complete
+51c6306186bf: Pull complete
+097adf26662d: Download complete
+27b4ece6aebb: Pull complete
+097adf26662d: Pull complete
+98679bd10007: Pull complete
+7101c7574452: Pull complete
+b1a0e0d8fc1d: Pull complete
+72a7766f51c7: Download complete
+ddd8d697b5e9: Pull complete
+72a7766f51c7: Pull complete
+1f6741cdef32: Pull complete
+984accb9bb08: Pull complete
+929bb7365cb3: Pull complete
+d885e54a3282: Pull complete
+Digest: sha256:cb968cc70260c6027b44f227d054a0f12381736e9ab628ef6b6070a19fdf2172
+Status: Downloaded newer image for swaggerapi/swagger-ui:v5.17.14
+docker.io/swaggerapi/swagger-ui:v5.17.14
+[PASS] swaggerapi/swagger-ui:v5.17.14
+
+==> Pulling hello-world:latest
+latest: Pulling from library/hello-world
+Digest: sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef
+Status: Image is up to date for hello-world:latest
+docker.io/library/hello-world:latest
+[PASS] hello-world:latest
+
+==> Pulling ultralytics/ultralytics:latest-cpu
+latest-cpu: Pulling from ultralytics/ultralytics
+37fb86c2a767: Pulling fs layer
+d6d089a6c0a2: Pulling fs layer
+416e6234df15: Pulling fs layer
+4cd08d393ab6: Pulling fs layer
+9657a2b913b2: Pulling fs layer
+e870dbe7d490: Pulling fs layer
+4a3e8f810ce0: Pulling fs layer
+0a364915ca3a: Pulling fs layer
+0e665593ff40: Pulling fs layer
+ce3c2a9291f8: Pulling fs layer
+124f6c43c3e9: Pulling fs layer
+37fb86c2a767: Already exists
+4cd08d393ab6: Download complete
+d6d089a6c0a2: Download complete
+9657a2b913b2: Download complete
+0e665593ff40: Download complete
+e870dbe7d490: Download complete
+4a3e8f810ce0: Download complete
+ce3c2a9291f8: Download complete
+124f6c43c3e9: Download complete
+d6d089a6c0a2: Pull complete
+0e665593ff40: Pull complete
+ce3c2a9291f8: Pull complete
+e870dbe7d490: Pull complete
+a2c0cd595efa: Download complete
+124f6c43c3e9: Pull complete
+4a3e8f810ce0: Pull complete
+416e6234df15: Download complete
+4cd08d393ab6: Pull complete
+416e6234df15: Pull complete
+9657a2b913b2: Pull complete
+0a364915ca3a: Download complete
+0a364915ca3a: Pull complete
+Digest: sha256:ea9514c84ded221040ce552b95e25b44165defbd3345ace132965fb47e9a3b59
+Status: Downloaded newer image for ultralytics/ultralytics:latest-cpu
+docker.io/ultralytics/ultralytics:latest-cpu
+[PASS] ultralytics/ultralytics:latest-cpu
+
+==> Current images
+REPOSITORY:TAG                       IMAGE ID       SIZE
+ultralytics/ultralytics:latest-cpu   ea9514c84ded   2.12GB
+redis:7-alpine                       7b1753b4c5ad   58.5MB
+eclipse-mosquitto:2                  75d6662dee52   41.8MB
+nginx:alpine                         713fc2ebfd92   94.5MB
+postgres:15-alpine                   aae6554de426   417MB
+python:3.11-slim                     07d4824036af   189MB
+node:20-alpine                       fb4cd12c85ee   194MB
+hello-world:latest                   c567b231f656   25.9kB
+rabbitmq:3-management                e582c0bc7766   392MB
+traefik:v3.1                         74d72c7a1345   232MB
+grafana/grafana:11.2.0               408afb9726de   635MB
+prom/prometheus:v2.54.1              f6639335d34a   386MB
+swaggerapi/swagger-ui:v5.17.14       cb968cc70260   168MB
+registry:2                           a3d8aaa63ed8   37.4MB
