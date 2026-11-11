@@ -1,2 +1,4 @@
+2bad77e lab01: align Notification Service boundary with Pair #4 (Queue async) in pairing-matrix.md
+36dcf61 lab01: update git-log.txt with lab01 commit history
 e202588 lab01: complete environment setup, smoke test, and Notification Service boundary
 fee80f7 Initial commit: create FIT4110 semester portfolio
