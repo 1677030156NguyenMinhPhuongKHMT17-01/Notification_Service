@@ -1,0 +1,21 @@
+# Checklist Lab 02 — Notification Service (Nhóm 6)
+
+- [x] Đã xác định đúng cặp đàm phán (**Pair #4: Core Business → Notification Service**).
+- [x] Đã đọc đúng user story trong thư mục `user-stories/pair-04-core-notification-async.md` và đồng bộ `event-contract-04-core-notification.md`.
+- [x] Provider đã điền `docs/analysis-provider.md`.
+- [x] Consumer đã điền `docs/analysis-consumer.md`.
+- [x] Đã hoàn thiện `docs/event-contract-template.md` cho luồng MQTT/Queue async (`mqtt://192.168.1.51:1883`, topic `campus.alerts`).
+- [x] `openapi.yaml` khai báo `openapi: 3.1.0`.
+- [x] Có tối thiểu 4 path (`/health`, `/notifications`, `/notifications/recent`, `/notifications/{notification_id}`).
+- [x] Mỗi operation có `operationId`, `summary`, `description`, `tags`.
+- [x] Schema lớn đã đưa vào `components/schemas`.
+- [x] Có `oneOf` + `discriminator` (`NotificationEventRequest` phân nhánh theo `event_name`: `alert.created`, `alert.escalated`, `alert.resolved`).
+- [x] Có union type với `null` (`error_detail: [string, 'null']`, `delivered_at`, `next_cursor`), không dùng `nullable: true`.
+- [x] Có `Problem` schema (`application/problem+json`) cho response lỗi.
+- [x] `spectral lint` không có severity error (`0 errors, 0 warnings`).
+- [x] Đã lưu `evidence/buoi-02/spectral-report.txt`.
+- [x] Prism mock server chạy được ở port 4010.
+- [x] Có 5 ảnh request mẫu trong `mock-screenshots/`.
+- [x] `negotiation-log.md` có tối thiểu 6 issue.
+- [x] Có sign-off Provider, Consumer, Witness.
+- [x] Đã hoàn thiện `VERSIONING.md` cho bài tập về nhà.

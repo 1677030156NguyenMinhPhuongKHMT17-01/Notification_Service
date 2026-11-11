@@ -1,0 +1,13 @@
+# Tool versions
+
+## Node
+v26.13.0
+
+## npm
+11.20.0
+
+## Spectral
+6.11.1
+
+## Prism
+5.14.2

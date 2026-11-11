@@ -1,0 +1,63 @@
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 154
+Date: Wed, 11 Nov 2026 10:32:52 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"status":"ok","service":"notification-service","mqtt_broker":"mqtt://192.168.1.51:1883","subscribed_topic":"campus.alerts","time":"2026-08-27T15:30:00Z"}
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Content-type: application/json
+Content-Length: 592
+Date: Wed, 11 Nov 2026 10:32:52 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"items":[{"notification_id":"0196fb3e-9999-7d1e-9f49-5d5148d2c001","event_id":"123e4567-e89b-12d3-a456-426614174000","event_name":"alert.created","correlationId":"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc","source":"core-business","alert_id":"ALT-001","severity":"high","message":"Phát hiện sự cố an ninh khẩn cấp từ Core Business","channel":"telegram","target_channels":["telegram","email","sms"],"sent":true,"status":"delivered","retry_count":0,"error_detail":null,"created_at":"2026-08-27T15:30:00Z","delivered_at":"2026-08-27T15:30:01Z"}],"next_cursor":null,"has_more":false}
+HTTP/1.1 201 Created
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+Location: http://example.com
+Content-type: application/json
+Content-Length: 544
+Date: Wed, 11 Nov 2026 10:32:52 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"notification_id":"0196fb3e-9999-7d1e-9f49-5d5148d2c001","event_id":"123e4567-e89b-12d3-a456-426614174000","event_name":"alert.created","correlationId":"req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc","source":"core-business","alert_id":"ALT-001","severity":"high","message":"Phát hiện sự cố an ninh khẩn cấp từ Core Business","channel":"telegram","target_channels":["telegram","email","sms"],"sent":true,"status":"delivered","retry_count":0,"error_detail":null,"created_at":"2026-08-27T15:30:00Z","delivered_at":"2026-08-27T15:30:01Z"}
+HTTP/1.1 401 Unauthorized
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+sl-violations: [{"location":["request"],"severity":"Error","code":401,"message":"Invalid security scheme used"}]
+Content-type: application/problem+json
+Content-Length: 227
+Date: Wed, 11 Nov 2026 10:32:53 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://campus.local/errors/unauthorized","title":"Chưa xác thực","status":401,"detail":"Thiếu header Authorization Bearer token hợp lệ","instance":"https://api.campus.local/notifications/recent","errors":[]}
+HTTP/1.1 422 Unprocessable Entity
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: *
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: *
+sl-violations: [{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'event_id'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'correlationId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'source'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'alert_id'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'message'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'timestamp'"},{"location":["request","body","severity"],"severity":"Error","code":"type","message":"Request body property severity must be string"},{"location":["request","body","severity"],"severity":"Error","code":"enum","message":"Request body property severity must be equal to one of the allowed values: low, medium, high, critical"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'event_id'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'correlationId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'source'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'alert_id'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'escalation_level'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'timestamp'"},{"location":["request","body"],"severity":"Error","code":"additionalProperties","message":"Request body must NOT have additional properties; found 'severity'"},{"location":["request","body","event_name"],"severity":"Error","code":"const","message":"Request body property event_name must be equal to constant"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'event_id'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'correlationId'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'source'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'alert_id'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'resolution_note'"},{"location":["request","body"],"severity":"Error","code":"required","message":"Request body must have required property 'timestamp'"},{"location":["request","body"],"severity":"Error","code":"additionalProperties","message":"Request body must NOT have additional properties; found 'severity'"},{"location":["request","body","event_name"],"severity":"Error","code":"const","message":"Request body property event_name must be equal to constant"},{"location":["request","body"],"severity":"Error","code":"oneOf","message":"Request body must match exactly one schema in oneOf"}]
+Content-type: application/problem+json
+Content-Length: 378
+Date: Wed, 11 Nov 2026 10:32:53 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://campus.local/errors/unprocessable","title":"Vi phạm ràng buộc nghiệp vụ","status":422,"detail":"Trường alert_id không đúng định dạng ALT-XXX hoặc severity không hợp lệ","instance":"https://api.campus.local/notifications","errors":[{"field":"alert_id","code":"PATTERN_MISMATCH","message":"alert_id phải có định dạng ALT-001"}]}
