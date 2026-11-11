@@ -4,10 +4,10 @@ File này ghi nhận phần đóng góp cá nhân và artefact chung của nhóm
 
 ## Team information
 
-- **Team:** Nhóm A7 — Product A *(hoặc B7 — Product B)*
+- **Team:** Nhóm 6 *(hoặc A7 / B7)* — Phụ trách **Notification Service**
 - **Service/capability:** **Notification Service** (Dịch vụ gửi cảnh báo đa kênh)
-- **Dependency Pair (theo `pairing-matrix.md`):** **Pair #4: Core Business (A6/B6) → Notification (A7/B7)** (`Queue async`)
-- **Role:** Provider năng lực gửi thông báo (Event Consumer nhận `alert.created`, `alert.escalated`, `alert.resolved` từ `Core Business Service`; đồng thời cung cấp REST API quản trị/tra cứu và gọi `Telegram Bot API`)
+- **Dependency Pair (theo `pairing-matrix.md` & `event-contract-04-core-notification.md`):** **Pair #4: Core Business → Notification Service** (Async qua Topic `campus.alerts` trên MQTT Broker `mqtt://192.168.1.51:1883` + REST fallback `/notifications`)
+- **Role:** Consumer nhận sự kiện bất đồng bộ (`alert.created`, `alert.escalated`, `alert.resolved`) từ `Core Business Service`; đồng thời là Provider của REST API `/notifications` (fallback/log query)
 - **Members:**
   - Nguyễn Minh Phượng – `<MãSinhViên>`
   - `<Thành viên 2>` – `<MSSV 2>`
@@ -20,7 +20,7 @@ File này ghi nhận phần đóng góp cá nhân và artefact chung của nhóm
 - **Work completed:**
   - Thiết lập môi trường phát triển cá nhân (Git, Docker Desktop, Docker Compose v2, Node.js, Python).
   - Kéo bộ 14 Docker image tiêu chuẩn (`scripts/pull_all.ps1`), chạy kiểm thử khói (`scripts/smoke_test.ps1`) và thu thập toàn bộ 11 file minh chứng (`scripts/collect_session01_evidence.ps1`).
-  - Phân tích và biên soạn tài liệu `evidence/buoi-01/service-boundary.md` cho **Notification Service** bám sát **Pair #4 (`Core Business → Notification` theo cơ chế Queue async)** trong `pairing-matrix.md` và `pair-04-core-notification-async.md` (xác định Actor, System/Service Boundary, Event Payload & REST Schema, bảng "Ai gọi ai", 3 sự kiện `alert.created` / `alert.escalated` / `alert.resolved` + 5 endpoint REST dự kiến, sơ đồ Mermaid và 6 vấn đề đàm phán cho Buổi 2).
+  - Phân tích và biên soạn tài liệu `evidence/buoi-01/service-boundary.md` cho **Notification Service** đồng bộ chính xác với hợp đồng `event-contract-04-core-notification.md` và thông số của nhóm `Core Business` (Subscribe topic `campus.alerts` tại `mqtt://192.168.1.51:1883`, xử lý 3 event `alert.created`, `alert.escalated`, `alert.resolved` theo convention `snake_case`, idempotent theo `event_id`, retry 3 lần interval 5s, và REST fallback `POST /notifications`, `GET /notifications`).
 - **Files or sections owned:**
   - `01_Setup/evidence/buoi-01/*`
   - `01_Setup/CONTRIBUTION.md`
@@ -31,7 +31,7 @@ File này ghi nhận phần đóng góp cá nhân và artefact chung của nhóm
   - `python .\scripts\verify_submission.py`
 - **Issues resolved:**
   - Khởi động Docker Desktop WSL2 engine và xác nhận mini-stack (`nginx:8081`, `redis`, `registry:5000`) hoạt động ổn định.
-  - Đồng bộ hóa kiến trúc Service Boundary của Notification Service với `pairing-matrix.md` (Pair #4 Queue async).
+  - Đồng bộ hóa cấu trúc payload `snake_case`, danh sách kênh (`telegram`, `email`, `discord`, `sms`) và thông số MQTT Broker (`mqtt://192.168.1.51:1883`, topic `campus.alerts`) với nhóm Core Business.
 - **Remaining limitations:**
   - Không có lỗi tồn đọng trong quá trình chạy smoke test.
 - **Corrections made after a deadline, if any:**
