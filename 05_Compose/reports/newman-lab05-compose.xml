@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="FIT4110 Lab05 - Notification Service Compose End-to-End" tests="19" time="0.393">
+  <testsuite name="00_Health / TC01 - GET /health - container is alive and healthy" id="497ccd05-de74-4bf5-b2f9-0adf05eac990" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.033">
+    <testcase name="Status code is 200" time="0.033" classname="00HealthTc01GetHealthContainerIsAliveAndHealthy"/>
+    <testcase name="Response has status=ok, service=notification-service, mqtt_broker and subscribed_topic" time="0.033" classname="00HealthTc01GetHealthContainerIsAliveAndHealthy"/>
+  </testsuite>
+  <testsuite name="00_Health / TC01b - GET /ready - PostgreSQL and MQTT Broker dependencies are ready" id="0fc0575c-e6c4-4e3b-bb78-7c4ca70446e2" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.010">
+    <testcase name="Status code is 200" time="0.010" classname="00HealthTc01BGetReadyPostgreSqlAndMqttBrokerDependenciesAreReady"/>
+    <testcase name="Database (postgresql) and MQTT Broker are ready" time="0.010" classname="00HealthTc01BGetReadyPostgreSqlAndMqttBrokerDependenciesAreReady"/>
+  </testsuite>
+  <testsuite name="01_Functional / TC02 - POST /notifications (alert.created) - happy path saves notificationId" id="076d54c4-31cd-4284-aaef-09366d75b3b4" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.042">
+    <testcase name="Status code is 201" time="0.042" classname="01FunctionalTc02PostNotificationsAlertCreatedHappyPathSavesNotificationId"/>
+    <testcase name="Response has NotificationLog fields and saves notificationId" time="0.042" classname="01FunctionalTc02PostNotificationsAlertCreatedHappyPathSavesNotificationId"/>
+  </testsuite>
+  <testsuite name="01_Functional / TC03 - POST /notifications (alert.escalated) - handles escalation event" id="3dd128dc-b828-4d7c-b82c-be3dfe88e6c6" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.040">
+    <testcase name="Escalated event returns 201" time="0.040" classname="01FunctionalTc03PostNotificationsAlertEscalatedHandlesEscalationEvent"/>
+    <testcase name="Escalated log is delivered" time="0.040" classname="01FunctionalTc03PostNotificationsAlertEscalatedHandlesEscalationEvent"/>
+  </testsuite>
+  <testsuite name="01_Functional / TC04 - POST /notifications (alert.resolved) - handles resolution event" id="453cdba4-20b1-4d60-ac8c-0c75768c3b87" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.039">
+    <testcase name="Resolved event returns 201" time="0.039" classname="01FunctionalTc04PostNotificationsAlertResolvedHandlesResolutionEvent"/>
+    <testcase name="Resolved log is delivered" time="0.039" classname="01FunctionalTc04PostNotificationsAlertResolvedHandlesResolutionEvent"/>
+  </testsuite>
+  <testsuite name="01_Functional / TC05 - GET /notifications - list notification logs with filter" id="039d580d-fecc-4966-95a7-a97a0e08d90a" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.016">
+    <testcase name="Status code is 200" time="0.016" classname="01FunctionalTc05GetNotificationsListNotificationLogsWithFilter"/>
+    <testcase name="Response contains items array and pagination metadata" time="0.016" classname="01FunctionalTc05GetNotificationsListNotificationLogsWithFilter"/>
+  </testsuite>
+  <testsuite name="01_Functional / TC06 - GET /notifications/recent - list recent notifications" id="fe5aa9a8-d250-438e-a8d8-b7eeec949d3d" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.014">
+    <testcase name="Status code is 200" time="0.014" classname="01FunctionalTc06GetNotificationsRecentListRecentNotifications"/>
+    <testcase name="Recent items have valid channel enum" time="0.014" classname="01FunctionalTc06GetNotificationsRecentListRecentNotifications"/>
+  </testsuite>
+  <testsuite name="01_Functional / TC07 - GET /notifications/{{notificationId}} - get saved notification detail" id="30c8c882-9dfa-4468-96d7-fbd37cef6fc5" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.017">
+    <testcase name="Status code is 200" time="0.017" classname="01FunctionalTc07GetNotificationsNotificationIdGetSavedNotificationDetail"/>
+    <testcase name="Response matches requested notification_id" time="0.017" classname="01FunctionalTc07GetNotificationsNotificationIdGetSavedNotificationDetail"/>
+  </testsuite>
+  <testsuite name="01_Functional / TC08 - POST /notifications/{{notificationId}}/retry - manual retry notification" id="52969dae-9d8d-42fa-9155-bb70c1afb650" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.037">
+    <testcase name="Status code is 200" time="0.037" classname="01FunctionalTc08PostNotificationsNotificationIdRetryManualRetryNotification"/>
+    <testcase name="Retry count incremented to >= 1" time="0.037" classname="01FunctionalTc08PostNotificationsNotificationIdRetryManualRetryNotification"/>
+  </testsuite>
+  <testsuite name="02_Auth / TC09 - GET /notifications/recent - valid token is accepted" id="c8a49a9f-89d4-4186-9767-899fccd3a0ad" timestamp="2026-11-12T16:48:55.931Z" tests="1" failures="0" errors="0" time="0.014">
+    <testcase name="Valid token request returns 200" time="0.014" classname="02AuthTc09GetNotificationsRecentValidTokenIsAccepted"/>
+  </testsuite>
+  <testsuite name="02_Auth / TC10 - POST /notifications - missing token returns 401 ProblemDetails" id="fb2a6c5d-6c4e-4250-9094-b3454b9903e0" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Missing token returns 401" time="0.004" classname="02AuthTc10PostNotificationsMissingTokenReturns401ProblemDetails"/>
+    <testcase name="Unauthorized response follows ProblemDetails" time="0.004" classname="02AuthTc10PostNotificationsMissingTokenReturns401ProblemDetails"/>
+  </testsuite>
+  <testsuite name="02_Auth / TC11 - POST /notifications - invalid token is rejected on real container" id="87919def-2ae7-415a-9353-5a9b06f1a47f" timestamp="2026-11-12T16:48:55.931Z" tests="1" failures="0" errors="0" time="0.003">
+    <testcase name="Invalid token returns 401 ProblemDetails on real container" time="0.003" classname="02AuthTc11PostNotificationsInvalidTokenIsRejectedOnRealContainer"/>
+  </testsuite>
+  <testsuite name="03_Negative / TC12 - POST /notifications - missing message and bad alert_id returns 422 ProblemDetails" id="a9cfc265-b9a1-43fd-97d9-c26000e77afe" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.003">
+    <testcase name="Invalid payload returns 400 or 422" time="0.003" classname="03NegativeTc12PostNotificationsMissingMessageAndBadAlertIdReturns422ProblemDetails"/>
+    <testcase name="Error follows RFC 9457 ProblemDetails" time="0.003" classname="03NegativeTc12PostNotificationsMissingMessageAndBadAlertIdReturns422ProblemDetails"/>
+  </testsuite>
+  <testsuite name="03_Negative / TC13 - POST /notifications - invalid channel enum (zalo) returns 422 ProblemDetails" id="aeec94c8-dcea-4ef1-b001-d03b3a98463a" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.006">
+    <testcase name="Invalid channel enum returns 400 or 422" time="0.006" classname="03NegativeTc13PostNotificationsInvalidChannelEnumZaloReturns422ProblemDetails"/>
+    <testcase name="Error response includes detail and errors" time="0.006" classname="03NegativeTc13PostNotificationsInvalidChannelEnumZaloReturns422ProblemDetails"/>
+  </testsuite>
+  <testsuite name="03_Negative / TC14 - GET /notifications/{unknown} - returns 404 ProblemDetails" id="b1681be8-7acd-4cef-84df-283731ab94c9" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.016">
+    <testcase name="Unknown notification returns 404" time="0.016" classname="03NegativeTc14GetNotificationsUnknownReturns404ProblemDetails"/>
+    <testcase name="404 follows ProblemDetails" time="0.016" classname="03NegativeTc14GetNotificationsUnknownReturns404ProblemDetails"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / TC15 - POST /notifications - boundary auto-routing when target_channels omitted" id="505073d1-4b7d-4468-92bb-e38544c01fbb" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.040">
+    <testcase name="Boundary payload without target_channels returns 201" time="0.040" classname="04BoundaryReliabilityTc15PostNotificationsBoundaryAutoRoutingWhenTargetChannelsOmitted"/>
+    <testcase name="Critical severity auto-routes to [telegram, email, sms]" time="0.040" classname="04BoundaryReliabilityTc15PostNotificationsBoundaryAutoRoutingWhenTargetChannelsOmitted"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / TC16 - GET /notifications/recent - limit above max 100 is rejected" id="255f4d67-bc25-45f6-90a2-4cb626cd874f" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.004">
+    <testcase name="Limit above 100 returns 400 or 422" time="0.004" classname="04BoundaryReliabilityTc16GetNotificationsRecentLimitAboveMax100IsRejected"/>
+    <testcase name="Boundary rejection follows ProblemDetails" time="0.004" classname="04BoundaryReliabilityTc16GetNotificationsRecentLimitAboveMax100IsRejected"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / TC17 - POST /notifications - duplicate event_id returns 409 Conflict" id="ad2de418-8510-4b1b-a394-bbe305e96db4" timestamp="2026-11-12T16:48:55.931Z" tests="2" failures="0" errors="0" time="0.015">
+    <testcase name="Duplicate event_id returns 409 Conflict" time="0.015" classname="04BoundaryReliabilityTc17PostNotificationsDuplicateEventIdReturns409Conflict"/>
+    <testcase name="Conflict response follows ProblemDetails" time="0.015" classname="04BoundaryReliabilityTc17PostNotificationsDuplicateEventIdReturns409Conflict"/>
+  </testsuite>
+  <testsuite name="04_Boundary_Reliability / TC18 - POST /notifications - local container latency under 1000ms" id="36cdfad1-6818-4149-aeca-872dd4a86fd6" timestamp="2026-11-12T16:48:55.931Z" tests="1" failures="0" errors="0" time="0.040">
+    <testcase name="Local container responds under 1000ms" time="0.040" classname="04BoundaryReliabilityTc18PostNotificationsLocalContainerLatencyUnder1000Ms"/>
+  </testsuite>
+</testsuites>

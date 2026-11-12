@@ -1,0 +1,474 @@
+"""Notification persistence and processing rules (PostgreSQL + in-memory fallback).
+
+Business rules (from event-contract-04-core-notification.md) live once inside
+`NotificationStore`, delegating persistence cleanly to either `PostgresBackend`
+(used in Docker Compose) or `MemoryBackend` (used when `DATABASE_URL` is unset,
+such as isolated unit tests).
+"""
+
+from __future__ import annotations
+
+import base64
+import binascii
+import json
+import logging
+import threading
+import uuid
+from contextlib import contextmanager
+from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
+
+from .config import settings
+from .delivery import deliver_all
+from .models import AlertCreatedEvent, AlertEscalatedEvent, AlertResolvedEvent, iso_utc
+
+logger = logging.getLogger("notification.store")
+
+Event = Union[AlertCreatedEvent, AlertEscalatedEvent, AlertResolvedEvent]
+
+SEVERITY_ROUTING: Dict[str, List[str]] = {
+    "critical": ["telegram", "email", "sms"],
+    "high": ["telegram", "email"],
+    "medium": ["telegram"],
+    "low": ["email"],
+}
+
+SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS notifications (
+    seq BIGSERIAL PRIMARY KEY,
+    notification_id TEXT NOT NULL UNIQUE,
+    event_id TEXT NOT NULL UNIQUE,
+    event_name TEXT NOT NULL,
+    correlation_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    alert_id TEXT NOT NULL,
+    severity TEXT,
+    message TEXT,
+    channel TEXT NOT NULL,
+    target_channels JSONB NOT NULL,
+    sent BOOLEAN NOT NULL,
+    status TEXT NOT NULL,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    error_detail TEXT,
+    created_at TEXT NOT NULL,
+    delivered_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_alert_id ON notifications (alert_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_status ON notifications (status);
+"""
+
+
+class InvalidCursor(ValueError):
+    pass
+
+
+class RetryLimitReached(RuntimeError):
+    pass
+
+
+class MemoryBackend:
+    backend_name = "memory"
+
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._logs: List[dict] = []
+        self._by_id: Dict[str, dict] = {}
+        self._by_event: Dict[str, dict] = {}
+
+    def init(self) -> None:
+        return None
+
+    def ping(self) -> bool:
+        return True
+
+    def get_by_id(self, notification_id: str) -> Optional[dict]:
+        with self._lock:
+            row = self._by_id.get(notification_id)
+            return dict(row) if row else None
+
+    def get_by_event_id(self, event_id: str) -> Optional[dict]:
+        with self._lock:
+            row = self._by_event.get(event_id)
+            return dict(row) if row else None
+
+    def latest_for_alert(self, alert_id: str) -> Optional[dict]:
+        with self._lock:
+            for item in reversed(self._logs):
+                if item["alert_id"] == alert_id:
+                    return dict(item)
+        return None
+
+    def insert(self, record: dict) -> None:
+        with self._lock:
+            stored = dict(record)
+            self._logs.append(stored)
+            self._by_id[stored["notification_id"]] = stored
+            self._by_event[stored["event_id"]] = stored
+
+    def update(self, record: dict) -> None:
+        with self._lock:
+            target = self._by_id.get(record["notification_id"])
+            if target is not None:
+                target.update(record)
+
+    def query_page(
+        self,
+        limit: int,
+        offset: int,
+        alert_id: Optional[str] = None,
+        status: Optional[str] = None,
+        channel: Optional[str] = None,
+    ) -> Tuple[List[dict], bool]:
+        with self._lock:
+            items = list(reversed(self._logs))
+        if alert_id:
+            items = [i for i in items if i["alert_id"] == alert_id]
+        if status:
+            items = [i for i in items if i["status"] == status]
+        if channel:
+            items = [i for i in items if channel in i["target_channels"]]
+        window = items[offset : offset + limit]
+        return [dict(i) for i in window], offset + limit < len(items)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._logs.clear()
+            self._by_id.clear()
+            self._by_event.clear()
+
+
+class PostgresBackend:
+    backend_name = "postgresql"
+
+    def __init__(self, dsn: str) -> None:
+        self._dsn = dsn
+
+    @contextmanager
+    def _conn(self) -> Iterator:
+        import psycopg
+        from psycopg.rows import dict_row
+
+        with psycopg.connect(self._dsn, row_factory=dict_row, connect_timeout=3) as conn:
+            yield conn
+
+    @staticmethod
+    def _to_record(row: Optional[dict]) -> Optional[dict]:
+        if row is None:
+            return None
+        channels = row["target_channels"]
+        if isinstance(channels, str):
+            channels = json.loads(channels)
+        return {
+            "notification_id": row["notification_id"],
+            "event_id": row["event_id"],
+            "event_name": row["event_name"],
+            "correlationId": row["correlation_id"],
+            "source": row["source"],
+            "alert_id": row["alert_id"],
+            "severity": row["severity"],
+            "message": row["message"],
+            "channel": row["channel"],
+            "target_channels": channels,
+            "sent": row["sent"],
+            "status": row["status"],
+            "retry_count": row["retry_count"],
+            "error_detail": row["error_detail"],
+            "created_at": row["created_at"],
+            "delivered_at": row["delivered_at"],
+        }
+
+    def init(self) -> None:
+        with self._conn() as conn:
+            conn.execute(SCHEMA_SQL)
+            conn.commit()
+        logger.info("PostgreSQL schema ready")
+
+    def ping(self) -> bool:
+        try:
+            with self._conn() as conn:
+                conn.execute("SELECT 1").fetchone()
+            return True
+        except Exception as exc:
+            logger.warning("PostgreSQL ping failed: %s", exc)
+            return False
+
+    def get_by_id(self, notification_id: str) -> Optional[dict]:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM notifications WHERE notification_id = %s",
+                (notification_id,),
+            ).fetchone()
+        return self._to_record(row)
+
+    def get_by_event_id(self, event_id: str) -> Optional[dict]:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM notifications WHERE event_id = %s",
+                (event_id,),
+            ).fetchone()
+        return self._to_record(row)
+
+    def latest_for_alert(self, alert_id: str) -> Optional[dict]:
+        with self._conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM notifications WHERE alert_id = %s ORDER BY seq DESC LIMIT 1",
+                (alert_id,),
+            ).fetchone()
+        return self._to_record(row)
+
+    def insert(self, record: dict) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """
+                INSERT INTO notifications (
+                    notification_id, event_id, event_name, correlation_id, source,
+                    alert_id, severity, message, channel, target_channels,
+                    sent, status, retry_count, error_detail, created_at, delivered_at
+                ) VALUES (
+                    %(notification_id)s, %(event_id)s, %(event_name)s, %(correlationId)s, %(source)s,
+                    %(alert_id)s, %(severity)s, %(message)s, %(channel)s, %(target_channels)s::jsonb,
+                    %(sent)s, %(status)s, %(retry_count)s, %(error_detail)s, %(created_at)s, %(delivered_at)s
+                )
+                """,
+                {**record, "target_channels": json.dumps(record["target_channels"])},
+            )
+            conn.commit()
+
+    def update(self, record: dict) -> None:
+        with self._conn() as conn:
+            conn.execute(
+                """
+                UPDATE notifications
+                SET sent = %(sent)s,
+                    status = %(status)s,
+                    retry_count = %(retry_count)s,
+                    error_detail = %(error_detail)s,
+                    delivered_at = %(delivered_at)s
+                WHERE notification_id = %(notification_id)s
+                """,
+                record,
+            )
+            conn.commit()
+
+    def query_page(
+        self,
+        limit: int,
+        offset: int,
+        alert_id: Optional[str] = None,
+        status: Optional[str] = None,
+        channel: Optional[str] = None,
+    ) -> Tuple[List[dict], bool]:
+        clauses: List[str] = []
+        params: List[object] = []
+        if alert_id:
+            clauses.append("alert_id = %s")
+            params.append(alert_id)
+        if status:
+            clauses.append("status = %s")
+            params.append(status)
+        if channel:
+            clauses.append("target_channels ? %s")
+            params.append(channel)
+
+        where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        sql = f"SELECT * FROM notifications {where_sql} ORDER BY seq DESC LIMIT %s OFFSET %s"
+        params.extend([limit + 1, offset])
+
+        with self._conn() as conn:
+            rows = conn.execute(sql, params).fetchall()
+
+        has_more = len(rows) > limit
+        records = [self._to_record(r) for r in rows[:limit]]
+        return [r for r in records if r is not None], has_more
+
+    def clear(self) -> None:
+        with self._conn() as conn:
+            conn.execute("TRUNCATE TABLE notifications RESTART IDENTITY")
+            conn.commit()
+
+
+def _create_backend():
+    if settings.database_url:
+        return PostgresBackend(settings.database_url)
+    return MemoryBackend()
+
+
+class NotificationStore:
+    def __init__(self, backend=None) -> None:
+        self._lock = threading.RLock()
+        self._backend = backend or _create_backend()
+        self._timers: List[threading.Timer] = []
+        self.dlq_publisher: Optional[Callable[[dict], None]] = None
+
+    @property
+    def backend_name(self) -> str:
+        return self._backend.backend_name
+
+    def init(self) -> None:
+        self._backend.init()
+
+    def ping(self) -> bool:
+        return self._backend.ping()
+
+    def _derive(self, event: Event) -> Tuple[Optional[str], str, List[str]]:
+        previous = self._backend.latest_for_alert(event.alert_id)
+        if isinstance(event, AlertCreatedEvent):
+            severity = event.severity.value
+            message = event.message
+            channels = [c.value for c in event.target_channels] if event.target_channels else SEVERITY_ROUTING[severity]
+        elif isinstance(event, AlertEscalatedEvent):
+            base = (previous or {}).get("severity") or "high"
+            severity = "critical" if event.escalation_level >= 3 else base
+            message = f"Cảnh báo {event.alert_id} đã leo thang lên cấp {event.escalation_level}"
+            channels = [c.value for c in event.target_channels] if event.target_channels else SEVERITY_ROUTING[severity]
+        else:
+            severity = (previous or {}).get("severity")
+            message = f"Cảnh báo {event.alert_id} đã được xử lý: {event.resolution_note}"
+            channels = list((previous or {}).get("target_channels") or ["telegram"])
+        return severity, message[:500], channels
+
+    def process(self, event: Event, origin: str) -> Tuple[dict, bool]:
+        event_id = str(event.event_id)
+        with self._lock:
+            existing = self._backend.get_by_event_id(event_id)
+            if existing is not None:
+                logger.info("duplicate event_id=%s origin=%s ignored", event_id, origin)
+                return existing, True
+
+            severity, message, channels = self._derive(event)
+            record = {
+                "notification_id": str(uuid.uuid4()),
+                "event_id": event_id,
+                "event_name": event.event_name,
+                "correlationId": event.correlationId,
+                "source": event.source,
+                "alert_id": event.alert_id,
+                "severity": severity,
+                "message": message,
+                "channel": channels[0],
+                "target_channels": channels,
+                "sent": False,
+                "status": "queued",
+                "retry_count": 0,
+                "error_detail": None,
+                "created_at": iso_utc(),
+                "delivered_at": None,
+            }
+            self._backend.insert(record)
+
+        logger.info(
+            "accepted backend=%s event_name=%s event_id=%s alert_id=%s origin=%s channels=%s correlationId=%s",
+            self.backend_name, record["event_name"], event_id, record["alert_id"], origin, channels, record["correlationId"],
+        )
+        self._attempt(record)
+        if record["status"] == "retrying":
+            self._schedule_auto_retry(record["notification_id"])
+        return dict(record), False
+
+    def _attempt(self, record: dict) -> None:
+        ok, errors = deliver_all(record["target_channels"], record["alert_id"], record["message"] or "", record["correlationId"])
+        with self._lock:
+            if ok:
+                record.update(sent=True, status="delivered", error_detail=None, delivered_at=iso_utc())
+            elif record["retry_count"] >= settings.max_retries:
+                record.update(sent=False, status="failed", error_detail="; ".join(errors)[:500])
+            else:
+                record.update(sent=False, status="retrying", error_detail="; ".join(errors)[:500])
+            self._backend.update(record)
+
+    def _schedule_auto_retry(self, notification_id: str) -> None:
+        timer = threading.Timer(settings.retry_interval_seconds, self._auto_retry, args=(notification_id,))
+        timer.daemon = True
+        with self._lock:
+            self._timers.append(timer)
+        timer.start()
+
+    def _auto_retry(self, notification_id: str) -> None:
+        with self._lock:
+            record = self._backend.get_by_id(notification_id)
+            if record is None or record["status"] != "retrying":
+                return
+            record["retry_count"] += 1
+            self._backend.update(record)
+        logger.info("auto-retry notification_id=%s attempt=%s", notification_id, record["retry_count"])
+        self._attempt(record)
+        if record["status"] == "retrying":
+            self._schedule_auto_retry(notification_id)
+        elif record["status"] == "failed":
+            self._send_to_dlq(record)
+
+    def _send_to_dlq(self, record: dict) -> None:
+        logger.error(
+            "DLQ topic=%s notification_id=%s event_id=%s after %s retries: %s",
+            settings.mqtt_dlq_topic, record["notification_id"], record["event_id"], record["retry_count"], record["error_detail"],
+        )
+        if self.dlq_publisher is not None:
+            try:
+                self.dlq_publisher(dict(record))
+            except Exception:  # pragma: no cover
+                logger.exception("failed to publish to DLQ")
+
+    def manual_retry(self, notification_id: str) -> Optional[dict]:
+        with self._lock:
+            record = self._backend.get_by_id(notification_id)
+            if record is None:
+                return None
+            if record["retry_count"] >= settings.max_retries:
+                raise RetryLimitReached(
+                    f"Notification {notification_id} đã đạt tối đa {settings.max_retries} lần retry"
+                )
+            record["retry_count"] += 1
+            record["status"] = "retrying"
+            self._backend.update(record)
+        self._attempt(record)
+        if record["status"] == "failed":
+            self._send_to_dlq(record)
+        return dict(record)
+
+    def get(self, notification_id: str) -> Optional[dict]:
+        return self._backend.get_by_id(notification_id)
+
+    def page(
+        self,
+        limit: int,
+        cursor: Optional[str] = None,
+        alert_id: Optional[str] = None,
+        status: Optional[str] = None,
+        channel: Optional[str] = None,
+    ) -> dict:
+        offset = decode_cursor(cursor) if cursor else 0
+        window, has_more = self._backend.query_page(
+            limit=limit, offset=offset, alert_id=alert_id, status=status, channel=channel,
+        )
+        return {
+            "items": window,
+            "next_cursor": encode_cursor(offset + limit) if has_more else None,
+            "has_more": has_more,
+        }
+
+    def reset(self) -> None:
+        with self._lock:
+            for timer in self._timers:
+                timer.cancel()
+            self._timers.clear()
+            self._backend.clear()
+
+
+def encode_cursor(offset: int) -> str:
+    return base64.urlsafe_b64encode(f"o:{offset}".encode()).decode().rstrip("=")
+
+
+def decode_cursor(cursor: str) -> int:
+    try:
+        padded = cursor + "=" * (-len(cursor) % 4)
+        raw = base64.urlsafe_b64decode(padded.encode()).decode()
+        prefix, value = raw.split(":", 1)
+        offset = int(value)
+        if prefix != "o" or offset < 0:
+            raise ValueError
+        return offset
+    except (ValueError, binascii.Error, UnicodeDecodeError) as exc:
+        raise InvalidCursor("cursor không hợp lệ") from exc
+
+
+store = NotificationStore()
+

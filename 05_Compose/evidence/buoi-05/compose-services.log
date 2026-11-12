@@ -1,0 +1,185 @@
+fit4110-mqtt-lab05  | 1794502119: Info: running mosquitto as user: mosquitto.
+fit4110-mqtt-lab05  | 1794502119: mosquitto version 2.1.2 starting
+fit4110-mqtt-lab05  | 1794502119: Config loaded from /mosquitto/config/mosquitto.conf.
+fit4110-mqtt-lab05  | 1794502119: Bridge support available.
+fit4110-mqtt-lab05  | 1794502119: Persistence support available.
+fit4110-mqtt-lab05  | 1794502119: TLS support available.
+fit4110-db-lab05    | The files belonging to this database system will be owned by user "postgres".
+fit4110-mqtt-lab05  | 1794502119: TLS-PSK support available.
+fit4110-mqtt-lab05  | 1794502119: Websockets support available.
+fit4110-mqtt-lab05  | 1794502119: Opening ipv4 listen socket on port 1883.
+fit4110-db-lab05    | This user must also own the server process.
+fit4110-mqtt-lab05  | 1794502119: Opening ipv6 listen socket on port 1883.
+fit4110-db-lab05    | 
+fit4110-db-lab05    | The database cluster will be initialized with locale "en_US.utf8".
+fit4110-db-lab05    | The default database encoding has accordingly been set to "UTF8".
+fit4110-db-lab05    | The default text search configuration will be set to "english".
+fit4110-db-lab05    | 
+fit4110-mqtt-lab05  | 1794502119: mosquitto version 2.1.2 running
+fit4110-mqtt-lab05  | 1794502124: New connection from 127.0.0.1:48316 on port 1883.
+fit4110-mqtt-lab05  | 1794502124: New client connected from 127.0.0.1:48316 as auto-FF51A364-5BD1-EE36-B863-D0DADFE6C79F (p4, c1, k60).
+fit4110-mqtt-lab05  | 1794502124: Client auto-FF51A364-5BD1-EE36-B863-D0DADFE6C79F [127.0.0.1:48316] disconnected.
+fit4110-mqtt-lab05  | 1794502126: New connection from 172.18.0.4:34937 on port 1883.
+fit4110-mqtt-lab05  | 1794502126: New client connected from 172.18.0.4:34937 as notification-service-g6 (p4, c0, k30).
+fit4110-mqtt-lab05  | 1794502131: New connection from 127.0.0.1:48326 on port 1883.
+fit4110-mqtt-lab05  | 1794502131: New client connected from 127.0.0.1:48326 as auto-631C0A19-8A53-1D84-0CDA-24DF7F419BCF (p4, c1, k60).
+fit4110-mqtt-lab05  | 1794502131: Client auto-631C0A19-8A53-1D84-0CDA-24DF7F419BCF [127.0.0.1:48326] disconnected.
+fit4110-mqtt-lab05  | 1794502131: New connection from 127.0.0.1:48328 on port 1883.
+fit4110-mqtt-lab05  | 1794502131: New client connected from 127.0.0.1:48328 as auto-465503B9-12DB-3975-35E2-117B6F0A9114 (p4, c1, k60).
+fit4110-mqtt-lab05  | 1794502131: Client auto-465503B9-12DB-3975-35E2-117B6F0A9114 [127.0.0.1:48328] disconnected.
+fit4110-mqtt-lab05  | 1794502134: New connection from 127.0.0.1:36336 on port 1883.
+fit4110-mqtt-lab05  | 1794502134: New client connected from 127.0.0.1:36336 as auto-BB9A5ED7-8C7B-9F73-4E92-8E17384BE4AD (p4, c1, k60).
+fit4110-db-lab05    | Data page checksums are disabled.
+fit4110-db-lab05    | 
+fit4110-mqtt-lab05  | 1794502134: Client auto-BB9A5ED7-8C7B-9F73-4E92-8E17384BE4AD [127.0.0.1:36336] disconnected.
+fit4110-mqtt-lab05  | 1794502138: Client notification-service-g6 [172.18.0.4:34937] disconnected.
+fit4110-mqtt-lab05  | 1794502139: New connection from 172.18.0.4:47541 on port 1883.
+fit4110-mqtt-lab05  | 1794502139: Client notification-service-g6 [172.18.0.4:34937] disconnected: session taken over.
+fit4110-mqtt-lab05  | 1794502139: New client connected from 172.18.0.4:47541 as notification-service-g6 (p4, c0, k30).
+fit4110-mqtt-lab05  | 1794502144: New connection from 127.0.0.1:51250 on port 1883.
+fit4110-mqtt-lab05  | 1794502144: New client connected from 127.0.0.1:51250 as auto-E05DE5C5-868A-AFC9-1E09-2CECB1DE0DE2 (p4, c1, k60).
+fit4110-mqtt-lab05  | 1794502144: Client auto-E05DE5C5-868A-AFC9-1E09-2CECB1DE0DE2 [127.0.0.1:51250] disconnected.
+fit4110-db-lab05    | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+fit4110-db-lab05    | creating subdirectories ... ok
+fit4110-db-lab05    | selecting dynamic shared memory implementation ... posix
+fit4110-db-lab05    | selecting default max_connections ... 100
+fit4110-db-lab05    | selecting default shared_buffers ... 128MB
+fit4110-db-lab05    | selecting default time zone ... UTC
+fit4110-db-lab05    | creating configuration files ... ok
+fit4110-db-lab05    | running bootstrap script ... ok
+fit4110-db-lab05    | sh: locale: not found
+fit4110-db-lab05    | 2026-11-12 16:48:40.064 UTC [35] WARNING:  no usable system locales were found
+fit4110-db-lab05    | performing post-bootstrap initialization ... ok
+fit4110-db-lab05    | initdb: warning: enabling "trust" authentication for local connections
+fit4110-db-lab05    | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+fit4110-db-lab05    | syncing data to disk ... ok
+fit4110-db-lab05    | 
+fit4110-db-lab05    | 
+fit4110-db-lab05    | Success. You can now start the database server using:
+fit4110-db-lab05    | 
+fit4110-db-lab05    |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+fit4110-db-lab05    | 
+fit4110-db-lab05    | waiting for server to start....2026-11-12 16:48:41.105 UTC [41] LOG:  starting PostgreSQL 15.19 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+fit4110-db-lab05    | 2026-11-12 16:48:41.108 UTC [41] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+fit4110-db-lab05    | 2026-11-12 16:48:41.118 UTC [44] LOG:  database system was shut down at 2026-11-12 16:48:40 UTC
+fit4110-db-lab05    | 2026-11-12 16:48:41.124 UTC [41] LOG:  database system is ready to accept connections
+fit4110-db-lab05    |  done
+fit4110-db-lab05    | server started
+fit4110-db-lab05    | CREATE DATABASE
+fit4110-db-lab05    | 
+fit4110-db-lab05    | 
+fit4110-db-lab05    | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+fit4110-db-lab05    | 
+fit4110-db-lab05    | waiting for server to shut down....2026-11-12 16:48:41.261 UTC [41] LOG:  received fast shutdown request
+fit4110-db-lab05    | 2026-11-12 16:48:41.263 UTC [41] LOG:  aborting any active transactions
+fit4110-db-lab05    | 2026-11-12 16:48:41.265 UTC [41] LOG:  background worker "logical replication launcher" (PID 47) exited with exit code 1
+fit4110-db-lab05    | 2026-11-12 16:48:41.266 UTC [42] LOG:  shutting down
+fit4110-db-lab05    | 2026-11-12 16:48:41.269 UTC [42] LOG:  checkpoint starting: shutdown immediate
+fit4110-db-lab05    | 2026-11-12 16:48:41.496 UTC [42] LOG:  checkpoint complete: wrote 922 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.203 s, total=0.230 s; sync files=301, longest=0.006 s, average=0.001 s; distance=4249 kB, estimate=4249 kB
+fit4110-db-lab05    | 2026-11-12 16:48:41.507 UTC [41] LOG:  database system is shut down
+fit4110-db-lab05    |  done
+fit4110-db-lab05    | server stopped
+fit4110-db-lab05    | 
+fit4110-db-lab05    | PostgreSQL init process complete; ready for start up.
+fit4110-db-lab05    | 
+fit4110-db-lab05    | 2026-11-12 16:48:41.587 UTC [1] LOG:  starting PostgreSQL 15.19 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+fit4110-db-lab05    | 2026-11-12 16:48:41.587 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+fit4110-db-lab05    | 2026-11-12 16:48:41.587 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+fit4110-db-lab05    | 2026-11-12 16:48:41.595 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+fit4110-db-lab05    | 2026-11-12 16:48:41.604 UTC [57] LOG:  database system was shut down at 2026-11-12 16:48:41 UTC
+fit4110-db-lab05    | 2026-11-12 16:48:41.609 UTC [1] LOG:  database system is ready to accept connections
+fit4110-api-lab05   | INFO:     Started server process [1]
+fit4110-api-lab05   | INFO:     Waiting for application startup.
+fit4110-api-lab05   | 2026-11-12 16:48:45,902 level=INFO logger=notification.api starting service=notification-service version=0.5.0 env=local backend=postgresql mqtt_enabled=True broker=mqtt://mqtt-broker:1883 topic=campus.alerts
+fit4110-api-lab05   | 2026-11-12 16:48:45,982 level=INFO logger=notification.store PostgreSQL schema ready
+fit4110-api-lab05   | 2026-11-12 16:48:46,020 level=INFO logger=notification.mqtt connecting to MQTT broker mqtt-broker:1883 topic=campus.alerts
+fit4110-api-lab05   | INFO:     Application startup complete.
+fit4110-api-lab05   | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+fit4110-api-lab05   | 2026-11-12 16:48:46,025 level=INFO logger=notification.mqtt MQTT connected, subscribed to campus.alerts (qos=1)
+fit4110-api-lab05   | 2026-11-12 16:48:50,335 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=8.8 trace_id=-
+fit4110-api-lab05   | INFO:     127.0.0.1:32888 - "GET /health HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:51,447 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=6.8 trace_id=-
+fit4110-api-lab05   | INFO:     172.18.0.1:43096 - "GET /health HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:51,488 level=INFO logger=notification.api http method=GET path=/ready status=200 duration_ms=8.0 trace_id=-
+fit4110-api-lab05   | INFO:     172.18.0.1:43112 - "GET /ready HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:51,729 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.created event_id=123e4567-e89b-12d3-a456-426614175501 alert_id=ALT-501 origin=mqtt channels=['telegram', 'email'] correlationId=req-mqtt-e2e-05
+fit4110-api-lab05   | 2026-11-12 16:48:51,729 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-501 correlationId=req-mqtt-e2e-05 delivered message='Sự cố bất thường phát qua MQTT nội bộ Lab 05'
+fit4110-api-lab05   | 2026-11-12 16:48:51,729 level=INFO logger=notification.delivery channel=email alert_id=ALT-501 correlationId=req-mqtt-e2e-05 delivered message='Sự cố bất thường phát qua MQTT nội bộ Lab 05'
+fit4110-api-lab05   | 2026-11-12 16:48:53,802 level=INFO logger=notification.api http method=GET path=/notifications status=200 duration_ms=13.6 trace_id=-
+fit4110-api-lab05   | INFO:     172.18.0.1:35578 - "GET /notifications?alert_id=ALT-501 HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,008 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=7.7 trace_id=fit4110-lab05-notify-1794502135964
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /health HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,072 level=INFO logger=notification.api http method=GET path=/ready status=200 duration_ms=7.0 trace_id=fit4110-lab05-notify-1794502136042
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /ready HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,171 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.created event_id=e8e67687-d71c-4f4b-94bb-8b25ef831ffc alert_id=ALT-001 origin=rest channels=['telegram', 'email', 'sms'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+fit4110-api-lab05   | 2026-11-12 16:48:56,171 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+fit4110-api-lab05   | 2026-11-12 16:48:56,171 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+fit4110-api-lab05   | 2026-11-12 16:48:56,171 level=INFO logger=notification.delivery channel=sms alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+fit4110-api-lab05   | 2026-11-12 16:48:56,180 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=37.4 trace_id=fit4110-lab05-notify-1794502136114
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 201 Created
+fit4110-api-lab05   | 2026-11-12 16:48:56,284 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.escalated event_id=4061e593-df37-49ce-a334-2e1ec23368f8 alert_id=ALT-001 origin=rest channels=['telegram', 'email'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+fit4110-api-lab05   | 2026-11-12 16:48:56,284 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã leo thang lên cấp 2'
+fit4110-api-lab05   | 2026-11-12 16:48:56,284 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã leo thang lên cấp 2'
+fit4110-api-lab05   | 2026-11-12 16:48:56,294 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=36.7 trace_id=fit4110-lab05-notify-1794502136225
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 201 Created
+fit4110-api-lab05   | 2026-11-12 16:48:56,389 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.resolved event_id=96f918d5-20c5-40c3-97b8-a5f12dc426d1 alert_id=ALT-001 origin=rest channels=['telegram', 'email'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+fit4110-api-lab05   | 2026-11-12 16:48:56,389 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã được xử lý: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.'
+fit4110-api-lab05   | 2026-11-12 16:48:56,389 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã được xử lý: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.'
+fit4110-api-lab05   | 2026-11-12 16:48:56,400 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=36.7 trace_id=fit4110-lab05-notify-1794502136341
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 201 Created
+fit4110-api-lab05   | 2026-11-12 16:48:56,485 level=INFO logger=notification.api http method=GET path=/notifications status=200 duration_ms=11.0 trace_id=fit4110-lab05-notify-1794502136453
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /notifications?alert_id=ALT-001&limit=10 HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,562 level=INFO logger=notification.api http method=GET path=/notifications/recent status=200 duration_ms=10.2 trace_id=fit4110-lab05-notify-1794502136522
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /notifications/recent?limit=5 HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,643 level=INFO logger=notification.api http method=GET path=/notifications/6bb9981e-9e4d-467b-af9e-333242aaa139 status=200 duration_ms=14.6 trace_id=fit4110-lab05-notify-1794502136607
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /notifications/6bb9981e-9e4d-467b-af9e-333242aaa139 HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,728 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+fit4110-api-lab05   | 2026-11-12 16:48:56,728 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+fit4110-api-lab05   | 2026-11-12 16:48:56,728 level=INFO logger=notification.delivery channel=sms alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+fit4110-api-lab05   | 2026-11-12 16:48:56,739 level=INFO logger=notification.api http method=POST path=/notifications/6bb9981e-9e4d-467b-af9e-333242aaa139/retry status=200 duration_ms=31.1 trace_id=fit4110-lab05-notify-1794502136685
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications/6bb9981e-9e4d-467b-af9e-333242aaa139/retry HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,833 level=INFO logger=notification.api http method=GET path=/notifications/recent status=200 duration_ms=10.3 trace_id=fit4110-lab05-notify-1794502136789
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /notifications/recent?limit=1 HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:48:56,933 level=INFO logger=notification.api http method=POST path=/notifications status=401 duration_ms=0.8 trace_id=fit4110-lab05-notify-1794502136896
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 401 Unauthorized
+fit4110-api-lab05   | 2026-11-12 16:48:57,013 level=INFO logger=notification.api http method=POST path=/notifications status=401 duration_ms=0.8 trace_id=fit4110-lab05-notify-1794502136987
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 401 Unauthorized
+fit4110-api-lab05   | 2026-11-12 16:48:57,090 level=INFO logger=notification.api http method=POST path=/notifications status=422 duration_ms=0.9 trace_id=fit4110-lab05-notify-1794502137050
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 422 Unprocessable Entity
+fit4110-api-lab05   | 2026-11-12 16:48:57,186 level=INFO logger=notification.api http method=POST path=/notifications status=422 duration_ms=1.3 trace_id=fit4110-lab05-notify-1794502137144
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 422 Unprocessable Entity
+fit4110-api-lab05   | 2026-11-12 16:48:57,290 level=INFO logger=notification.api http method=GET path=/notifications/00000000-0000-0000-0000-000000000000 status=404 duration_ms=12.0 trace_id=fit4110-lab05-notify-1794502137238
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /notifications/00000000-0000-0000-0000-000000000000 HTTP/1.1" 404 Not Found
+fit4110-api-lab05   | 2026-11-12 16:48:57,434 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.created event_id=fd063e8b-6c6e-4e5f-8778-3c500a2f0271 alert_id=ALT-999 origin=rest channels=['telegram', 'email', 'sms'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+fit4110-api-lab05   | 2026-11-12 16:48:57,435 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
+fit4110-api-lab05   | 2026-11-12 16:48:57,435 level=INFO logger=notification.delivery channel=email alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
+fit4110-api-lab05   | 2026-11-12 16:48:57,435 level=INFO logger=notification.delivery channel=sms alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
+fit4110-api-lab05   | 2026-11-12 16:48:57,443 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=37.3 trace_id=fit4110-lab05-notify-1794502137367
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 201 Created
+fit4110-api-lab05   | 2026-11-12 16:48:57,533 level=INFO logger=notification.api http method=GET path=/notifications/recent status=400 duration_ms=0.9 trace_id=fit4110-lab05-notify-1794502137492
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "GET /notifications/recent?limit=101 HTTP/1.1" 400 Bad Request
+fit4110-api-lab05   | 2026-11-12 16:48:57,638 level=INFO logger=notification.store duplicate event_id=e8e67687-d71c-4f4b-94bb-8b25ef831ffc origin=rest ignored
+fit4110-api-lab05   | 2026-11-12 16:48:57,639 level=INFO logger=notification.api http method=POST path=/notifications status=409 duration_ms=12.3 trace_id=fit4110-lab05-notify-1794502137586
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 409 Conflict
+fit4110-api-lab05   | 2026-11-12 16:48:57,765 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.created event_id=60480ac1-5631-477f-a28c-480f97ed7afe alert_id=ALT-002 origin=rest channels=['telegram'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+fit4110-api-lab05   | 2026-11-12 16:48:57,765 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-002 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Kiểm tra thời gian phản hồi container Docker'
+fit4110-api-lab05   | 2026-11-12 16:48:57,774 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=37.2 trace_id=fit4110-lab05-notify-1794502137696
+fit4110-api-lab05   | INFO:     172.18.0.1:35586 - "POST /notifications HTTP/1.1" 201 Created
+fit4110-api-lab05   | INFO:     Shutting down
+fit4110-api-lab05   | INFO:     Waiting for application shutdown.
+fit4110-api-lab05   | 2026-11-12 16:48:58,746 level=WARNING logger=notification.mqtt MQTT disconnected: Normal disconnection (auto-reconnect enabled)
+fit4110-api-lab05   | 2026-11-12 16:48:58,746 level=INFO logger=notification.api service stopped
+fit4110-api-lab05   | INFO:     Application shutdown complete.
+fit4110-api-lab05   | INFO:     Finished server process [1]
+fit4110-api-lab05   | INFO:     Started server process [1]
+fit4110-api-lab05   | INFO:     Waiting for application startup.
+fit4110-api-lab05   | 2026-11-12 16:48:59,922 level=INFO logger=notification.api starting service=notification-service version=0.5.0 env=local backend=postgresql mqtt_enabled=True broker=mqtt://mqtt-broker:1883 topic=campus.alerts
+fit4110-api-lab05   | 2026-11-12 16:48:59,977 level=INFO logger=notification.store PostgreSQL schema ready
+fit4110-api-lab05   | 2026-11-12 16:48:59,995 level=INFO logger=notification.mqtt connecting to MQTT broker mqtt-broker:1883 topic=campus.alerts
+fit4110-api-lab05   | INFO:     Application startup complete.
+fit4110-api-lab05   | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+fit4110-api-lab05   | 2026-11-12 16:48:59,997 level=INFO logger=notification.mqtt MQTT connected, subscribed to campus.alerts (qos=1)
+fit4110-api-lab05   | 2026-11-12 16:49:04,461 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=8.6 trace_id=-
+fit4110-api-lab05   | INFO:     127.0.0.1:34696 - "GET /health HTTP/1.1" 200 OK
+fit4110-api-lab05   | 2026-11-12 16:49:05,596 level=INFO logger=notification.api http method=GET path=/notifications status=200 duration_ms=12.1 trace_id=-
+fit4110-api-lab05   | INFO:     172.18.0.1:45246 - "GET /notifications?alert_id=ALT-501 HTTP/1.1" 200 OK

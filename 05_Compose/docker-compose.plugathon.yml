@@ -1,0 +1,15 @@
+# Optional Compose override for Lab 06 Plug-a-thon on the shared class network.
+# Prerequisite: docker network create class-net
+# Usage: docker compose -f docker-compose.yml -f docker-compose.plugathon.yml up -d
+services:
+  api:
+    environment:
+      MQTT_BROKER_URL: mqtt://192.168.1.51:1883
+    networks:
+      - team-internal
+      - class-net
+
+networks:
+  class-net:
+    external: true
+
