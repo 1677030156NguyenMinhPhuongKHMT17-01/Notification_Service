@@ -1,0 +1,3 @@
+REPOSITORY                     TAG       IMAGE ID       SIZE
+fit4110/notification-service   lab04     7370407fd292   276MB
+fit4110/notification-service   test      d21e68c52d2a   285MB

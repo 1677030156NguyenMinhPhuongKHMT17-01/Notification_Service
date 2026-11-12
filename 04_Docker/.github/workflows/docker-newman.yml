@@ -1,0 +1,71 @@
+name: Lab04 Notification Docker and Newman Verification
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  docker-newman:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: 04_Docker/package-lock.json
+
+      - name: Install Node dependencies
+        working-directory: 04_Docker
+        run: npm ci
+
+      - name: Lint OpenAPI contracts
+        working-directory: 04_Docker
+        run: npm run lint:openapi
+
+      - name: Run unit tests in Docker test stage
+        working-directory: 04_Docker
+        run: docker build --target test -t fit4110/notification-service:test .
+
+      - name: Build Notification Service runtime Docker image
+        working-directory: 04_Docker
+        run: docker build -t fit4110/notification-service:lab04 .
+
+      - name: Verify non-root user and HEALTHCHECK
+        run: |
+          docker inspect --format '{{.Config.User}}' fit4110/notification-service:lab04 | grep -q 'appuser'
+          docker inspect --format '{{.Config.Healthcheck.Test}}' fit4110/notification-service:lab04 | grep -q '/health'
+
+      - name: Run Docker container
+        working-directory: 04_Docker
+        run: |
+          docker run -d --rm \
+            --name fit4110-notify-lab04 \
+            -p 8000:8000 \
+            --env-file .env.example \
+            fit4110/notification-service:lab04
+
+      - name: Wait for service health
+        run: npx wait-on http://127.0.0.1:8000/health --timeout 30000
+
+      - name: Run Newman against Docker container
+        working-directory: 04_Docker
+        run: npm run test:local
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs fit4110-notify-lab04 || true
+
+      - name: Stop container
+        if: always()
+        run: docker stop fit4110-notify-lab04 || true
+
+      - name: Upload Newman reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab04-notification-newman-reports
+          path: 04_Docker/reports/

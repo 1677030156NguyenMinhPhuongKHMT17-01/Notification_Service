@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+date: Thu, 12 Nov 2026 16:07:59 GMT
+server: uvicorn
+content-length: 154
+content-type: application/json
+
+{"status":"ok","service":"notification-service","mqtt_broker":"mqtt://192.168.1.51:1883","subscribed_topic":"campus.alerts","time":"2026-11-12T16:07:59Z"}

@@ -1,0 +1,119 @@
+
+> fit4110-lab04-notification-docker@0.4.0 test:local
+> newman run postman/collections/FIT4110_lab04_notification_docker.postman_collection.json -e postman/environments/FIT4110_lab04_local.postman_environment.json -r cli,junit,htmlextra --reporter-junit-export reports/newman-lab04-local.xml --reporter-htmlextra-export reports/newman-lab04-local.html
+
+newman
+
+FIT4110 Lab04 - Notification Service Docker Verification
+
+□ 00_Health
+└ TC01 - GET /health - container is alive and healthy
+  GET http://localhost:8000/health [200 OK, 328B, 30ms]
+  √  Status code is 200
+  √  Response has status=ok, service=notification-service, mqtt_broker and subscribed_topic
+
+□ 01_Functional
+└ TC02 - POST /notifications (alert.created) - happy path saves notificationId
+  POST http://localhost:8000/notifications [201 Created, 786B, 8ms]
+  √  Status code is 201
+  √  Response has NotificationLog fields and saves notificationId
+
+└ TC03 - POST /notifications (alert.escalated) - handles escalation event
+  POST http://localhost:8000/notifications [201 Created, 767B, 5ms]
+  √  Escalated event returns 201
+  √  Escalated log is delivered
+
+└ TC04 - POST /notifications (alert.resolved) - handles resolution event
+  POST http://localhost:8000/notifications [201 Created, 829B, 6ms]
+  √  Resolved event returns 201
+  √  Resolved log is delivered
+
+└ TC05 - GET /notifications - list notification logs with filter
+  GET http://localhost:8000/notifications?alert_id=ALT-001&limit=10 [200 OK, 1.88kB, 3ms]
+  √  Status code is 200
+  √  Response contains items array and pagination metadata
+
+└ TC06 - GET /notifications/recent - list recent notifications
+  GET http://localhost:8000/notifications/recent?limit=5 [200 OK, 1.88kB, 6ms]
+  √  Status code is 200
+  √  Recent items have valid channel enum
+
+└ TC07 - GET /notifications/{{notificationId}} - get saved notification detail
+  GET http://localhost:8000/notifications/96bd3afa-eb9e-4a71-b3db-4b200266696c [200 OK, 718B, 4ms]
+  √  Status code is 200
+  √  Response matches requested notification_id
+
+└ TC08 - POST /notifications/{{notificationId}}/retry - manual retry notification
+  POST http://localhost:8000/notifications/96bd3afa-eb9e-4a71-b3db-4b200266696c/retry [200 OK, 718B, 4ms]
+  √  Status code is 200
+  √  Retry count incremented to >= 1
+
+□ 02_Auth
+└ TC09 - GET /notifications/recent - valid token is accepted
+  GET http://localhost:8000/notifications/recent?limit=1 [200 OK, 810B, 9ms]
+  √  Valid token request returns 200
+
+└ TC10 - POST /notifications - missing token returns 401 ProblemDetails
+  POST http://localhost:8000/notifications [401 Unauthorized, 456B, 4ms]
+  √  Missing token returns 401
+  √  Unauthorized response follows ProblemDetails
+
+└ TC11 - POST /notifications - invalid token is rejected on real container
+  POST http://localhost:8000/notifications [401 Unauthorized, 442B, 3ms]
+  √  Invalid token returns 401 ProblemDetails on real container
+
+□ 03_Negative
+└ TC12 - POST /notifications - missing message and bad alert_id returns 422 ProblemDetails
+  POST http://localhost:8000/notifications [422 Unprocessable Entity, 2.05kB, 6ms]
+  √  Invalid payload returns 400 or 422
+  √  Error follows RFC 9457 ProblemDetails
+
+└ TC13 - POST /notifications - invalid channel enum (zalo) returns 422 ProblemDetails
+  POST http://localhost:8000/notifications [422 Unprocessable Entity, 2.27kB, 5ms]
+  √  Invalid channel enum returns 400 or 422
+  √  Error response includes detail and errors
+
+└ TC14 - GET /notifications/{unknown} - returns 404 ProblemDetails
+  GET http://localhost:8000/notifications/00000000-0000-0000-0000-000000000000 [404 Not Found, 491B, 6ms]
+  √  Unknown notification returns 404
+  √  404 follows ProblemDetails
+
+□ 04_Boundary_Reliability
+└ TC15 - POST /notifications - boundary auto-routing when target_channels omitted
+  POST http://localhost:8000/notifications [201 Created, 843B, 7ms]
+  √  Boundary payload without target_channels returns 201
+  √  Critical severity auto-routes to [telegram, email, sms]
+
+└ TC16 - GET /notifications/recent - limit above max 100 is rejected
+  GET http://localhost:8000/notifications/recent?limit=101 [400 Bad Request, 610B, 3ms]
+  √  Limit above 100 returns 400 or 422
+  √  Boundary rejection follows ProblemDetails
+
+└ TC17 - POST /notifications - duplicate event_id returns 409 Conflict
+  POST http://localhost:8000/notifications [409 Conflict, 528B, 6ms]
+  √  Duplicate event_id returns 409 Conflict
+  √  Conflict response follows ProblemDetails
+
+└ TC18 - POST /notifications - local container latency under 1000ms
+  POST http://localhost:8000/notifications [201 Created, 764B, 6ms]
+  √  Local container responds under 1000ms
+
+┌─────────────────────────┬─────────────────┬─────────────────┐
+│                         │        executed │          failed │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              iterations │               1 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│                requests │              18 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│            test-scripts │              18 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│      prerequest-scripts │              18 │               0 │
+├─────────────────────────┼─────────────────┼─────────────────┤
+│              assertions │              33 │               0 │
+├─────────────────────────┴─────────────────┴─────────────────┤
+│ total run duration: 1603ms                                  │
+├─────────────────────────────────────────────────────────────┤
+│ total data received: 13.46kB (approx)                       │
+├─────────────────────────────────────────────────────────────┤
+│ average response time: 6ms [min: 3ms, max: 30ms, s.d.: 5ms] │
+└─────────────────────────────────────────────────────────────┘

@@ -1,0 +1,64 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.61kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+#2 DONE 0.6s
+
+#3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+#3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/python:3.11-slim
+#4 DONE 0.6s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 348B done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 457B done
+#6 DONE 0.0s
+
+#7 [builder 1/5] FROM docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535
+#7 resolve docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535 0.0s done
+#7 CACHED
+
+#8 [builder 4/5] COPY requirements.txt .
+#8 CACHED
+
+#9 [builder 2/5] WORKDIR /build
+#9 CACHED
+
+#10 [builder 3/5] RUN python -m venv /opt/venv
+#10 CACHED
+
+#11 [builder 5/5] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+#11 CACHED
+
+#12 [runtime 2/5] WORKDIR /app
+#12 DONE 0.0s
+
+#13 [runtime 3/5] RUN groupadd --system --gid 10001 appgroup     && useradd --system --uid 10001 --gid appgroup --home-dir /app --shell /usr/sbin/nologin appuser
+#13 0.236 useradd warning: appuser's uid 10001 is greater than SYS_UID_MAX 999
+#13 DONE 0.3s
+
+#14 [runtime 4/5] COPY --from=builder /opt/venv /opt/venv
+#14 DONE 0.3s
+
+#15 [runtime 5/5] COPY --chown=appuser:appgroup src/ ./src/
+#15 DONE 0.1s
+
+#16 exporting to image
+#16 exporting layers
+#16 exporting layers 1.8s done
+#16 exporting manifest sha256:3da78b98e6c5845adedac59d3b6b904e9603a33d8ce5cef4f66fa4e2ef5c7dfb 0.0s done
+#16 exporting config sha256:3830a667aa52d51e68c99a42c81015def552d38e9bebc75c67fafb5f57205f7b 0.0s done
+#16 exporting attestation manifest sha256:7062ba4e85611124000bef5001a3a6c86e9138851c3dab6785f6f39d52c3d314 0.0s done
+#16 exporting manifest list sha256:7370407fd2927a2bbd55420bf6f3c6e7e8fe78145110d083de58d3675b4a4f4a 0.0s done
+#16 naming to docker.io/fit4110/notification-service:lab04 done
+#16 unpacking to docker.io/fit4110/notification-service:lab04
+#16 unpacking to docker.io/fit4110/notification-service:lab04 0.5s done
+#16 DONE 2.5s

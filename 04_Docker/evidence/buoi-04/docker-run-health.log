@@ -1,0 +1,4 @@
+Health status: healthy
+uid=10001(appuser) gid=10001(appgroup) groups=10001(appgroup)
+NAMES                  IMAGE                                STATUS                   PORTS
+fit4110-notify-lab04   fit4110/notification-service:lab04   Up 6 seconds (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp

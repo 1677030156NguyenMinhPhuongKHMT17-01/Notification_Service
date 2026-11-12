@@ -1,0 +1,78 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.61kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+#2 DONE 1.7s
+
+#3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+#3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/python:3.11-slim
+#4 DONE 1.7s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 348B done
+#5 DONE 0.0s
+
+#6 [builder 1/5] FROM docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535
+#6 resolve docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535 0.0s done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 5.80kB done
+#7 DONE 0.0s
+
+#8 [builder 4/5] COPY requirements.txt .
+#8 CACHED
+
+#9 [test 3/6] WORKDIR /app
+#9 CACHED
+
+#10 [test 1/6] COPY requirements-dev.txt .
+#10 CACHED
+
+#11 [builder 3/5] RUN python -m venv /opt/venv
+#11 CACHED
+
+#12 [builder 2/5] WORKDIR /build
+#12 CACHED
+
+#13 [builder 5/5] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+#13 CACHED
+
+#14 [test 2/6] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements-dev.txt
+#14 CACHED
+
+#15 [test 4/6] COPY src/ ./src/
+#15 CACHED
+
+#16 [test 5/6] COPY tests/ ./tests/
+#16 DONE 0.0s
+
+#17 [test 6/6] RUN /opt/venv/bin/python -m pytest -q tests
+#17 1.187 ......                                                                   [100%]
+#17 1.267 =============================== warnings summary ===============================
+#17 1.267 ../opt/venv/lib/python3.11/site-packages/starlette/testclient.py:40
+#17 1.267   /opt/venv/lib/python3.11/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+#17 1.267     _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+#17 1.267 
+#17 1.267 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#17 1.267 6 passed, 1 warning in 0.50s
+#17 DONE 1.5s
+
+#18 exporting to image
+#18 exporting layers
+#18 exporting layers 1.6s done
+#18 exporting manifest sha256:35d4f7adbc580b2e3183640227087a035b89d11e9907f5e68d5a603fa90bd32d 0.0s done
+#18 exporting config sha256:1c7429794c9f7b9e3fab0f9447177b4f3f9759349b27a86412fed51f3baf55ad 0.0s done
+#18 exporting attestation manifest sha256:1767a764dcf6bb8b4e57cd99458ba9b14c38a36f01ad1af69d8cc29e1b81526c 0.0s done
+#18 exporting manifest list sha256:d21e68c52d2a98dd445533b7da61d43ba5a7a1acc0901fe993a015a2ca7232fc 0.0s done
+#18 naming to docker.io/fit4110/notification-service:test
+#18 naming to docker.io/fit4110/notification-service:test done
+#18 unpacking to docker.io/fit4110/notification-service:test
+#18 unpacking to docker.io/fit4110/notification-service:test 0.9s done
+#18 DONE 2.6s
