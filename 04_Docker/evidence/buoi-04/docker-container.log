@@ -1,66 +1,69 @@
-2026-11-12 16:07:54,042 level=INFO logger=notification.api starting service=notification-service version=0.4.0 env=local mqtt_enabled=False broker=mqtt://192.168.1.51:1883 topic=campus.alerts
+2026-11-13 10:55:01,560 level=INFO logger=notification.api starting service=notification-service version=0.4.0 env=local mqtt_enabled=False broker=mqtt://192.168.1.51:1883 topic=campus.alerts
 INFO:     Started server process [1]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-2026-11-12 16:07:54,042 level=INFO logger=notification.mqtt MQTT consumer disabled (MQTT_ENABLED=false); REST fallback only
-2026-11-12 16:07:58,411 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=1.1 trace_id=-
-INFO:     127.0.0.1:57802 - "GET /health HTTP/1.1" 200 OK
-2026-11-12 16:07:59,798 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=0.9 trace_id=-
-INFO:     172.17.0.1:45098 - "GET /health HTTP/1.1" 200 OK
-2026-11-12 16:08:02,423 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=0.7 trace_id=fit4110-lab04-notify-1794499682371
-INFO:     172.17.0.1:45120 - "GET /health HTTP/1.1" 200 OK
-2026-11-12 16:08:02,529 level=INFO logger=notification.store accepted event_name=alert.created event_id=123e4567-e89b-12d3-a456-426614174000 alert_id=ALT-001 origin=rest channels=['telegram', 'email', 'sms'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
-2026-11-12 16:08:02,529 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
-2026-11-12 16:08:02,529 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
-2026-11-12 16:08:02,529 level=INFO logger=notification.delivery channel=sms alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
-2026-11-12 16:08:02,530 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=2.6 trace_id=fit4110-lab04-notify-1794499682511
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 201 Created
-2026-11-12 16:08:02,603 level=INFO logger=notification.store accepted event_name=alert.escalated event_id=123e4567-e89b-12d3-a456-426614174001 alert_id=ALT-001 origin=rest channels=['telegram', 'email'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
-2026-11-12 16:08:02,603 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã leo thang lên cấp 2'
-2026-11-12 16:08:02,603 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã leo thang lên cấp 2'
-2026-11-12 16:08:02,604 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=1.7 trace_id=fit4110-lab04-notify-1794499682571
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 201 Created
-2026-11-12 16:08:02,699 level=INFO logger=notification.store accepted event_name=alert.resolved event_id=123e4567-e89b-12d3-a456-426614174002 alert_id=ALT-001 origin=rest channels=['telegram', 'email'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
-2026-11-12 16:08:02,699 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã được xử lý: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.'
-2026-11-12 16:08:02,699 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã được xử lý: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.'
-2026-11-12 16:08:02,699 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=1.5 trace_id=fit4110-lab04-notify-1794499682664
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 201 Created
-2026-11-12 16:08:02,790 level=INFO logger=notification.api http method=GET path=/notifications status=200 duration_ms=1.0 trace_id=fit4110-lab04-notify-1794499682758
-INFO:     172.17.0.1:45120 - "GET /notifications?alert_id=ALT-001&limit=10 HTTP/1.1" 200 OK
-2026-11-12 16:08:02,885 level=INFO logger=notification.api http method=GET path=/notifications/recent status=200 duration_ms=2.5 trace_id=fit4110-lab04-notify-1794499682849
-INFO:     172.17.0.1:45120 - "GET /notifications/recent?limit=5 HTTP/1.1" 200 OK
-2026-11-12 16:08:02,977 level=INFO logger=notification.api http method=GET path=/notifications/96bd3afa-eb9e-4a71-b3db-4b200266696c status=200 duration_ms=1.2 trace_id=fit4110-lab04-notify-1794499682944
-INFO:     172.17.0.1:45120 - "GET /notifications/96bd3afa-eb9e-4a71-b3db-4b200266696c HTTP/1.1" 200 OK
-2026-11-12 16:08:03,070 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
-2026-11-12 16:08:03,070 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
-2026-11-12 16:08:03,070 level=INFO logger=notification.delivery channel=sms alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
-2026-11-12 16:08:03,071 level=INFO logger=notification.api http method=POST path=/notifications/96bd3afa-eb9e-4a71-b3db-4b200266696c/retry status=200 duration_ms=1.2 trace_id=fit4110-lab04-notify-1794499683038
-INFO:     172.17.0.1:45120 - "POST /notifications/96bd3afa-eb9e-4a71-b3db-4b200266696c/retry HTTP/1.1" 200 OK
-2026-11-12 16:08:03,101 level=INFO logger=notification.api http method=GET path=/notifications/recent status=200 duration_ms=1.6 trace_id=fit4110-lab04-notify-1794499683095
-INFO:     172.17.0.1:45120 - "GET /notifications/recent?limit=1 HTTP/1.1" 200 OK
-2026-11-12 16:08:03,180 level=INFO logger=notification.api http method=POST path=/notifications status=401 duration_ms=0.9 trace_id=fit4110-lab04-notify-1794499683146
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 401 Unauthorized
-2026-11-12 16:08:03,275 level=INFO logger=notification.api http method=POST path=/notifications status=401 duration_ms=1.1 trace_id=fit4110-lab04-notify-1794499683241
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 401 Unauthorized
-2026-11-12 16:08:03,371 level=INFO logger=notification.api http method=POST path=/notifications status=422 duration_ms=2.0 trace_id=fit4110-lab04-notify-1794499683337
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 422 Unprocessable Entity
-2026-11-12 16:08:03,447 level=INFO logger=notification.api http method=POST path=/notifications status=422 duration_ms=2.2 trace_id=fit4110-lab04-notify-1794499683413
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 422 Unprocessable Entity
-2026-11-12 16:08:03,541 level=INFO logger=notification.api http method=GET path=/notifications/00000000-0000-0000-0000-000000000000 status=404 duration_ms=1.6 trace_id=fit4110-lab04-notify-1794499683508
-INFO:     172.17.0.1:45120 - "GET /notifications/00000000-0000-0000-0000-000000000000 HTTP/1.1" 404 Not Found
-2026-11-12 16:08:03,635 level=INFO logger=notification.store accepted event_name=alert.created event_id=123e4567-e89b-12d3-a456-426614174010 alert_id=ALT-999 origin=rest channels=['telegram', 'email', 'sms'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
-2026-11-12 16:08:03,635 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
-2026-11-12 16:08:03,635 level=INFO logger=notification.delivery channel=email alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
-2026-11-12 16:08:03,635 level=INFO logger=notification.delivery channel=sms alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
-2026-11-12 16:08:03,636 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=3.4 trace_id=fit4110-lab04-notify-1794499683600
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 201 Created
-2026-11-12 16:08:03,726 level=INFO logger=notification.api http method=GET path=/notifications/recent status=400 duration_ms=0.8 trace_id=fit4110-lab04-notify-1794499683694
-INFO:     172.17.0.1:45120 - "GET /notifications/recent?limit=101 HTTP/1.1" 400 Bad Request
-2026-11-12 16:08:03,821 level=INFO logger=notification.store duplicate event_id=123e4567-e89b-12d3-a456-426614174000 origin=rest ignored
-2026-11-12 16:08:03,822 level=INFO logger=notification.api http method=POST path=/notifications status=409 duration_ms=3.1 trace_id=fit4110-lab04-notify-1794499683787
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 409 Conflict
-2026-11-12 16:08:03,914 level=INFO logger=notification.store accepted event_name=alert.created event_id=123e4567-e89b-12d3-a456-426614174088 alert_id=ALT-002 origin=rest channels=['telegram'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
-2026-11-12 16:08:03,914 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-002 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Kiểm tra thời gian phản hồi container Docker'
-2026-11-12 16:08:03,915 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=1.7 trace_id=fit4110-lab04-notify-1794499683881
-INFO:     172.17.0.1:45120 - "POST /notifications HTTP/1.1" 201 Created
+2026-11-13 10:55:01,560 level=INFO logger=notification.mqtt MQTT consumer disabled (MQTT_ENABLED=false); REST fallback only
+2026-11-13 10:55:05,819 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=1.1 trace_id=-
+INFO:     127.0.0.1:35976 - "GET /health HTTP/1.1" 200 OK
+2026-11-13 10:55:06,311 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=0.6 trace_id=-
+INFO:     172.17.0.1:58460 - "GET /health HTTP/1.1" 200 OK
+2026-11-13 10:55:08,591 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=0.8 trace_id=fit4110-lab04-notify-1794567308544
+INFO:     172.17.0.1:58476 - "GET /health HTTP/1.1" 200 OK
+2026-11-13 10:55:08,683 level=INFO logger=notification.store accepted event_name=alert.created event_id=123e4567-e89b-12d3-a456-426614174000 alert_id=ALT-001 origin=rest channels=['telegram', 'email', 'sms'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+2026-11-13 10:55:08,683 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+2026-11-13 10:55:08,683 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+2026-11-13 10:55:08,683 level=INFO logger=notification.delivery channel=sms alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+2026-11-13 10:55:08,684 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=1.9 trace_id=fit4110-lab04-notify-1794567308650
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 201 Created
+2026-11-13 10:55:08,760 level=INFO logger=notification.store accepted event_name=alert.escalated event_id=123e4567-e89b-12d3-a456-426614174001 alert_id=ALT-001 origin=rest channels=['telegram', 'email', 'discord'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+2026-11-13 10:55:08,760 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã leo thang lên cấp 2'
+2026-11-13 10:55:08,760 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã leo thang lên cấp 2'
+2026-11-13 10:55:08,760 level=INFO logger=notification.delivery channel=discord alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã leo thang lên cấp 2'
+2026-11-13 10:55:08,761 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=1.7 trace_id=fit4110-lab04-notify-1794567308728
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 201 Created
+2026-11-13 10:55:08,854 level=INFO logger=notification.store accepted event_name=alert.resolved event_id=123e4567-e89b-12d3-a456-426614174002 alert_id=ALT-001 origin=rest channels=['telegram', 'email', 'discord'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+2026-11-13 10:55:08,854 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã được xử lý: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.'
+2026-11-13 10:55:08,854 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã được xử lý: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.'
+2026-11-13 10:55:08,854 level=INFO logger=notification.delivery channel=discord alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Cảnh báo ALT-001 đã được xử lý: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.'
+2026-11-13 10:55:08,855 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=2.4 trace_id=fit4110-lab04-notify-1794567308820
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 201 Created
+2026-11-13 10:55:08,947 level=INFO logger=notification.api http method=GET path=/notifications status=200 duration_ms=1.4 trace_id=fit4110-lab04-notify-1794567308914
+INFO:     172.17.0.1:58476 - "GET /notifications?alert_id=ALT-001&limit=10 HTTP/1.1" 200 OK
+2026-11-13 10:55:09,025 level=INFO logger=notification.api http method=GET path=/notifications/recent status=200 duration_ms=1.1 trace_id=fit4110-lab04-notify-1794567309007
+INFO:     172.17.0.1:58476 - "GET /notifications/recent?limit=5 HTTP/1.1" 200 OK
+2026-11-13 10:55:09,118 level=INFO logger=notification.api http method=GET path=/notifications/8b8ab2d1-e76d-4ed3-b622-e69986290fff status=200 duration_ms=1.3 trace_id=fit4110-lab04-notify-1794567309084
+INFO:     172.17.0.1:58476 - "GET /notifications/8b8ab2d1-e76d-4ed3-b622-e69986290fff HTTP/1.1" 200 OK
+2026-11-13 10:55:09,195 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+2026-11-13 10:55:09,195 level=INFO logger=notification.delivery channel=email alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+2026-11-13 10:55:09,195 level=INFO logger=notification.delivery channel=sms alert_id=ALT-001 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Phát hiện sự cố an ninh khẩn cấp từ Core Business'
+2026-11-13 10:55:09,196 level=INFO logger=notification.api http method=POST path=/notifications/8b8ab2d1-e76d-4ed3-b622-e69986290fff/retry status=200 duration_ms=1.3 trace_id=fit4110-lab04-notify-1794567309163
+INFO:     172.17.0.1:58476 - "POST /notifications/8b8ab2d1-e76d-4ed3-b622-e69986290fff/retry HTTP/1.1" 200 OK
+2026-11-13 10:55:09,291 level=INFO logger=notification.api http method=GET path=/notifications/recent status=200 duration_ms=2.2 trace_id=fit4110-lab04-notify-1794567309258
+INFO:     172.17.0.1:58476 - "GET /notifications/recent?limit=1 HTTP/1.1" 200 OK
+2026-11-13 10:55:09,398 level=INFO logger=notification.api http method=POST path=/notifications status=401 duration_ms=0.8 trace_id=fit4110-lab04-notify-1794567309365
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 401 Unauthorized
+2026-11-13 10:55:09,491 level=INFO logger=notification.api http method=POST path=/notifications status=401 duration_ms=0.8 trace_id=fit4110-lab04-notify-1794567309459
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 401 Unauthorized
+2026-11-13 10:55:09,585 level=INFO logger=notification.api http method=POST path=/notifications status=422 duration_ms=1.1 trace_id=fit4110-lab04-notify-1794567309554
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 422 Unprocessable Entity
+2026-11-13 10:55:09,665 level=INFO logger=notification.api http method=POST path=/notifications status=422 duration_ms=1.9 trace_id=fit4110-lab04-notify-1794567309631
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 422 Unprocessable Entity
+2026-11-13 10:55:09,746 level=INFO logger=notification.api http method=GET path=/notifications/00000000-0000-0000-0000-000000000000 status=404 duration_ms=5.2 trace_id=fit4110-lab04-notify-1794567309710
+INFO:     172.17.0.1:58476 - "GET /notifications/00000000-0000-0000-0000-000000000000 HTTP/1.1" 404 Not Found
+2026-11-13 10:55:09,851 level=INFO logger=notification.store accepted event_name=alert.created event_id=123e4567-e89b-12d3-a456-426614174010 alert_id=ALT-999 origin=rest channels=['telegram', 'email', 'discord', 'sms'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd
+2026-11-13 10:55:09,851 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
+2026-11-13 10:55:09,851 level=INFO logger=notification.delivery channel=email alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
+2026-11-13 10:55:09,851 level=INFO logger=notification.delivery channel=discord alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
+2026-11-13 10:55:09,851 level=INFO logger=notification.delivery channel=sms alert_id=ALT-999 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babd delivered message='Cảnh báo cháy khẩn cấp tại phòng máy chủ tầng 3 (tự định tuyến kênh theo severity critical)'
+2026-11-13 10:55:09,852 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=2.6 trace_id=fit4110-lab04-notify-1794567309816
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 201 Created
+2026-11-13 10:55:09,929 level=INFO logger=notification.api http method=GET path=/notifications/recent status=400 duration_ms=1.5 trace_id=fit4110-lab04-notify-1794567309897
+INFO:     172.17.0.1:58476 - "GET /notifications/recent?limit=101 HTTP/1.1" 400 Bad Request
+2026-11-13 10:55:10,017 level=INFO logger=notification.store duplicate event_id=123e4567-e89b-12d3-a456-426614174000 origin=rest ignored
+2026-11-13 10:55:10,018 level=INFO logger=notification.api http method=POST path=/notifications status=409 duration_ms=0.9 trace_id=fit4110-lab04-notify-1794567309987
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 409 Conflict
+2026-11-13 10:55:10,096 level=INFO logger=notification.store accepted event_name=alert.created event_id=123e4567-e89b-12d3-a456-426614174088 alert_id=ALT-002 origin=rest channels=['telegram'] correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
+2026-11-13 10:55:10,096 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-002 correlationId=req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc delivered message='Kiểm tra thời gian phản hồi container Docker'
+2026-11-13 10:55:10,097 level=INFO logger=notification.api http method=POST path=/notifications status=201 duration_ms=1.9 trace_id=fit4110-lab04-notify-1794567310064
+INFO:     172.17.0.1:58476 - "POST /notifications HTTP/1.1" 201 Created

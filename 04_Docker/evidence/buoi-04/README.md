@@ -4,7 +4,7 @@
 
 - **Team:** Nhóm 6
 - **Service:** `notification-service` (Pair 04: `Core Business → Notification`)
-- **Image tag:** `fit4110/notification-service:lab04` (`ID: 7370407fd292`, kích thước `276MB`)
+- **Image tag:** `fit4110/notification-service:lab04` (`ID: 27df7fcc95f3`, kích thước `276MB`)
 
 ---
 
@@ -15,8 +15,8 @@ docker build --target test -t fit4110/notification-service:test .
 docker build -t fit4110/notification-service:lab04 .
 ```
 
-- Kết quả stage `test`: **`6 passed` in 0.50s** ([`docker-test-stage.log`](./docker-test-stage.log)).
-- Kết quả stage `runtime`: Build thành công multi-stage image `fit4110/notification-service:lab04` (`276MB`) ([`docker-build.log`](./docker-build.log), [`docker-images.txt`](./docker-images.txt)).
+- Kết quả stage `test`: **`13 passed`, `1 warning` in `0.51s`** ([`docker-test-stage.log`](./docker-test-stage.log)).
+- Kết quả stage `runtime`: Build thành công multi-stage image `fit4110/notification-service:lab04` (`ID: 27df7fcc95f3`, `276MB`) ([`docker-build.log`](./docker-build.log), [`docker-images.txt`](./docker-images.txt)).
 
 ---
 
@@ -49,7 +49,7 @@ Kết quả thực tế ([`curl-health.txt`](./curl-health.txt)):
 HTTP/1.1 200 OK
 content-type: application/json
 
-{"status":"ok","service":"notification-service","mqtt_broker":"mqtt://192.168.1.51:1883","subscribed_topic":"campus.alerts","time":"2026-11-12T16:07:59Z"}
+{"status":"ok","service":"notification-service","mqtt_broker":"mqtt://192.168.1.51:1883","subscribed_topic":"campus.alerts","time":"2026-11-13T10:55:06Z"}
 ```
 
 ---
@@ -64,5 +64,6 @@ Kết quả ([`newman-local-cli.txt`](./newman-local-cli.txt)):
 
 - **Executed:** `18 requests`, `33 assertions`
 - **Failed:** **`0 failed`**
-- **Average response time:** `6ms` (min `3ms`, max `30ms`)
-- **Reports:** [`../../reports/newman-lab04-local.html`](../../reports/newman-lab04-local.html), [`../../reports/newman-lab04-local.xml`](../../reports/newman-lab04-local.xml)
+- **Total run duration / Average response time:** `1621ms` / **`6ms`** (`min: 2ms, max: 26ms, s.d.: 5ms`)
+- **Reports (Local Docker):** [`../../reports/newman-lab04-local.html`](../../reports/newman-lab04-local.html), [`../../reports/newman-lab04-local.xml`](../../reports/newman-lab04-local.xml)
+- **Prism Mock (`npm run test:mock`):** **18 requests, 33 assertions, 0 failed** (`1757ms`, avg **`14ms`**, `min: 5ms, max: 41ms`, mock skip `TC11`/`TC18`) — [`../../reports/newman-lab04-mock.html`](../../reports/newman-lab04-mock.html), [`../../reports/newman-lab04-mock.xml`](../../reports/newman-lab04-mock.xml)

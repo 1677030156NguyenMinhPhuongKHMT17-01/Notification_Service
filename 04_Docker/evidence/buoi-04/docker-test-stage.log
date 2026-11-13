@@ -5,14 +5,14 @@
 #1 DONE 0.0s
 
 #2 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
-#2 DONE 1.7s
+#2 DONE 1.5s
 
 #3 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 #3 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
 #3 CACHED
 
 #4 [internal] load metadata for docker.io/library/python:3.11-slim
-#4 DONE 1.7s
+#4 DONE 1.8s
 
 #5 [internal] load .dockerignore
 #5 transferring context: 348B done
@@ -22,57 +22,173 @@
 #6 resolve docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535 0.0s done
 #6 DONE 0.0s
 
-#7 [internal] load build context
-#7 transferring context: 5.80kB done
-#7 DONE 0.0s
+#7 [builder 2/5] WORKDIR /build
+#7 CACHED
 
-#8 [builder 4/5] COPY requirements.txt .
-#8 CACHED
+#8 [internal] load build context
+#8 transferring context: 17.48kB done
+#8 DONE 0.0s
 
-#9 [test 3/6] WORKDIR /app
-#9 CACHED
+#9 [builder 3/5] RUN python -m venv /opt/venv
+#9 DONE 3.8s
 
-#10 [test 1/6] COPY requirements-dev.txt .
-#10 CACHED
+#10 [builder 4/5] COPY requirements.txt .
+#10 DONE 0.1s
 
-#11 [builder 3/5] RUN python -m venv /opt/venv
-#11 CACHED
+#11 [builder 5/5] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+#11 3.884 Collecting fastapi==0.115.6 (from -r requirements.txt (line 1))
+#11 4.155   Downloading fastapi-0.115.6-py3-none-any.whl.metadata (27 kB)
+#11 4.417 Collecting uvicorn==0.34.0 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 4.467   Downloading uvicorn-0.34.0-py3-none-any.whl.metadata (6.5 kB)
+#11 4.896 Collecting pydantic==2.10.4 (from -r requirements.txt (line 3))
+#11 4.946   Downloading pydantic-2.10.4-py3-none-any.whl.metadata (29 kB)
+#11 5.050 Collecting paho-mqtt==2.1.0 (from -r requirements.txt (line 4))
+#11 5.103   Downloading paho_mqtt-2.1.0-py3-none-any.whl.metadata (23 kB)
+#11 5.237 Collecting starlette<0.42.0,>=0.40.0 (from fastapi==0.115.6->-r requirements.txt (line 1))
+#11 5.417   Downloading starlette-0.41.3-py3-none-any.whl.metadata (6.0 kB)
+#11 5.692 Collecting typing-extensions>=4.8.0 (from fastapi==0.115.6->-r requirements.txt (line 1))
+#11 5.817   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#11 6.019 Collecting click>=7.0 (from uvicorn==0.34.0->uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 6.120   Downloading click-8.5.1-py3-none-any.whl.metadata (2.6 kB)
+#11 6.184 Collecting h11>=0.8 (from uvicorn==0.34.0->uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 6.229   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#11 6.376 Collecting annotated-types>=0.6.0 (from pydantic==2.10.4->-r requirements.txt (line 3))
+#11 6.451   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+#11 8.175 Collecting pydantic-core==2.27.2 (from pydantic==2.10.4->-r requirements.txt (line 3))
+#11 8.223   Downloading pydantic_core-2.27.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+#11 8.356 Collecting httptools>=0.6.3 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 8.407   Downloading httptools-0.9.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+#11 8.479 Collecting python-dotenv>=0.13 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 8.526   Downloading python_dotenv-1.2.4-py3-none-any.whl.metadata (29 kB)
+#11 10.10 Collecting pyyaml>=5.1 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 10.22   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#11 10.60 Collecting uvloop!=0.15.0,!=0.15.1,>=0.14.0 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 10.72   Downloading uvloop-0.23.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.1 kB)
+#11 11.20 Collecting watchfiles>=0.13 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 11.27   Downloading watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+#11 12.49 Collecting websockets>=10.4 (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2))
+#11 13.03   Downloading websockets-17.4-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.3 kB)
+#11 13.42 Collecting anyio<5,>=3.4.0 (from starlette<0.42.0,>=0.40.0->fastapi==0.115.6->-r requirements.txt (line 1))
+#11 13.53   Downloading anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+#11 13.73 Collecting idna>=2.8 (from anyio<5,>=3.4.0->starlette<0.42.0,>=0.40.0->fastapi==0.115.6->-r requirements.txt (line 1))
+#11 13.81   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+#11 13.92 Downloading fastapi-0.115.6-py3-none-any.whl (94 kB)
+#11 14.12    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 94.8/94.8 kB 503.8 kB/s eta 0:00:00
+#11 14.21 Downloading uvicorn-0.34.0-py3-none-any.whl (62 kB)
+#11 14.33    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 62.3/62.3 kB 553.2 kB/s eta 0:00:00
+#11 14.40 Downloading pydantic-2.10.4-py3-none-any.whl (431 kB)
+#11 15.36    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 431.8/431.8 kB 457.2 kB/s eta 0:00:00
+#11 15.49 Downloading paho_mqtt-2.1.0-py3-none-any.whl (67 kB)
+#11 15.64    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 67.2/67.2 kB 699.7 kB/s eta 0:00:00
+#11 15.69 Downloading pydantic_core-2.27.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.0 MB)
+#11 17.78    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.0/2.0 MB 966.7 kB/s eta 0:00:00
+#11 17.84 Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#11 17.92 Downloading click-8.5.1-py3-none-any.whl (126 kB)
+#11 18.09    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 126.2/126.2 kB 747.2 kB/s eta 0:00:00
+#11 18.16 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#11 18.26 Downloading httptools-0.9.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (499 kB)
+#11 18.74    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 499.1/499.1 kB 1.1 MB/s eta 0:00:00
+#11 18.84 Downloading python_dotenv-1.2.4-py3-none-any.whl (23 kB)
+#11 18.94 Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+#11 19.64    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 1.1 MB/s eta 0:00:00
+#11 19.69 Downloading starlette-0.41.3-py3-none-any.whl (73 kB)
+#11 19.78    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.2/73.2 kB 1.4 MB/s eta 0:00:00
+#11 19.85 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#11 19.89    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 kB 825.3 kB/s eta 0:00:00
+#11 19.97 Downloading uvloop-0.23.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.0 MB)
+#11 25.40    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.0/4.0 MB 727.4 kB/s eta 0:00:00
+#11 25.47 Downloading watchfiles-1.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (458 kB)
+#11 26.25    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 458.4/458.4 kB 592.2 kB/s eta 0:00:00
+#11 26.32 Downloading websockets-17.4-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (226 kB)
+#11 26.63    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 226.0/226.0 kB 733.0 kB/s eta 0:00:00
+#11 27.53 Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+#11 27.85    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.5/134.5 kB 747.8 kB/s eta 0:00:00
+#11 27.92 Downloading idna-3.20-py3-none-any.whl (69 kB)
+#11 28.02    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.6/69.6 kB 621.8 kB/s eta 0:00:00
+#11 28.12 Installing collected packages: websockets, uvloop, typing-extensions, pyyaml, python-dotenv, paho-mqtt, idna, httptools, h11, click, annotated-types, uvicorn, pydantic-core, anyio, watchfiles, starlette, pydantic, fastapi
+#11 29.16 Successfully installed annotated-types-0.8.0 anyio-4.16.0 click-8.5.1 fastapi-0.115.6 h11-0.16.0 httptools-0.9.0 idna-3.20 paho-mqtt-2.1.0 pydantic-2.10.4 pydantic-core-2.27.2 python-dotenv-1.2.4 pyyaml-6.0.3 starlette-0.41.3 typing-extensions-4.16.0 uvicorn-0.34.0 uvloop-0.23.0 watchfiles-1.3.0 websockets-17.4
+#11 DONE 29.6s
 
-#12 [builder 2/5] WORKDIR /build
-#12 CACHED
+#12 [test 1/6] COPY requirements-dev.txt .
+#12 DONE 0.1s
 
-#13 [builder 5/5] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
-#13 CACHED
+#13 [test 2/6] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements-dev.txt
+#13 0.865 Requirement already satisfied: fastapi==0.115.6 in /opt/venv/lib/python3.11/site-packages (from -r requirements.txt (line 1)) (0.115.6)
+#13 0.866 Requirement already satisfied: uvicorn==0.34.0 in /opt/venv/lib/python3.11/site-packages (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (0.34.0)
+#13 0.868 Requirement already satisfied: pydantic==2.10.4 in /opt/venv/lib/python3.11/site-packages (from -r requirements.txt (line 3)) (2.10.4)
+#13 0.869 Requirement already satisfied: paho-mqtt==2.1.0 in /opt/venv/lib/python3.11/site-packages (from -r requirements.txt (line 4)) (2.1.0)
+#13 3.230 Collecting pytest==8.3.4 (from -r requirements-dev.txt (line 2))
+#13 3.754   Downloading pytest-8.3.4-py3-none-any.whl.metadata (7.5 kB)
+#13 4.196 Collecting httpx==0.28.1 (from -r requirements-dev.txt (line 3))
+#13 4.374   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#13 4.437 Requirement already satisfied: starlette<0.42.0,>=0.40.0 in /opt/venv/lib/python3.11/site-packages (from fastapi==0.115.6->-r requirements.txt (line 1)) (0.41.3)
+#13 4.438 Requirement already satisfied: typing-extensions>=4.8.0 in /opt/venv/lib/python3.11/site-packages (from fastapi==0.115.6->-r requirements.txt (line 1)) (4.16.0)
+#13 4.445 Requirement already satisfied: click>=7.0 in /opt/venv/lib/python3.11/site-packages (from uvicorn==0.34.0->uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (8.5.1)
+#13 4.446 Requirement already satisfied: h11>=0.8 in /opt/venv/lib/python3.11/site-packages (from uvicorn==0.34.0->uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (0.16.0)
+#13 4.450 Requirement already satisfied: annotated-types>=0.6.0 in /opt/venv/lib/python3.11/site-packages (from pydantic==2.10.4->-r requirements.txt (line 3)) (0.8.0)
+#13 4.451 Requirement already satisfied: pydantic-core==2.27.2 in /opt/venv/lib/python3.11/site-packages (from pydantic==2.10.4->-r requirements.txt (line 3)) (2.27.2)
+#13 4.737 Collecting iniconfig (from pytest==8.3.4->-r requirements-dev.txt (line 2))
+#13 4.800   Downloading iniconfig-2.3.1-py3-none-any.whl.metadata (2.8 kB)
+#13 5.012 Collecting packaging (from pytest==8.3.4->-r requirements-dev.txt (line 2))
+#13 5.072   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+#13 5.229 Collecting pluggy<2,>=1.5 (from pytest==8.3.4->-r requirements-dev.txt (line 2))
+#13 5.283   Downloading pluggy-1.7.0-py3-none-any.whl.metadata (5.0 kB)
+#13 5.349 Requirement already satisfied: anyio in /opt/venv/lib/python3.11/site-packages (from httpx==0.28.1->-r requirements-dev.txt (line 3)) (4.16.0)
+#13 5.501 Collecting certifi (from httpx==0.28.1->-r requirements-dev.txt (line 3))
+#13 5.594   Downloading certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+#13 5.717 Collecting httpcore==1.* (from httpx==0.28.1->-r requirements-dev.txt (line 3))
+#13 5.769   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#13 5.826 Requirement already satisfied: idna in /opt/venv/lib/python3.11/site-packages (from httpx==0.28.1->-r requirements-dev.txt (line 3)) (3.20)
+#13 5.843 Requirement already satisfied: httptools>=0.6.3 in /opt/venv/lib/python3.11/site-packages (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (0.9.0)
+#13 5.845 Requirement already satisfied: python-dotenv>=0.13 in /opt/venv/lib/python3.11/site-packages (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (1.2.4)
+#13 5.847 Requirement already satisfied: pyyaml>=5.1 in /opt/venv/lib/python3.11/site-packages (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (6.0.3)
+#13 5.849 Requirement already satisfied: uvloop!=0.15.0,!=0.15.1,>=0.14.0 in /opt/venv/lib/python3.11/site-packages (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (0.23.0)
+#13 5.853 Requirement already satisfied: watchfiles>=0.13 in /opt/venv/lib/python3.11/site-packages (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (1.3.0)
+#13 5.854 Requirement already satisfied: websockets>=10.4 in /opt/venv/lib/python3.11/site-packages (from uvicorn[standard]==0.34.0->-r requirements.txt (line 2)) (17.4)
+#13 5.959 Downloading pytest-8.3.4-py3-none-any.whl (343 kB)
+#13 6.474    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 343.1/343.1 kB 680.1 kB/s eta 0:00:00
+#13 6.543 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#13 6.617    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 73.5/73.5 kB 915.6 kB/s eta 0:00:00
+#13 6.672 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#13 6.723    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 78.8/78.8 kB 1.6 MB/s eta 0:00:00
+#13 6.770 Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+#13 7.159 Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+#13 7.208    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 135.1/135.1 kB 2.9 MB/s eta 0:00:00
+#13 7.263 Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+#13 7.394 Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#13 7.457    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 kB 2.0 MB/s eta 0:00:00
+#13 7.565 Installing collected packages: pluggy, packaging, iniconfig, certifi, pytest, httpcore, httpx
+#13 7.948 Successfully installed certifi-2026.10.23 httpcore-1.0.9 httpx-0.28.1 iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pytest-8.3.4
+#13 DONE 8.1s
 
-#14 [test 2/6] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements-dev.txt
-#14 CACHED
+#14 [test 3/6] WORKDIR /app
+#14 DONE 0.1s
 
 #15 [test 4/6] COPY src/ ./src/
-#15 CACHED
+#15 DONE 0.0s
 
 #16 [test 5/6] COPY tests/ ./tests/
-#16 DONE 0.0s
+#16 DONE 0.1s
 
 #17 [test 6/6] RUN /opt/venv/bin/python -m pytest -q tests
-#17 1.187 ......                                                                   [100%]
-#17 1.267 =============================== warnings summary ===============================
-#17 1.267 ../opt/venv/lib/python3.11/site-packages/starlette/testclient.py:40
-#17 1.267   /opt/venv/lib/python3.11/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
-#17 1.267     _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
-#17 1.267 
-#17 1.267 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-#17 1.267 6 passed, 1 warning in 0.50s
-#17 DONE 1.5s
+#17 1.127 .............                                                            [100%]
+#17 1.240 =============================== warnings summary ===============================
+#17 1.240 ../opt/venv/lib/python3.11/site-packages/starlette/testclient.py:40
+#17 1.240   /opt/venv/lib/python3.11/site-packages/starlette/testclient.py:40: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+#17 1.240     _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+#17 1.240 
+#17 1.240 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#17 1.240 13 passed, 1 warning in 0.51s
+#17 DONE 1.3s
 
 #18 exporting to image
 #18 exporting layers
-#18 exporting layers 1.6s done
-#18 exporting manifest sha256:35d4f7adbc580b2e3183640227087a035b89d11e9907f5e68d5a603fa90bd32d 0.0s done
-#18 exporting config sha256:1c7429794c9f7b9e3fab0f9447177b4f3f9759349b27a86412fed51f3baf55ad 0.0s done
-#18 exporting attestation manifest sha256:1767a764dcf6bb8b4e57cd99458ba9b14c38a36f01ad1af69d8cc29e1b81526c 0.0s done
-#18 exporting manifest list sha256:d21e68c52d2a98dd445533b7da61d43ba5a7a1acc0901fe993a015a2ca7232fc 0.0s done
-#18 naming to docker.io/fit4110/notification-service:test
+#18 exporting layers 1.3s done
+#18 exporting manifest sha256:89ce832790efeb6b0ca4d1656082ca962cf70f961f97bf1a4268427e61c55dd6 0.0s done
+#18 exporting config sha256:6e37dbcf22b8e3fea679e22bf5c1e5ef0cc43c41b8e027408b46baa85d69ce64 0.0s done
+#18 exporting attestation manifest sha256:254ab75c3eae110aaa5678d5ecd0e11637b8479fb1151d909195503f3e58a171 0.0s done
+#18 exporting manifest list sha256:24946e291a9c82a2d1bb3cde5ebd9c2377d2c99c0f17c9ac23e348df128e83a7 0.0s done
 #18 naming to docker.io/fit4110/notification-service:test done
 #18 unpacking to docker.io/fit4110/notification-service:test
-#18 unpacking to docker.io/fit4110/notification-service:test 0.9s done
-#18 DONE 2.6s
+#18 unpacking to docker.io/fit4110/notification-service:test 0.6s done
+#18 DONE 2.1s

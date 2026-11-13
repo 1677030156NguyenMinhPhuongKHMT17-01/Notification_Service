@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -25,9 +26,20 @@ logger = logging.getLogger("notification.mqtt")
 
 
 class MqttConsumer:
-    def __init__(self) -> None:
+    def __init__(self, max_workers: int = 4) -> None:
         self._client = None
+        self._max_workers = max(1, max_workers)
+        self._executor: Optional[ThreadPoolExecutor] = None
+        self._stopping = False
         self.connected = False
+
+    def _ensure_executor(self) -> ThreadPoolExecutor:
+        if self._executor is None:
+            self._executor = ThreadPoolExecutor(
+                max_workers=self._max_workers,
+                thread_name_prefix="mqtt-worker",
+            )
+        return self._executor
 
     def start(self) -> None:
         try:
@@ -35,6 +47,9 @@ class MqttConsumer:
         except ImportError:  # pragma: no cover
             logger.error("paho-mqtt is not installed; MQTT consumer disabled")
             return
+
+        self._stopping = False
+        self._ensure_executor()
 
         url = urlparse(settings.mqtt_broker_url)
         host, port = url.hostname or "localhost", url.port or 1883
@@ -52,9 +67,17 @@ class MqttConsumer:
         store.dlq_publisher = self.publish_dlq
 
     def stop(self) -> None:
+        self._stopping = True
+        if self._executor is not None:
+            self._executor.shutdown(wait=True)
+            self._executor = None
         if self._client is not None:
             self._client.loop_stop()
             self._client.disconnect()
+            self._client = None
+        if store.dlq_publisher == self.publish_dlq:
+            store.dlq_publisher = None
+        self.connected = False
 
     # ---------------------------------------------------------------- callbacks
     def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
@@ -70,24 +93,47 @@ class MqttConsumer:
         logger.warning("MQTT disconnected: %s (auto-reconnect enabled)", reason_code)
 
     def _on_message(self, client, userdata, msg) -> None:
-        raw = msg.payload.decode("utf-8", errors="replace")
+        if self._stopping:
+            return
+        executor = self._executor
+        if executor is not None:
+            try:
+                executor.submit(self._handle_message, msg.topic, msg.payload)
+            except RuntimeError:
+                logger.warning("MQTT executor shut down while receiving message on %s", msg.topic)
+            return
+        self._handle_message(msg.topic, msg.payload)
+
+    def _handle_message(self, topic: str, payload: bytes) -> None:
+        raw = payload.decode("utf-8", errors="replace")
         try:
             data = json.loads(raw)
             event = event_adapter.validate_python(data)
         except (json.JSONDecodeError, ValidationError) as exc:
-            logger.warning("invalid event on %s -> DLQ: %s", msg.topic, exc)
+            logger.warning("invalid event on %s -> DLQ: %s", topic, exc)
             self._publish(settings.mqtt_dlq_topic, {
-                "reason": "schema_validation_failed",
-                "error": str(exc)[:500],
+                "reason": "SCHEMA_VALIDATION_FAILED",
+                "error_detail": str(exc)[:500],
+                "retry_count": 0,
+                "failed_at": iso_utc(),
+                "topic": topic,
                 "original_payload": raw[:4000],
-                "received_at": iso_utc(),
             })
             return
-        store.process(event, origin="mqtt")
+        try:
+            store.process(event, origin="mqtt")
+        except Exception:  # pragma: no cover - worker errors must be logged
+            logger.exception("failed to process MQTT event on topic=%s", topic)
 
     # ---------------------------------------------------------------- publishing
     def publish_dlq(self, record: dict) -> None:
-        self._publish(settings.mqtt_dlq_topic, {"reason": "max_retries_exceeded", "notification": record, "received_at": iso_utc()})
+        self._publish(settings.mqtt_dlq_topic, {
+            "reason": "MAX_RETRIES_EXCEEDED",
+            "error_detail": record.get("error_detail") or "Delivery failed after max retries",
+            "retry_count": record.get("retry_count", settings.max_retries),
+            "failed_at": iso_utc(),
+            "notification": record,
+        })
 
     def _publish(self, topic: str, body: dict) -> None:
         if self._client is None:

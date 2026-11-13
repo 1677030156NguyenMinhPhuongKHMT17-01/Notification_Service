@@ -13,6 +13,7 @@ Persistence (SQLite/PostgreSQL) is deferred to Lab 05 (Docker Compose).
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import base64
 import binascii
 import logging
@@ -29,11 +30,17 @@ logger = logging.getLogger("notification.store")
 Event = Union[AlertCreatedEvent, AlertEscalatedEvent, AlertResolvedEvent]
 
 SEVERITY_ROUTING: Dict[str, List[str]] = {
-    "critical": ["telegram", "email", "sms"],
-    "high": ["telegram", "email"],
-    "medium": ["telegram"],
     "low": ["email"],
+    "medium": ["telegram", "email"],
+    "high": ["telegram", "email", "discord"],
+    "critical": ["telegram", "email", "discord", "sms"],
 }
+
+
+def _utc_dt(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 class InvalidCursor(ValueError):
@@ -50,13 +57,14 @@ class NotificationStore:
         self._logs: List[dict] = []
         self._by_id: Dict[str, dict] = {}
         self._by_event: Dict[str, dict] = {}
+        self._resolved_at: Dict[str, datetime] = {}
         self._timers: List[threading.Timer] = []
         self.dlq_publisher: Optional[Callable[[dict], None]] = None
 
     # ------------------------------------------------------------------ helpers
     def _latest_for_alert(self, alert_id: str) -> Optional[dict]:
         for item in reversed(self._logs):
-            if item["alert_id"] == alert_id:
+            if item["alert_id"] == alert_id and item["status"] != "duplicate_ignored":
                 return item
         return None
 
@@ -65,32 +73,86 @@ class NotificationStore:
         if isinstance(event, AlertCreatedEvent):
             severity = event.severity.value
             message = event.message
-            channels = [c.value for c in event.target_channels] if event.target_channels else SEVERITY_ROUTING[severity]
+            channels = (
+                [c.value for c in event.target_channels]
+                if event.target_channels
+                else list(SEVERITY_ROUTING[severity])
+            )
         elif isinstance(event, AlertEscalatedEvent):
-            base = (previous or {}).get("severity") or "high"
-            severity = "critical" if event.escalation_level >= 3 else base
-            message = f"Cảnh báo {event.alert_id} đã leo thang lên cấp {event.escalation_level}"
-            if event.target_channels:
-                channels = [c.value for c in event.target_channels]
+            if event.severity is not None:
+                severity = event.severity.value
             else:
-                channels = SEVERITY_ROUTING[severity]
+                base = (previous or {}).get("severity") or "high"
+                severity = "critical" if event.escalation_level >= 3 else base
+            message = (
+                event.message
+                if event.message is not None
+                else f"Cảnh báo {event.alert_id} đã leo thang lên cấp {event.escalation_level}"
+            )
+            channels = (
+                [c.value for c in event.target_channels]
+                if event.target_channels
+                else list(SEVERITY_ROUTING[severity])
+            )
         else:
             severity = (previous or {}).get("severity")
             message = f"Cảnh báo {event.alert_id} đã được xử lý: {event.resolution_note}"
-            channels = list((previous or {}).get("target_channels") or ["telegram"])
+            channels = (
+                [c.value for c in event.target_channels]
+                if event.target_channels
+                else list((previous or {}).get("target_channels") or ["telegram"])
+            )
         return severity, message[:500], channels
 
     # --------------------------------------------------------------- processing
     def process(self, event: Event, origin: str) -> Tuple[dict, bool]:
         """Create a notification log for `event`. Returns (log, is_duplicate)."""
         event_id = str(event.event_id)
+        event_ts = _utc_dt(event.timestamp)
         with self._lock:
             existing = self._by_event.get(event_id)
             if existing is not None:
                 logger.info("duplicate event_id=%s origin=%s ignored", event_id, origin)
-                return existing, True
+                return dict(existing), True
 
             severity, message, channels = self._derive(event)
+            resolved_ts = self._resolved_at.get(event.alert_id)
+            if not isinstance(event, AlertResolvedEvent) and resolved_ts is not None and event_ts <= resolved_ts:
+                detail = (
+                    f"SUPPRESSED_OUT_OF_ORDER: {event.event_name} ({event_ts.isoformat()}) "
+                    f"arrived after alert.resolved ({resolved_ts.isoformat()}) for {event.alert_id}"
+                )[:500]
+                record = {
+                    "notification_id": str(uuid.uuid4()),
+                    "event_id": event_id,
+                    "event_name": event.event_name,
+                    "correlationId": event.correlationId,
+                    "source": event.source,
+                    "alert_id": event.alert_id,
+                    "severity": severity,
+                    "message": message,
+                    "channel": channels[0],
+                    "target_channels": channels,
+                    "sent": False,
+                    "status": "duplicate_ignored",
+                    "retry_count": 0,
+                    "error_detail": detail,
+                    "created_at": iso_utc(),
+                    "delivered_at": None,
+                }
+                self._logs.append(record)
+                self._by_id[record["notification_id"]] = record
+                self._by_event[event_id] = record
+                logger.warning(
+                    "SUPPRESSED_OUT_OF_ORDER event_name=%s event_id=%s alert_id=%s origin=%s correlationId=%s",
+                    record["event_name"], event_id, record["alert_id"], origin, record["correlationId"],
+                )
+                return dict(record), False
+
+            if isinstance(event, AlertResolvedEvent):
+                if resolved_ts is None or event_ts > resolved_ts:
+                    self._resolved_at[event.alert_id] = event_ts
+
             record = {
                 "notification_id": str(uuid.uuid4()),
                 "event_id": event_id,
@@ -118,9 +180,14 @@ class NotificationStore:
             record["event_name"], event_id, record["alert_id"], origin, channels, record["correlationId"],
         )
         self._attempt(record)
-        if record["status"] == "retrying":
-            self._schedule_auto_retry(record["notification_id"])
-        return dict(record), False
+        with self._lock:
+            status_now = record["status"]
+            snapshot = dict(record)
+        if status_now == "retrying":
+            self._schedule_auto_retry(snapshot["notification_id"])
+        elif status_now == "failed":
+            self._send_to_dlq(snapshot)
+        return snapshot, False
 
     def _attempt(self, record: dict) -> None:
         ok, errors = deliver_all(record["target_channels"], record["alert_id"], record["message"] or "", record["correlationId"])
@@ -145,12 +212,16 @@ class NotificationStore:
             if record is None or record["status"] != "retrying":
                 return
             record["retry_count"] += 1
-        logger.info("auto-retry notification_id=%s attempt=%s", notification_id, record["retry_count"])
+            attempt_no = record["retry_count"]
+        logger.info("auto-retry notification_id=%s attempt=%s", notification_id, attempt_no)
         self._attempt(record)
-        if record["status"] == "retrying":
+        with self._lock:
+            status_now = record["status"]
+            snapshot = dict(record)
+        if status_now == "retrying":
             self._schedule_auto_retry(notification_id)
-        elif record["status"] == "failed":
-            self._send_to_dlq(record)
+        elif status_now == "failed":
+            self._send_to_dlq(snapshot)
 
     def _send_to_dlq(self, record: dict) -> None:
         logger.error(
@@ -168,16 +239,28 @@ class NotificationStore:
             record = self._by_id.get(notification_id)
             if record is None:
                 return None
-            if record["retry_count"] >= settings.max_retries:
+            status_now = record["status"]
+            if status_now == "retrying":
+                raise RetryLimitReached(
+                    f"Notification {notification_id} đang trong tiến trình auto-retry"
+                )
+            if status_now == "duplicate_ignored":
+                raise RetryLimitReached(
+                    f"Notification {notification_id} ở trạng thái duplicate_ignored (SUPPRESSED_OUT_OF_ORDER), không thể retry"
+                )
+            if status_now != "failed" and record["retry_count"] >= settings.max_retries:
                 raise RetryLimitReached(
                     f"Notification {notification_id} đã đạt tối đa {settings.max_retries} lần retry"
                 )
             record["retry_count"] += 1
             record["status"] = "retrying"
         self._attempt(record)
-        if record["status"] == "failed":
-            self._send_to_dlq(record)
-        return dict(record)
+        with self._lock:
+            final_status = record["status"]
+            snapshot = dict(record)
+        if final_status == "failed":
+            self._send_to_dlq(snapshot)
+        return snapshot
 
     # ------------------------------------------------------------------ queries
     def get(self, notification_id: str) -> Optional[dict]:
@@ -218,6 +301,7 @@ class NotificationStore:
             self._logs.clear()
             self._by_id.clear()
             self._by_event.clear()
+            self._resolved_at.clear()
 
 
 def encode_cursor(offset: int) -> str:

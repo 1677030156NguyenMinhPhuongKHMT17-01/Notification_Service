@@ -14,7 +14,7 @@ from uuid import UUID
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
-ALERT_ID_PATTERN = r"^ALT-[0-9]{3,6}$"
+ALERT_ID_PATTERN = r"^ALT-[0-9]{3,}$"
 
 
 class SeverityLevel(str, Enum):
@@ -43,7 +43,7 @@ class _EventBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     event_id: UUID
-    correlationId: str = Field(min_length=4, max_length=100)
+    correlationId: str = Field(min_length=1, max_length=100)
     source: Literal["core-business"]
     alert_id: str = Field(pattern=ALERT_ID_PATTERN)
     timestamp: AwareDatetime
@@ -65,13 +65,16 @@ class AlertCreatedEvent(_EventBase):
 
 class AlertEscalatedEvent(_EventBase):
     event_name: Literal["alert.escalated"]
-    escalation_level: int = Field(ge=1, le=10)
+    escalation_level: int = Field(ge=1, le=5)
+    severity: Optional[SeverityLevel] = None
+    message: Optional[str] = Field(default=None, min_length=5, max_length=500)
     target_channels: Optional[List[NotificationChannel]] = Field(default=None, min_length=1, max_length=4)
 
 
 class AlertResolvedEvent(_EventBase):
     event_name: Literal["alert.resolved"]
     resolution_note: str = Field(min_length=3, max_length=500)
+    target_channels: Optional[List[NotificationChannel]] = Field(default=None, min_length=1, max_length=4)
 
 
 NotificationEventRequest = Annotated[
@@ -103,7 +106,7 @@ class NotificationLog(BaseModel):
     target_channels: List[NotificationChannel]
     sent: bool
     status: DeliveryStatus
-    retry_count: int = Field(ge=0, le=3)
+    retry_count: int = Field(ge=0)
     error_detail: Optional[str] = None
     created_at: str
     delivered_at: Optional[str] = None
