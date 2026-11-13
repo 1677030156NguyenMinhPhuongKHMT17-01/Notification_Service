@@ -11,7 +11,7 @@ Repository portfolio cá nhân cho học phần **FIT4110 – Dịch vụ kết 
 | **Nhóm** | Nhóm 6 *(hoặc A7 / B7)* — Phụ trách **Notification Service** |
 | **Service phụ trách** | **Notification Service** (Dịch vụ gửi cảnh báo đa kênh) |
 | **Cặp phụ thuộc (Pairing Matrix)** | **Pair #4: Core Business → Notification Service** (Async qua MQTT Broker `mqtt://192.168.1.51:1883` / Topic `campus.alerts`: `alert.created`, `alert.escalated`, `alert.resolved` + REST API fallback `/notifications`) |
-| **Công nghệ dự kiến** | Python 3.11 + FastAPI, MQTT (`paho-mqtt`) / RabbitMQ, SQLite/PostgreSQL, Telegram Bot API + Email + SMS/Console Mock |
+| **Công nghệ sử dụng** | Python 3.11 + FastAPI + Pydantic v2, Eclipse Mosquitto 2 MQTT (`paho-mqtt`), PostgreSQL 15 (`postgres:15-alpine`) / in-memory store, stdout mock & optional webhook notifications |
 
 ---
 
@@ -35,6 +35,6 @@ FIT4110_<MãSinhViên>/
 | **Buổi 1 (Lab 01)** | [`01_Setup/`](./01_Setup/) | Kiểm tra toolchain, pull Docker images, chạy smoke test, thu thập minh chứng môi trường (`evidence/buoi-01/`) và đặc tả **Service Boundary** cho **Notification Service** (đồng bộ 100% với `event-contract-04-core-notification.md`) | Đã hoàn thành |
 | **Buổi 2 (Lab 02)** | [`02_OpenAPI/`](./02_OpenAPI/) | Đàm phán hợp đồng **Pair #4 (`Core Business → Notification`)**, hoàn thiện Event Contract, `openapi.yaml` 3.1, `negotiation-log.md` và minh chứng Spectral + Prism | Đã hoàn thành |
 | **Buổi 3 (Lab 03)** | [`03_Postman/`](./03_Postman/) | Kiểm thử Hợp đồng Queue Async Pair 04 (`queue-contract-tests/pair-04-core-notification/` với Ajv JSON Schema Draft 2020-12 + Semantic Stub `Q05–Q09`) và bộ kiểm thử Postman/Newman + Prism Mock (`TC01–TC16`) | Đã hoàn thành |
-| **Buổi 4 (Lab 04)** | [`04_Docker/`](./04_Docker/) | Đóng gói **Notification Service** (FastAPI + Pydantic v2 + MQTT consumer stub) bằng multi-stage non-root `Dockerfile`, `HEALTHCHECK /health`, `.env.example`, kiểm thử `pytest` (6/6 PASS) và Newman trên container thực tế (`18/18 requests, 33/33 assertions PASS`) | Đã hoàn thành |
+| **Buổi 4 (Lab 04)** | [`04_Docker/`](./04_Docker/) | Đóng gói **Notification Service** (FastAPI + Pydantic v2 + MQTT consumer) bằng multi-stage non-root `Dockerfile`, `HEALTHCHECK /health`, `.env.example`, kiểm thử `pytest` (`13/13 PASS`) và Newman trên container thực tế (`18/18 requests, 33/33 assertions PASS`) | Đã hoàn thành |
 | **Buổi 5 (Lab 05)** | [`05_Compose/`](./05_Compose/) | Điều phối stack 3 service (`api` + `db` PostgreSQL 15 + `mqtt-broker` Mosquitto 2) qua `docker-compose.yml`, `/ready` dependency check, persistence qua restart, Async MQTT E2E (`campus.alerts`) và Newman (`19/19 requests, 35/35 assertions PASS`) | Đã hoàn thành |
 | **Buổi 6 (Lab 06)** | `06_Plugathon/` | Tích hợp thực tế với `Core Business Service` qua MQTT Broker `mqtt://192.168.1.51:1883` (`campus.alerts`), hoàn thiện Demo Pack | Dự kiến |

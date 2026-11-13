@@ -6,7 +6,7 @@ info:
     Hợp đồng API (OpenAPI 3.1.0) của **Notification Service (Nhóm 6)** trong hệ thống **Smart Campus Operations Platform**.
     
     - **Luồng chính (Async Pub/Sub — Pair #4):** Subscribe vào **MQTT Broker `mqtt://192.168.1.51:1883` (Anonymous)** trên topic `campus.alerts` để nhận 3 sự kiện bất đồng bộ từ `Core Business Service`: `alert.created`, `alert.escalated`, `alert.resolved` (theo convention `snake_case` đã chốt trong `event-contract-04-core-notification.md`).
-    - **Luồng phụ (REST Sync Fallback & Log Query):** Cung cấp các endpoint REST chuẩn OpenAPI 3.1 (`POST /notifications`, `GET /notifications`, `GET /notifications/recent`, `GET /notifications/{notification_id}`, `GET /health`) để gửi thông báo thủ công (fallback/test), tra cứu lịch sử gửi cho Analytics/Admin và kiểm tra trạng thái sống của service.
+    - **Luồng phụ (REST Sync Fallback & Log Query):** Cung cấp các endpoint REST chuẩn OpenAPI 3.1 (`POST /notifications`, `GET /notifications`, `GET /notifications/recent`, `GET /notifications/{notification_id}`, `POST /notifications/{notification_id}/retry`, `GET /health`, `GET /ready`) để gửi thông báo thủ công (fallback/test), tra cứu lịch sử gửi cho Analytics/Admin và kiểm tra trạng thái sống/sẵn sàng của service.
   contact:
     name: Nhóm 6 — Notification Service Team
     email: notification-team@campus.local
@@ -49,6 +49,64 @@ paths:
                     mqtt_broker: mqtt://192.168.1.51:1883
                     subscribed_topic: campus.alerts
                     time: '2026-08-27T15:30:00Z'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /ready:
+    get:
+      operationId: getReadiness
+      summary: Kiểm tra mức độ sẵn sàng của Notification Service và các dịch vụ phụ thuộc
+      description: |
+        Endpoint công khai dùng cho Docker Compose / Kubernetes readiness probe.
+        Xác nhận kết nối tới PostgreSQL (`database.ready`) và MQTT Broker (`mqtt.connected`).
+        Trả về `200 OK` (`ready`) khi tất cả dependency cần thiết sẵn sàng hoặc `503 Service Unavailable` (`degraded`).
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: Notification Service và toàn bộ dependency đang sẵn sàng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessStatus'
+              examples:
+                ready:
+                  value:
+                    status: ready
+                    service: notification-service
+                    version: '0.5.0'
+                    dependencies:
+                      database:
+                        backend: postgresql
+                        ready: true
+                      mqtt:
+                        enabled: true
+                        broker: mqtt://mqtt-broker:1883
+                        topic: campus.alerts
+                        connected: true
+                    time: '2026-11-12T16:45:00Z'
+        '503':
+          description: Một hoặc nhiều dependency (PostgreSQL hoặc MQTT Broker) chưa sẵn sàng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessStatus'
+              examples:
+                degraded:
+                  value:
+                    status: degraded
+                    service: notification-service
+                    version: '0.5.0'
+                    dependencies:
+                      database:
+                        backend: postgresql
+                        ready: true
+                      mqtt:
+                        enabled: true
+                        broker: mqtt://mqtt-broker:1883
+                        topic: campus.alerts
+                        connected: false
+                    time: '2026-11-12T16:45:00Z'
 
   /notifications:
     post:
@@ -164,7 +222,7 @@ paths:
           description: Lọc theo mã cảnh báo nghiệp vụ (ví dụ ALT-001).
           schema:
             type: string
-            pattern: '^ALT-[0-9]{3,6}$'
+            pattern: '^ALT-[0-9]{3,}$'
         - name: status
           in: query
           required: false
@@ -262,8 +320,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
@@ -448,6 +504,79 @@ components:
           description: Thời điểm kiểm tra trạng thái.
           example: '2026-08-27T15:30:00Z'
 
+    ReadinessStatus:
+      type: object
+      additionalProperties: false
+      required: [status, service, version, dependencies, time]
+      properties:
+        status:
+          type: string
+          enum: [ready, degraded]
+          description: Trạng thái tổng thể của service và các dependency.
+          example: ready
+        service:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Tên định danh service.
+          example: notification-service
+        version:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: Phiên bản service đang chạy.
+          example: '0.5.0'
+        dependencies:
+          type: object
+          additionalProperties: false
+          required: [database, mqtt]
+          description: Trạng thái chi tiết của từng dịch vụ phụ thuộc.
+          properties:
+            database:
+              type: object
+              additionalProperties: false
+              required: [backend, ready]
+              properties:
+                backend:
+                  type: string
+                  enum: [postgresql, memory]
+                  description: Backend lưu trữ đang được sử dụng.
+                  example: postgresql
+                ready:
+                  type: boolean
+                  description: Kết quả kiểm tra kết nối tới cơ sở dữ liệu.
+                  example: true
+            mqtt:
+              type: object
+              additionalProperties: false
+              required: [enabled, broker, topic, connected]
+              properties:
+                enabled:
+                  type: boolean
+                  description: Cờ bật/tắt MQTT subscriber.
+                  example: true
+                broker:
+                  type: string
+                  minLength: 5
+                  maxLength: 120
+                  description: Địa chỉ MQTT Broker đang cấu hình.
+                  example: mqtt://mqtt-broker:1883
+                topic:
+                  type: string
+                  minLength: 2
+                  maxLength: 80
+                  description: Topic đang đăng ký lắng nghe.
+                  example: campus.alerts
+                connected:
+                  type: boolean
+                  description: Trạng thái kết nối thực tế tới MQTT Broker.
+                  example: true
+        time:
+          type: string
+          format: date-time
+          description: Thời điểm kiểm tra readiness.
+          example: '2026-11-12T16:45:00Z'
+
     SeverityLevel:
       type: string
       enum: [low, medium, high, critical]
@@ -503,7 +632,7 @@ components:
           example: alert.created
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên suốt giữa các service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -514,7 +643,7 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo từ Core Business.
           example: ALT-001
         severity:
@@ -564,7 +693,7 @@ components:
           example: alert.escalated
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên suốt giữa các service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -575,15 +704,22 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo được leo thang.
           example: ALT-001
         escalation_level:
           type: integer
           minimum: 1
-          maximum: 10
-          description: Cấp độ leo thang của cảnh báo.
+          maximum: 5
+          description: Cấp độ leo thang của cảnh báo (1..5).
           example: 2
+        severity:
+          $ref: '#/components/schemas/SeverityLevel'
+        message:
+          type: string
+          minLength: 5
+          maxLength: 500
+          description: Thông điệp leo thang bổ sung (tùy chọn).
         target_channels:
           type: array
           minItems: 1
@@ -622,7 +758,7 @@ components:
           example: alert.resolved
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên suốt giữa các service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -633,7 +769,7 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo đã được giải quyết.
           example: ALT-001
         resolution_note:
@@ -642,6 +778,14 @@ components:
           maxLength: 500
           description: Ghi chú kết quả xử lý sự cố.
           example: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.
+        target_channels:
+          type: array
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+          description: Danh sách kênh gửi thông báo giải quyết (tùy chọn).
         timestamp:
           type: string
           format: date-time
@@ -683,7 +827,7 @@ components:
           example: alert.created
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -695,11 +839,13 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo nghiệp vụ.
           example: ALT-001
         severity:
-          $ref: '#/components/schemas/SeverityLevel'
+          oneOf:
+            - $ref: '#/components/schemas/SeverityLevel'
+            - type: 'null'
         message:
           type: [string, 'null']
           maxLength: 500
@@ -724,8 +870,7 @@ components:
         retry_count:
           type: integer
           minimum: 0
-          maximum: 3
-          description: Số lần đã thử lại (tối đa 3 lần, interval 5s).
+          description: Số lần đã thử lại (auto-retry tối đa 3 lần, interval 5s; có thể tăng thêm khi operator retry thủ công).
           example: 0
         error_detail:
           type: [string, 'null']
@@ -852,20 +997,6 @@ components:
             instance: https://api.campus.local/notifications/recent
             errors: []
 
-    Forbidden:
-      description: Không có quyền truy cập tài nguyên thông báo này
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: https://campus.local/errors/forbidden
-            title: Không đủ quyền truy cập
-            status: 403
-            detail: Token hiện tại không có quyền xem log thông báo hệ thống
-            instance: https://api.campus.local/notifications/recent
-            errors: []
-
     NotFound:
       description: Không tìm thấy bản ghi thông báo theo notification_id
       content:
@@ -923,4 +1054,18 @@ components:
             status: 500
             detail: Không thể kết nối tới kênh gửi thông báo sau 3 lần retry
             instance: https://api.campus.local/notifications
+            errors: []
+
+    ServiceUnavailable:
+      description: Cơ sở dữ liệu hoặc dịch vụ phụ thuộc chưa sẵn sàng
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://campus.local/errors/service-unavailable
+            title: Cơ sở dữ liệu chưa sẵn sàng
+            status: 503
+            detail: Không thể kết nối PostgreSQL
+            instance: https://api.campus.local/health
             errors: []

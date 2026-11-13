@@ -1,13 +1,21 @@
 # Optional Compose override for Lab 06 Plug-a-thon on the shared class network.
 # Prerequisite: docker network create class-net
-# Usage: docker compose -f docker-compose.yml -f docker-compose.plugathon.yml up -d
+# Usage:
+#   MQTT_BROKER_URL=mqtt://192.168.1.51:1883 docker compose -f docker-compose.yml -f docker-compose.plugathon.yml up -d --build
 services:
+  mqtt-broker:
+    # Avoid host :1883 collision when a shared class broker is already bound on :1883
+    ports: !override []
+
   api:
     environment:
-      MQTT_BROKER_URL: mqtt://192.168.1.51:1883
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://192.168.1.51:1883}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-notification-service-g6-plugathon}
     networks:
-      - team-internal
-      - class-net
+      team-internal: {}
+      class-net:
+        aliases:
+          - notification-service
 
 networks:
   class-net:

@@ -7,7 +7,7 @@
 
 ## 1. Unit Tests & Compose Startup
 
-- Docker `test` stage (`pytest -q tests`): **PASSED** ([`docker-test-stage.log`](./docker-test-stage.log)).
+- Docker `test` stage (`pytest -q tests` build & `pytest -v tests` verify): **13/13 PASSED** ([`docker-test-stage.log`](./docker-test-stage.log)).
 - `docker compose up -d --build --wait`: Cả 3 container `fit4110-db-lab05`, `fit4110-mqtt-lab05`, `fit4110-api-lab05` đạt trạng thái `healthy` đúng thứ tự `depends_on` ([`compose-up.log`](./compose-up.log), [`compose-ps.txt`](./compose-ps.txt)).
 
 ---
@@ -26,6 +26,6 @@ Chi tiết log tại [`readiness-checks.log`](./readiness-checks.log):
 
 ## 3. End-to-End Verification
 
-1. **Async MQTT (`campus.alerts` → PostgreSQL → REST):** Bắn JSON `alert.created` (`ALT-501`) vào `mqtt-broker:1883`, `api` nhận bất đồng bộ qua `team-internal`, lưu vào PostgreSQL và truy vấn lại `200 OK` qua `GET /notifications?alert_id=ALT-501` ([`mqtt-e2e.log`](./mqtt-e2e.log)).
-2. **Newman trên Compose stack (`npm run test:compose`):** **19/19 requests, 35/35 assertions PASS, 0 failures**, average `20ms` ([`newman-compose-cli.txt`](./newman-compose-cli.txt), [`../../reports/newman-lab05-compose.html`](../../reports/newman-lab05-compose.html), [`../../reports/newman-lab05-compose.xml`](../../reports/newman-lab05-compose.xml)).
-3. **PostgreSQL Persistence sau restart:** Đếm trực tiếp trong PostgreSQL (`total_rows = 6`), chạy `docker compose restart api`, đợi `healthy` và truy vấn lại `ALT-501` thành công ([`db-persistence.log`](./db-persistence.log), [`compose-services.log`](./compose-services.log)).
+1. **Async MQTT (`campus.alerts` → PostgreSQL → REST & DLQ & Q09):** Bắn JSON `alert.created` (`ALT-501`, `severity=high`) vào `mqtt-broker:1883`, `api` nhận bất đồng bộ qua `team-internal`, tự định tuyến `target_channels=["telegram","email","discord"]`, lưu PostgreSQL và truy vấn `200 OK` qua `GET /notifications?alert_id=ALT-501`; kiểm chứng `invalid-schema` (`ALT-502`) chuyển sang `campus.alerts.dlq` (`SCHEMA_VALIDATION_FAILED`) và `ooo` (`ALT-520`) bị chặn với `status="duplicate_ignored"` (`SUPPRESSED_OUT_OF_ORDER`) ([`mqtt-e2e.log`](./mqtt-e2e.log)).
+2. **Newman trên Compose stack (`npm run test:compose`):** **19/19 requests, 35/35 assertions PASS, 0 failures**, duration `2.1s`, average `28ms` `[min: 4ms, max: 75ms, s.d.: 23ms]` ([`newman-compose-cli.txt`](./newman-compose-cli.txt), [`../../reports/newman-lab05-compose.html`](../../reports/newman-lab05-compose.html), [`../../reports/newman-lab05-compose.xml`](../../reports/newman-lab05-compose.xml)).
+3. **PostgreSQL Persistence sau restart:** Đếm trực tiếp trong PostgreSQL (`total_rows = 8`), chạy `docker compose restart api`, đợi `healthy`, kiểm tra lại `total_rows = 8` và truy vấn `ALT-501` thành công ([`db-persistence.log`](./db-persistence.log), [`compose-services.log`](./compose-services.log)).

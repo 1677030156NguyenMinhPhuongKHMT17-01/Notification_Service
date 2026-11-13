@@ -56,8 +56,8 @@ docker compose exec -T api id
 curl -fsS http://localhost:8000/health
 curl -fsS http://localhost:8000/ready
 
-# 3. PostgreSQL readiness
-docker compose exec -T db pg_isready -U lab05 -d notificationdb
+# 3. PostgreSQL readiness (tự động đọc POSTGRES_USER & POSTGRES_DB trong container db)
+docker compose exec -T db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 
 # 4. MQTT Broker readiness
 docker compose exec -T mqtt-broker mosquitto_pub -h 127.0.0.1 -p 1883 -t health/ping -m ok
@@ -94,6 +94,19 @@ Sau đó truy vấn lại qua REST API (kể cả sau khi `docker compose restar
 curl -H "Authorization: Bearer local-dev-token" "http://localhost:8000/notifications?alert_id=ALT-501"
 ```
 
+Hoặc dùng script demo có sẵn trong `scripts/` để test các kịch bản (`created`, `escalated`, `resolved`, `lifecycle`, `invalid-schema`, `ooo`) và theo dõi DLQ (`campus.alerts.dlq`):
+
+```bash
+# Terminal 1: Theo dõi campus.alerts.dlq
+python scripts/mqtt_watch_dlq.py --timeout 20 --count 1
+
+# Terminal 2: Bắn demo event hợp lệ và event lỗi schema
+python scripts/mqtt_publish_demo.py --scenario created --alert-id ALT-501 --severity high
+python scripts/mqtt_publish_demo.py --scenario invalid-schema
+```
+
+> Lưu ý: Kiểm thử Q09 out-of-order suppression sẽ giữ trạng thái `alert.resolved` của `ALT-001` (`2026-08-27T16:30:00Z`) trong volume `db-data`. Nếu muốn chạy lại `npm run test:compose` từ đầu, hãy dọn volume sạch bằng `docker compose down -v` trước khi khởi động lại.
+
 ---
 
 ## 5. Dừng stack & Plug-a-thon (Lab 06)
@@ -103,10 +116,11 @@ docker compose down        # giữ lại volume dữ liệu PostgreSQL
 docker compose down -v     # xóa cả volume db-data
 ```
 
-Khi kết nối với các nhóm khác trên mạng chung `class-net` ở Lab 06:
+Khi kết nối với các nhóm khác trên mạng chung `class-net` ở Lab 06 (tham số hóa `MQTT_BROKER_URL` / `MQTT_CLIENT_ID`, gắn alias `notification-service`, và tránh xung đột cổng host `:1883`):
 
 ```bash
 docker network create class-net || true
-docker compose -f docker-compose.yml -f docker-compose.plugathon.yml up -d
+APP_PORT=8080 MQTT_BROKER_URL=mqtt://192.168.1.51:1883 \
+  docker compose -f docker-compose.yml -f docker-compose.plugathon.yml up -d --build
 ```
 

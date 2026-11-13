@@ -1,26 +1,17 @@
-=== 1. Non-root user ===
+=== 1. Non-root API container user ===
+$ docker compose exec -T api id
 uid=10001(appuser) gid=10001(appgroup) groups=10001(appgroup)
 
-=== 2. DB pg_isready ===
+=== 2. PostgreSQL readiness ===
+$ docker compose exec -T db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 /var/run/postgresql:5432 - accepting connections
 
-=== 3. MQTT mosquitto_pub health ===
-mosquitto_pub exit=0
+=== 3. Mosquitto broker publish check ===
+$ docker compose exec -T mqtt-broker mosquitto_pub -h localhost -p 1883 -t campus.alerts.healthcheck -m ok
+exit=0 
 
-=== 4. API GET /health ===
-HTTP/1.1 200 OK
-date: Thu, 12 Nov 2026 16:48:51 GMT
-server: uvicorn
-content-length: 153
-content-type: application/json
+=== 4. GET /health ===
+{"status":"ok","service":"notification-service","mqtt_broker":"mqtt://mqtt-broker:1883","subscribed_topic":"campus.alerts","time":"2026-11-13T10:57:47Z"}
 
-{"status":"ok","service":"notification-service","mqtt_broker":"mqtt://mqtt-broker:1883","subscribed_topic":"campus.alerts","time":"2026-11-12T16:48:51Z"}
-
-=== 5. API GET /ready ===
-HTTP/1.1 200 OK
-date: Thu, 12 Nov 2026 16:48:51 GMT
-server: uvicorn
-content-length: 265
-content-type: application/json
-
-{"status":"ready","service":"notification-service","version":"0.5.0","dependencies":{"database":{"backend":"postgresql","ready":true},"mqtt":{"enabled":true,"broker":"mqtt://mqtt-broker:1883","topic":"campus.alerts","connected":true}},"time":"2026-11-12T16:48:51Z"}
+=== 5. GET /ready ===
+{"status":"ready","service":"notification-service","version":"0.5.0","dependencies":{"database":{"backend":"postgresql","ready":true},"mqtt":{"enabled":true,"broker":"mqtt://mqtt-broker:1883","topic":"campus.alerts","connected":true}},"time":"2026-11-13T10:57:47Z"}

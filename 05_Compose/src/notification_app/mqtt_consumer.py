@@ -10,9 +10,12 @@ together with the validation error (consumer rule Q04 in the event contract).
 
 from __future__ import annotations
 
+import concurrent.futures
+from concurrent.futures import Future, ThreadPoolExecutor
 import json
 import logging
-from typing import Optional
+import threading
+from typing import Optional, Set
 from urllib.parse import urlparse
 
 from pydantic import ValidationError
@@ -25,9 +28,17 @@ logger = logging.getLogger("notification.mqtt")
 
 
 class MqttConsumer:
-    def __init__(self) -> None:
+    def __init__(self, max_workers: Optional[int] = None) -> None:
         self._client = None
         self.connected = False
+        self._max_workers = max_workers or settings.mqtt_worker_threads
+        self._executor: Optional[ThreadPoolExecutor] = ThreadPoolExecutor(
+            max_workers=self._max_workers,
+            thread_name_prefix="mqtt-worker",
+        )
+        self._futures_lock = threading.Lock()
+        self._futures: Set[Future] = set()
+        self._shutting_down = False
 
     def start(self) -> None:
         try:
@@ -35,6 +46,13 @@ class MqttConsumer:
         except ImportError:  # pragma: no cover
             logger.error("paho-mqtt is not installed; MQTT consumer disabled")
             return
+
+        if self._executor is None or self._shutting_down:
+            self._shutting_down = False
+            self._executor = ThreadPoolExecutor(
+                max_workers=self._max_workers,
+                thread_name_prefix="mqtt-worker",
+            )
 
         url = urlparse(settings.mqtt_broker_url)
         host, port = url.hostname or "localhost", url.port or 1883
@@ -52,9 +70,28 @@ class MqttConsumer:
         store.dlq_publisher = self.publish_dlq
 
     def stop(self) -> None:
+        self._shutting_down = True
+        if self._executor is not None:
+            self._executor.shutdown(wait=True)
+            self._executor = None
         if self._client is not None:
-            self._client.loop_stop()
-            self._client.disconnect()
+            if hasattr(self._client, "loop_stop"):
+                self._client.loop_stop()
+            if hasattr(self._client, "disconnect"):
+                self._client.disconnect()
+        self.connected = False
+        if store.dlq_publisher == self.publish_dlq:
+            store.dlq_publisher = None
+
+    def wait_idle(self, timeout: Optional[float] = None) -> None:
+        while True:
+            with self._futures_lock:
+                pending = list(self._futures)
+            if not pending:
+                return
+            concurrent.futures.wait(pending, timeout=timeout)
+            if timeout is not None:
+                return
 
     # ---------------------------------------------------------------- callbacks
     def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
@@ -69,25 +106,63 @@ class MqttConsumer:
         self.connected = False
         logger.warning("MQTT disconnected: %s (auto-reconnect enabled)", reason_code)
 
-    def _on_message(self, client, userdata, msg) -> None:
+    def _discard_future(self, future: Future) -> None:
+        with self._futures_lock:
+            self._futures.discard(future)
+
+    def _on_message(self, client, userdata, msg) -> Optional[Future]:
         raw = msg.payload.decode("utf-8", errors="replace")
+        topic = getattr(msg, "topic", settings.mqtt_topic)
+        if self._shutting_down or self._executor is None:
+            logger.warning("ignoring MQTT message on %s while consumer is stopped", topic)
+            return None
+        future = self._executor.submit(self._process_message, topic, raw)
+        with self._futures_lock:
+            self._futures.add(future)
+        future.add_done_callback(self._discard_future)
+        return future
+
+    def _process_message(self, topic: str, raw: str) -> None:
+        parsed_data = None
         try:
-            data = json.loads(raw)
-            event = event_adapter.validate_python(data)
+            parsed_data = json.loads(raw)
+            event = event_adapter.validate_python(parsed_data)
         except (json.JSONDecodeError, ValidationError) as exc:
-            logger.warning("invalid event on %s -> DLQ: %s", msg.topic, exc)
-            self._publish(settings.mqtt_dlq_topic, {
-                "reason": "schema_validation_failed",
-                "error": str(exc)[:500],
+            logger.warning("invalid event on %s -> DLQ: %s", topic, exc)
+            dlq_payload: dict = {
+                "topic": settings.mqtt_dlq_topic,
+                "reason": "SCHEMA_VALIDATION_FAILED",
+                "error_detail": str(exc)[:500],
+                "retry_count": 0,
+                "failed_at": iso_utc(),
+                "source_topic": topic,
                 "original_payload": raw[:4000],
-                "received_at": iso_utc(),
-            })
+            }
+            if isinstance(parsed_data, dict):
+                dlq_payload["event"] = parsed_data
+            self._publish(settings.mqtt_dlq_topic, dlq_payload)
             return
-        store.process(event, origin="mqtt")
+        try:
+            store.process(event, origin="mqtt")
+        except Exception:  # pragma: no cover
+            logger.exception("unhandled error processing MQTT event on %s", topic)
 
     # ---------------------------------------------------------------- publishing
     def publish_dlq(self, record: dict) -> None:
-        self._publish(settings.mqtt_dlq_topic, {"reason": "max_retries_exceeded", "notification": record, "received_at": iso_utc()})
+        self._publish(
+            settings.mqtt_dlq_topic,
+            {
+                "topic": settings.mqtt_dlq_topic,
+                "reason": "MAX_RETRIES_EXCEEDED",
+                "error_detail": record.get("error_detail") or "Delivery failed after max retries",
+                "retry_count": record.get("retry_count", 0),
+                "failed_at": iso_utc(),
+                "notification_id": record.get("notification_id"),
+                "event_id": record.get("event_id"),
+                "alert_id": record.get("alert_id"),
+                "notification": record,
+            },
+        )
 
     def _publish(self, topic: str, body: dict) -> None:
         if self._client is None:

@@ -1,6 +1,4 @@
 
-=== 7. Newman Compose Test ===
-
 > fit4110-lab05-notification-compose@0.5.0 test:compose
 > newman run postman/collections/FIT4110_lab05_notification_compose.postman_collection.json -e postman/environments/FIT4110_lab05_local.postman_environment.json -r cli,junit,htmlextra --reporter-junit-export reports/newman-lab05-compose.xml --reporter-htmlextra-export reports/newman-lab05-compose.html
 
@@ -10,54 +8,54 @@ FIT4110 Lab05 - Notification Service Compose End-to-End
 
 □ 00_Health
 └ TC01 - GET /health - container is alive and healthy
-  GET http://localhost:8000/health [200 OK, 327B, 33ms]
+  GET http://localhost:8000/health [200 OK, 327B, 37ms]
   √  Status code is 200
   √  Response has status=ok, service=notification-service, mqtt_broker and subscribed_topic
 
 └ TC01b - GET /ready - PostgreSQL and MQTT Broker dependencies are ready
-  GET http://localhost:8000/ready [200 OK, 439B, 10ms]
+  GET http://localhost:8000/ready [200 OK, 439B, 18ms]
   √  Status code is 200
   √  Database (postgresql) and MQTT Broker are ready
 
 □ 01_Functional
 └ TC02 - POST /notifications (alert.created) - happy path saves notificationId
-  POST http://localhost:8000/notifications [201 Created, 786B, 42ms]
+  POST http://localhost:8000/notifications [201 Created, 786B, 58ms]
   √  Status code is 201
   √  Response has NotificationLog fields and saves notificationId
 
 └ TC03 - POST /notifications (alert.escalated) - handles escalation event
-  POST http://localhost:8000/notifications [201 Created, 767B, 40ms]
+  POST http://localhost:8000/notifications [201 Created, 777B, 70ms]
   √  Escalated event returns 201
   √  Escalated log is delivered
 
 └ TC04 - POST /notifications (alert.resolved) - handles resolution event
-  POST http://localhost:8000/notifications [201 Created, 829B, 39ms]
+  POST http://localhost:8000/notifications [201 Created, 839B, 75ms]
   √  Resolved event returns 201
   √  Resolved log is delivered
 
 └ TC05 - GET /notifications - list notification logs with filter
-  GET http://localhost:8000/notifications?alert_id=ALT-001&limit=10 [200 OK, 1.88kB, 16ms]
+  GET http://localhost:8000/notifications?alert_id=ALT-001&limit=10 [200 OK, 1.9kB, 17ms]
   √  Status code is 200
   √  Response contains items array and pagination metadata
 
 └ TC06 - GET /notifications/recent - list recent notifications
-  GET http://localhost:8000/notifications/recent?limit=5 [200 OK, 2.4kB, 14ms]
+  GET http://localhost:8000/notifications/recent?limit=5 [200 OK, 1.9kB, 13ms]
   √  Status code is 200
   √  Recent items have valid channel enum
 
 └ TC07 - GET /notifications/{{notificationId}} - get saved notification detail
-  GET http://localhost:8000/notifications/6bb9981e-9e4d-467b-af9e-333242aaa139 [200 OK, 718B, 17ms]
+  GET http://localhost:8000/notifications/f3adca7c-4862-40ca-af3d-f488662709a8 [200 OK, 718B, 11ms]
   √  Status code is 200
   √  Response matches requested notification_id
 
 └ TC08 - POST /notifications/{{notificationId}}/retry - manual retry notification
-  POST http://localhost:8000/notifications/6bb9981e-9e4d-467b-af9e-333242aaa139/retry [200 OK, 718B, 37ms]
+  POST http://localhost:8000/notifications/f3adca7c-4862-40ca-af3d-f488662709a8/retry [200 OK, 718B, 53ms]
   √  Status code is 200
   √  Retry count incremented to >= 1
 
 □ 02_Auth
 └ TC09 - GET /notifications/recent - valid token is accepted
-  GET http://localhost:8000/notifications/recent?limit=1 [200 OK, 810B, 14ms]
+  GET http://localhost:8000/notifications/recent?limit=1 [200 OK, 820B, 28ms]
   √  Valid token request returns 200
 
 └ TC10 - POST /notifications - missing token returns 401 ProblemDetails
@@ -66,28 +64,28 @@ FIT4110 Lab05 - Notification Service Compose End-to-End
   √  Unauthorized response follows ProblemDetails
 
 └ TC11 - POST /notifications - invalid token is rejected on real container
-  POST http://localhost:8000/notifications [401 Unauthorized, 442B, 3ms]
+  POST http://localhost:8000/notifications [401 Unauthorized, 442B, 7ms]
   √  Invalid token returns 401 ProblemDetails on real container
 
 □ 03_Negative
 └ TC12 - POST /notifications - missing message and bad alert_id returns 422 ProblemDetails
-  POST http://localhost:8000/notifications [422 Unprocessable Entity, 2.05kB, 3ms]
+  POST http://localhost:8000/notifications [422 Unprocessable Entity, 1.91kB, 6ms]
   √  Invalid payload returns 400 or 422
   √  Error follows RFC 9457 ProblemDetails
 
 └ TC13 - POST /notifications - invalid channel enum (zalo) returns 422 ProblemDetails
-  POST http://localhost:8000/notifications [422 Unprocessable Entity, 2.27kB, 6ms]
+  POST http://localhost:8000/notifications [422 Unprocessable Entity, 2.03kB, 7ms]
   √  Invalid channel enum returns 400 or 422
   √  Error response includes detail and errors
 
 └ TC14 - GET /notifications/{unknown} - returns 404 ProblemDetails
-  GET http://localhost:8000/notifications/00000000-0000-0000-0000-000000000000 [404 Not Found, 491B, 16ms]
+  GET http://localhost:8000/notifications/00000000-0000-0000-0000-000000000000 [404 Not Found, 491B, 19ms]
   √  Unknown notification returns 404
   √  404 follows ProblemDetails
 
 □ 04_Boundary_Reliability
 └ TC15 - POST /notifications - boundary auto-routing when target_channels omitted
-  POST http://localhost:8000/notifications [201 Created, 843B, 40ms]
+  POST http://localhost:8000/notifications [201 Created, 853B, 50ms]
   √  Boundary payload without target_channels returns 201
   √  Critical severity auto-routes to [telegram, email, sms]
 
@@ -102,7 +100,7 @@ FIT4110 Lab05 - Notification Service Compose End-to-End
   √  Conflict response follows ProblemDetails
 
 └ TC18 - POST /notifications - local container latency under 1000ms
-  POST http://localhost:8000/notifications [201 Created, 764B, 40ms]
+  POST http://localhost:8000/notifications [201 Created, 764B, 51ms]
   √  Local container responds under 1000ms
 
 ┌─────────────────────────┬──────────────────┬──────────────────┐
@@ -118,9 +116,9 @@ FIT4110 Lab05 - Notification Service Compose End-to-End
 ├─────────────────────────┼──────────────────┼──────────────────┤
 │              assertions │               35 │                0 │
 ├─────────────────────────┴──────────────────┴──────────────────┤
-│ total run duration: 1873ms                                    │
+│ total run duration: 2.1s                                      │
 ├───────────────────────────────────────────────────────────────┤
-│ total data received: 14.24kB (approx)                         │
+│ total data received: 13.42kB (approx)                         │
 ├───────────────────────────────────────────────────────────────┤
-│ average response time: 20ms [min: 3ms, max: 42ms, s.d.: 14ms] │
+│ average response time: 28ms [min: 4ms, max: 75ms, s.d.: 23ms] │
 └───────────────────────────────────────────────────────────────┘

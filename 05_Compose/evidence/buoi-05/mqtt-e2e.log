@@ -1,3 +1,44 @@
+=== 1. Publish Pair-04 alert.created (ALT-501, severity=high -> auto-routed with discord) ===
+$ python scripts/mqtt_publish_demo.py --scenario created --alert-id ALT-501 --severity high
+[PUB 1/1] broker=mqtt://127.0.0.1:1883 topic=campus.alerts event_name=alert.created event_id=b842aaf7-eee2-4598-95ec-db6eade704c7 alert_id=ALT-501
+{"event_id": "b842aaf7-eee2-4598-95ec-db6eade704c7", "event_name": "alert.created", "correlationId": "req-demo-a8458d4c3d", "source": "core-business", "alert_id": "ALT-501", "severity": "high", "message": "Demo cảnh báo ALT-501 (severity=high) qua MQTT", "timestamp": "2026-11-13T10:57:52Z"}
 
-=== 6. Async MQTT -> PostgreSQL -> REST E2E ===
-{"items":[{"notification_id":"5c1eb03c-e121-4ee9-973b-4065cd68fb48","event_id":"123e4567-e89b-12d3-a456-426614175501","event_name":"alert.created","correlationId":"req-mqtt-e2e-05","source":"core-business","alert_id":"ALT-501","severity":"critical","message":"Sự cố bất thường phát qua MQTT nội bộ Lab 05","channel":"telegram","target_channels":["telegram","email"],"sent":true,"status":"delivered","retry_count":0,"error_detail":null,"created_at":"2026-11-12T16:48:51Z","delivered_at":"2026-11-12T16:48:51Z"}],"next_cursor":null,"has_more":false}
+=== Query GET /notifications?alert_id=ALT-501 ===
+{"items":[{"notification_id":"10c82444-ef70-4b19-9bed-2efe234427e2","event_id":"b842aaf7-eee2-4598-95ec-db6eade704c7","event_name":"alert.created","correlationId":"req-demo-a8458d4c3d","source":"core-business","alert_id":"ALT-501","severity":"high","message":"Demo cảnh báo ALT-501 (severity=high) qua MQTT","channel":"telegram","target_channels":["telegram","email","discord"],"sent":true,"status":"delivered","retry_count":0,"error_detail":null,"created_at":"2026-11-13T10:57:52Z","delivered_at":"2026-11-13T10:57:52Z"}],"next_cursor":null,"has_more":false}
+
+=== 2. Invalid schema -> DLQ (campus.alerts.dlq) ===
+$ python scripts/mqtt_publish_demo.py --scenario invalid-schema --alert-id ALT-502
+[PUB 1/1] broker=mqtt://127.0.0.1:1883 topic=campus.alerts event_name=alert.deleted event_id=d3a1421a-38fc-4578-8789-2e1832ab5638 alert_id=ALT-502
+{"event_id": "d3a1421a-38fc-4578-8789-2e1832ab5638", "event_name": "alert.deleted", "correlationId": "req-demo-0c15ecb038", "source": "core-business", "alert_id": "ALT-502", "severity": "EXTREME", "message": "Invalid demo event to test DLQ routing", "timestamp": "2026-11-13T10:57:55Z"}
+$ python scripts/mqtt_watch_dlq.py --timeout 10 --count 1
+[SUB] Listening broker=mqtt://127.0.0.1:1883 topic=campus.alerts.dlq
+[DLQ 2026-11-13T10:57:55Z] topic=campus.alerts.dlq
+{
+  "topic": "campus.alerts.dlq",
+  "reason": "SCHEMA_VALIDATION_FAILED",
+  "error_detail": "1 validation error for tagged-union[AlertCreatedEvent,AlertEscalatedEvent,AlertResolvedEvent]\n  Input tag 'alert.deleted' found using 'event_name' does not match any of the expected tags: 'alert.created', 'alert.escalated', 'alert.resolved' [type=union_tag_invalid, input_value={'event_id': 'd3a1421a-38... '2026-11-13T10:57:55Z'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.10/v/union_tag_invalid",
+  "retry_count": 0,
+  "failed_at": "2026-11-13T10:57:55Z",
+  "source_topic": "campus.alerts",
+  "original_payload": "{\"event_id\": \"d3a1421a-38fc-4578-8789-2e1832ab5638\", \"event_name\": \"alert.deleted\", \"correlationId\": \"req-demo-0c15ecb038\", \"source\": \"core-business\", \"alert_id\": \"ALT-502\", \"severity\": \"EXTREME\", \"message\": \"Invalid demo event to test DLQ routing\", \"timestamp\": \"2026-11-13T10:57:55Z\"}",
+  "event": {
+    "event_id": "d3a1421a-38fc-4578-8789-2e1832ab5638",
+    "event_name": "alert.deleted",
+    "correlationId": "req-demo-0c15ecb038",
+    "source": "core-business",
+    "alert_id": "ALT-502",
+    "severity": "EXTREME",
+    "message": "Invalid demo event to test DLQ routing",
+    "timestamp": "2026-11-13T10:57:55Z"
+  }
+}
+
+=== 3. Q09 Out-of-order suppression (ALT-520) ===
+$ python scripts/mqtt_publish_demo.py --scenario ooo --alert-id ALT-520
+[PUB 1/2] broker=mqtt://127.0.0.1:1883 topic=campus.alerts event_name=alert.resolved event_id=ea5b61f4-ce9b-4cb4-8437-f4564b53bb2a alert_id=ALT-520
+{"event_id": "ea5b61f4-ce9b-4cb4-8437-f4564b53bb2a", "event_name": "alert.resolved", "correlationId": "req-demo-c9adf5766c", "source": "core-business", "alert_id": "ALT-520", "resolution_note": "Đội vận hành đã xác minh và xử lý xong sự cố.", "timestamp": "2026-11-13T10:57:55Z"}
+[PUB 2/2] broker=mqtt://127.0.0.1:1883 topic=campus.alerts event_name=alert.created event_id=1d526425-1dd1-45a5-819d-49804ff02e3a alert_id=ALT-520
+{"event_id": "1d526425-1dd1-45a5-819d-49804ff02e3a", "event_name": "alert.created", "correlationId": "req-demo-c9adf5766c", "source": "core-business", "alert_id": "ALT-520", "severity": "high", "message": "Demo cảnh báo ALT-520 (severity=high) qua MQTT", "timestamp": "2026-11-13T10:47:55Z"}
+
+=== Query GET /notifications?alert_id=ALT-520 ===
+{"items":[{"notification_id":"42c59a08-2b51-493a-ae65-7812e8d5db3d","event_id":"1d526425-1dd1-45a5-819d-49804ff02e3a","event_name":"alert.created","correlationId":"req-demo-c9adf5766c","source":"core-business","alert_id":"ALT-520","severity":"high","message":"Demo cảnh báo ALT-520 (severity=high) qua MQTT","channel":"telegram","target_channels":["telegram","email","discord"],"sent":false,"status":"duplicate_ignored","retry_count":0,"error_detail":"SUPPRESSED_OUT_OF_ORDER: alert ALT-520 already resolved at 2026-11-13T10:57:55Z (>= 2026-11-13T10:47:55Z)","created_at":"2026-11-13T10:57:56Z","delivered_at":null},{"notification_id":"e15eb8b8-a847-40f2-b14f-8ca88f2ca9f1","event_id":"ea5b61f4-ce9b-4cb4-8437-f4564b53bb2a","event_name":"alert.resolved","correlationId":"req-demo-c9adf5766c","source":"core-business","alert_id":"ALT-520","severity":null,"message":"Cảnh báo ALT-520 đã được xử lý: Đội vận hành đã xác minh và xử lý xong sự cố.","channel":"telegram","target_channels":["telegram"],"sent":true,"status":"delivered","retry_count":0,"error_detail":null,"created_at":"2026-11-13T10:57:55Z","delivered_at":"2026-11-13T10:57:56Z"}],"next_cursor":null,"has_more":false}

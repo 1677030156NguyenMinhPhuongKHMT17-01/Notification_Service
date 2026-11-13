@@ -215,7 +215,12 @@ PROBLEM_RESPONSES = {
 
 
 # ---------------------------------------------------------------- routes
-@app.get("/health", response_model=HealthStatus, tags=["health"])
+@app.get(
+    "/health",
+    response_model=HealthStatus,
+    tags=["health"],
+    responses={503: {"model": Problem, "content": {PROBLEM_MEDIA_TYPE: {}}}},
+)
 def get_health() -> HealthStatus:
     if not store.ping():
         raise ProblemException(503, "service-unavailable", "Cơ sở dữ liệu chưa sẵn sàng", "Không thể kết nối PostgreSQL")

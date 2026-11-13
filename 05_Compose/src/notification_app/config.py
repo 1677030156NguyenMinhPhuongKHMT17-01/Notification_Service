@@ -49,11 +49,20 @@ class Settings:
     mqtt_topic: str = field(default_factory=lambda: os.getenv("MQTT_TOPIC", "campus.alerts"))
     mqtt_dlq_topic: str = field(default_factory=lambda: os.getenv("MQTT_DLQ_TOPIC", "campus.alerts.dlq"))
     mqtt_client_id: str = field(default_factory=lambda: os.getenv("MQTT_CLIENT_ID", "notification-service-g6"))
+    mqtt_worker_threads: int = field(default_factory=lambda: max(1, int(os.getenv("MQTT_WORKER_THREADS", "4"))))
 
     # Delivery policy (event-contract-04: max 3 retries, 5 s apart)
     max_retries: int = field(default_factory=lambda: int(os.getenv("MAX_RETRIES", "3")))
     retry_interval_seconds: float = field(default_factory=lambda: float(os.getenv("RETRY_INTERVAL_SECONDS", "5")))
     fail_channels: FrozenSet[str] = field(default_factory=lambda: _env_set("FAIL_CHANNELS"))
+
+    # Optional real channel adapters (stdlib urllib, <=5s timeout; stdout mock when unset)
+    discord_webhook_url: str = field(default_factory=lambda: os.getenv("DISCORD_WEBHOOK_URL", "").strip())
+    telegram_bot_token: str = field(default_factory=lambda: os.getenv("TELEGRAM_BOT_TOKEN", "").strip())
+    telegram_chat_id: str = field(default_factory=lambda: os.getenv("TELEGRAM_CHAT_ID", "").strip())
+    webhook_timeout_seconds: float = field(
+        default_factory=lambda: max(0.1, min(float(os.getenv("WEBHOOK_TIMEOUT_SECONDS", "5")), 5.0))
+    )
 
 
 settings = Settings()
