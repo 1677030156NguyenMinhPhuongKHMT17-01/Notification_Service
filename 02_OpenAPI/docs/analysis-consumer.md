@@ -13,9 +13,9 @@
 
 | Event / Resource | Consumer (Notification) dùng để làm gì? | Field bắt buộc với Consumer | Field có thể tùy chọn |
 |---|---|---|---|
-| `alert.created` | Tạo và gửi thông báo cảnh báo mới tới đội bảo vệ/quản lý qua Telegram, Email, SMS | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `severity`, `message`, `timestamp` | `target_channels` (nếu thiếu thì tự định tuyến theo `severity`) |
-| `alert.escalated` | Gửi thông báo nhắc nhở leo thang khi sự cố chưa được xử lý | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `escalation_level`, `timestamp` | `target_channels` |
-| `alert.resolved` | Gửi thông báo xác nhận sự cố đã được giải quyết xong | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `resolution_note`, `timestamp` | — |
+| `alert.created` | Tạo và gửi thông báo cảnh báo mới tới đội bảo vệ/quản lý qua Telegram, Email, Discord, SMS | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `severity`, `message`, `timestamp` | `target_channels` (nếu thiếu thì tự định tuyến theo `severity`) |
+| `alert.escalated` | Gửi thông báo nhắc nhở leo thang khi sự cố chưa được xử lý | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `escalation_level`, `timestamp` | `severity`, `message`, `target_channels` |
+| `alert.resolved` | Gửi thông báo xác nhận sự cố đã được giải quyết xong | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `resolution_note`, `timestamp` | `target_channels` |
 
 ---
 

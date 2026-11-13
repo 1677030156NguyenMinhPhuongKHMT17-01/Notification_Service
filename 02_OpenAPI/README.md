@@ -2,7 +2,7 @@
 
 Repo này dùng cho **Lab 02 — Thực hành đàm phán và viết OpenAPI 3.1** của học phần **Dịch vụ kết nối và công nghệ nền tảng (FIT4110)**.
 
-Lab 02 nối tiếp trực tiếp Lab 01 trong repo `FIT4110_setup`:
+Trong portfolio hợp nhất `FIT4110_<MãSinhViên>/`, Lab 02 nằm tại `02_OpenAPI/`, nối tiếp trực tiếp `01_Setup/`:
 
 - Lab 01: sinh viên thiết lập môi trường và nộp `service-boundary.md`.
 - Lab 02: sinh viên chuyển Service Boundary thành **hợp đồng API** bằng `openapi.yaml`.
@@ -349,7 +349,12 @@ file dữ liệu lớn
 file model lớn
 ```
 
-Repo đã có GitHub Actions để chặn file Word và kiểm tra cấu trúc Lab 02.
+Repo đã có workflow kiểm tra tại `02_OpenAPI/.github/workflows/check-lab02.yml` (áp dụng khi tách thành repo Lab 02 độc lập; trong portfolio hợp nhất `FIT4110_<MãSinhViên>/`, GitHub Actions kích hoạt từ `.github/workflows/` ở thư mục gốc).
+
+> **Lưu ý nộp bài & minh chứng (`evidence/buoi-02/`):**
+> - Đường dẫn trong portfolio: `FIT4110_<MãSinhViên>/02_OpenAPI/`.
+> - Ảnh chụp kết quả kiểm thử Prism Mock lưu tại `evidence/buoi-02/mock-screenshots/` (đối chiếu cùng `evidence/buoi-02/curl-mock-test-output.txt` và `evidence/buoi-02/spectral-report.txt`).
+> - Bản đối soát chi tiết hợp đồng v1.0 với canonical Pair 04 (`03_Postman/queue-contract-tests/pair-04-core-notification/event-contract.md`) được ghi nhận tại `negotiation-log.md` (Issue #7) và `evidence/buoi-02/known-issues.md`.
 
 ---
 

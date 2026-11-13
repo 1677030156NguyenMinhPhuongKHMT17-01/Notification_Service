@@ -8,81 +8,57 @@ Buổi 1 tập trung vào việc đưa máy cá nhân của sinh viên về tr�
 - Chạy được smoke test môi trường lab.
 - Tạo và nộp minh chứng học tập trong thư mục `evidence/buoi-01/`.
 
-> Lưu ý: Repo này được dùng qua **GitHub Classroom**. Sinh viên **không clone repo template gốc** nếu chưa nhận bài qua link GitHub Classroom của giảng viên.
+> Lưu ý: Trong quy trình **FIT4110 Student Kit** (một repository portfolio duy nhất `FIT4110_<MãSinhViên>` cho cả học kỳ), toàn bộ nội dung Buổi 1 nằm trong thư mục `01_Setup/`. Sinh viên di chuyển vào thư mục `01_Setup/` trước khi chạy các script `./scripts/*` hoặc `.\scripts\*`.
 
 ---
 
 ## 1. Hướng dẫn sử dụng
 
-Quy trình nộp bài gồm 5 bước:
+Quy trình thực hiện Buổi 1 gồm 5 bước:
 
 ```text
-Bước 1. Mở link GitHub Classroom do giảng viên cung cấp.
-Bước 2. Accept assignment để GitHub tạo repo bài làm riêng cho em.
-Bước 3. Clone repo bài làm của em về máy.
-Bước 4. Chạy script kiểm tra môi trường và sinh minh chứng.
-Bước 5. Commit + push thư mục evidence/buoi-01/ lên GitHub.
+Bước 1. Tạo hoặc clone repository portfolio duy nhất FIT4110_<MãSinhViên> về máy.
+Bước 2. Đặt starter Buổi 1 (không kèm .git) vào thư mục 01_Setup/ và mở terminal tại 01_Setup/.
+Bước 3. Chạy script tải image (pull_all), smoke test và thu thập minh chứng (collect_session01_evidence).
+Bước 4. Hoàn thiện service-boundary.md, checklist.md, known-issues.md và kiểm tra bằng verify_submission.py.
+Bước 5. Commit + push thư mục 01_Setup/evidence/buoi-01/ lên GitHub repository portfolio.
 ```
 
 ---
 
-## 2. Nhận bài qua GitHub Classroom
+## 2. Chuẩn bị Repository Portfolio (`FIT4110_<MãSinhViên>`)
 
-### 2.1. Mở link bài tập
+### 2.1. Quy ước đặt tên và cấu trúc
 
-Giảng viên sẽ gửi link dạng:
-
-```text
-https://classroom.github.com/a/xxxxxxxx
-```
-
-Sinh viên mở link này bằng trình duyệt và đăng nhập GitHub.
-
-### 2.2. Chọn đúng danh tính trong danh sách lớp
-
-Nếu GitHub Classroom yêu cầu chọn tên hoặc mã sinh viên trong roster, hãy chọn **đúng thông tin của mình**.
-
-Không chọn hộ bạn khác.
-
-### 2.3. Accept assignment
-
-Sau khi bấm **Accept assignment**, GitHub Classroom sẽ tạo một repo bài làm riêng cho em.
-
-Repo thường có dạng:
+Theo `FIT4110_Student_Kit/03_Guides/Submission.md`, mỗi sinh viên dùng **một repository GitHub public duy nhất** cho toàn bộ học kỳ theo mẫu:
 
 ```text
-s01-environment-setup-<github-username>
+FIT4110_<MãSinhViên>
 ```
 
-hoặc theo quy ước do giảng viên đặt.
+Mỗi buổi học nằm trong một thư mục top-level tương ứng (`01_Setup/`, `02_OpenAPI/`, `03_Postman/`, `04_Docker/`, `05_Compose/`, `06_Plugathon/`).
 
-### 2.4. Copy URL repo cá nhân
+### 2.2. Ghi chú lịch sử starter (`FIT4110_setup`)
 
-Sau khi repo được tạo xong, bấm nút **Code** và copy URL HTTPS, ví dụ:
-
-```text
-https://github.com/<class-org>/s01-environment-setup-nguyenvana.git
-```
+Starter gốc ban đầu được thiết kế cho repo đơn lẻ (`s01-environment-setup-<github-username>`). Khi tích hợp vào portfolio `FIT4110_<MãSinhViên>`, sinh viên giữ nguyên cấu trúc bên trong `01_Setup/` và ghi nhận lịch sử commit của chính portfolio repo vào `evidence/buoi-01/git-log.txt`.
 
 ---
 
-## 3. Clone repo bài làm về máy
+## 3. Clone repository portfolio về máy
 
 Mở Terminal, Git Bash hoặc PowerShell:
 
 ```bash
-git clone <URL_REPO_BAI_LAM_CUA_EM>
-cd <TEN_REPO_BAI_LAM_CUA_EM>
+git clone <URL_REPO_PORTFOLIO_FIT4110_MSSV>
+cd FIT4110_<MãSinhViên>/01_Setup
 ```
 
 Ví dụ:
 
 ```bash
-git clone https://github.com/dnu-smart-campus-2026/s01-environment-setup-nguyenvana.git
-cd s01-environment-setup-nguyenvana
+git clone https://github.com/<account>/FIT4110_<MãSinhViên>.git
+cd FIT4110_<MãSinhViên>/01_Setup
 ```
-
-> Không cần tự tạo repo mới. Repo bài làm đã được GitHub Classroom tạo sẵn.
 
 ---
 
@@ -131,10 +107,11 @@ ultralytics/ultralytics:latest-cpu
 ./scripts/collect_session01_evidence.sh
 ```
 
-Sau bước này, kiểm tra thư mục:
+Sau bước này, kiểm tra thư mục và chạy script xác minh cấu trúc nộp bài:
 
 ```bash
 ls evidence/buoi-01
+python3 ./scripts/verify_submission.py
 ```
 
 ---
@@ -167,10 +144,11 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\collect_session01_evidence.ps1
 ```
 
-Sau bước này, kiểm tra thư mục:
+Sau bước này, kiểm tra thư mục và chạy script xác minh (có thể chạy từ `01_Setup/` hoặc từ thư mục gốc portfolio `python 01_Setup/scripts/verify_submission.py`):
 
 ```powershell
 Get-ChildItem evidence\buoi-01
+python .\scripts\verify_submission.py
 ```
 
 ---
@@ -239,11 +217,11 @@ evidence/buoi-01/
 
 ## 8. Nộp bài bằng commit và push
 
-Sau khi có minh chứng, chạy:
+Sau khi có minh chứng, chạy từ thư mục gốc repository `FIT4110_<MãSinhViên>`:
 
 ```bash
 git status
-git add evidence/buoi-01
+git add 01_Setup/evidence/buoi-01 01_Setup/CONTRIBUTION.md
 git commit -m "Add session 01 environment evidence"
 git push
 ```
@@ -255,20 +233,20 @@ git config --global user.name "Ho Ten Sinh Vien"
 git config --global user.email "email-cua-em@example.com"
 ```
 
-Sau khi push, mở repo bài làm trên GitHub và kiểm tra xem thư mục `evidence/buoi-01/` đã xuất hiện chưa.
+Sau khi push, mở repo portfolio trên GitHub và kiểm tra xem thư mục `01_Setup/evidence/buoi-01/` đã xuất hiện chưa.
 
 ---
 
 ## 9. Có cần tạo branch không?
 
-Với Buổi 1 trên GitHub Classroom, thông thường sinh viên có thể commit trực tiếp lên nhánh mặc định của repo bài làm.
+Với Buổi 1 trong portfolio `FIT4110_<MãSinhViên>`, thông thường sinh viên có thể commit trực tiếp lên nhánh mặc định (`main`) của repo portfolio.
 
 Không cần tạo branch riêng, trừ khi giảng viên yêu cầu.
 
 Nếu giảng viên yêu cầu tạo branch, dùng mẫu:
 
 ```bash
-git checkout -b feat/s1-setup-<ma-sinh-vien>
+git checkout -b feat/s1-setup-<MãSinhViên>
 ```
 
 Ví dụ:
@@ -294,7 +272,7 @@ file model lớn hơn 100 MB
 file dữ liệu lớn không được yêu cầu
 ```
 
-Repo này có GitHub Actions kiểm tra tự động. Nếu em commit file Word `.doc` hoặc `.docx`, workflow sẽ báo lỗi.
+Thư mục `01_Setup/.github/workflows/` lưu giữ workflow kiểm tra tham chiếu từ starter gốc; đối với repository portfolio một repo duy nhất (`FIT4110_<MãSinhViên>`), GitHub Actions thực tế chạy từ thư mục gốc `.github/workflows/`. Tuyệt đối không commit file Word `.doc`/`.docx`.
 
 ---
 
@@ -302,15 +280,14 @@ Repo này có GitHub Actions kiểm tra tự động. Nếu em commit file Word 
 
 Sinh viên được xem là hoàn thành Buổi 1 khi:
 
-- Repo bài làm được tạo từ GitHub Classroom.
-- Clone được repo bài làm về máy.
+- Repository portfolio `FIT4110_<MãSinhViên>` có đầy đủ thư mục `01_Setup/`.
 - `docker run --rm hello-world` chạy thành công.
 - `docker compose version` chạy thành công.
 - `scripts/smoke_test` đã chạy và sinh log.
-- Thư mục `evidence/buoi-01/` có đầy đủ minh chứng.
-- Đã commit và push minh chứng lên repo bài làm.
-- Nếu còn lỗi, đã ghi rõ vào `evidence/buoi-01/known-issues.md`.
-- Đã nộp `evidence/buoi-01/service-boundary.md` mô tả Service Boundary của nhóm.
+- Thư mục `01_Setup/evidence/buoi-01/` có đầy đủ 11 file minh chứng và `python scripts/verify_submission.py` báo `PASS`.
+- Đã hoàn thiện `01_Setup/CONTRIBUTION.md` và commit/push minh chứng lên repo portfolio.
+- Nếu còn lỗi hoặc sai lệch lịch sử snapshot, đã ghi rõ vào `01_Setup/evidence/buoi-01/known-issues.md`.
+- Đã nộp `01_Setup/evidence/buoi-01/service-boundary.md` mô tả Service Boundary của nhóm.
 
 ---
 

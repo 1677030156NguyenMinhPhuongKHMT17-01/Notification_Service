@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
-base = Path('evidence/buoi-01')
+cwd_base = Path('evidence/buoi-01')
+base = cwd_base if cwd_base.exists() else Path(__file__).resolve().parent.parent / 'evidence' / 'buoi-01'
 required = ['README.md','checklist.md','known-issues.md','tool-versions.txt','docker-version.txt','compose-version.txt','hello-world.txt','image-list.txt','smoke-test-result.txt','git-log.txt','service-boundary.md']
 missing = [x for x in required if not (base/x).exists()]
 errors = []

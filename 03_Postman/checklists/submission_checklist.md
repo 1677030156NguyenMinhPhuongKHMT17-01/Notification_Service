@@ -25,6 +25,8 @@ Trước khi nộp, thư mục `03_Postman/` đã có đầy đủ cả **2 nhá
 - [x] `postman/environments/FIT4110_lab03_local.postman_environment.json` (và `team-notify_local.postman_environment.json`)
 - [x] `reports/contract-lint-report.txt`
 - [x] `reports/newman-report.xml` & `reports/newman-report.html`
+- [x] `Makefile` & `scripts/start-prism-mock.sh`, `scripts/run-newman.sh`
+- [x] `known-issues.md`
 - [x] `checklists/reliability_checklist.md`
 - [x] `templates/test-case-matrix.csv`
 - [x] `templates/consumer-provider-handshake.md`

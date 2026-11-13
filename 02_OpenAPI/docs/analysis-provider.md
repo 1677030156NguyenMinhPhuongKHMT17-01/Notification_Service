@@ -16,8 +16,8 @@
 | Resource / Event | Mô tả | Thuộc tính bắt buộc | Thuộc tính tùy chọn |
 |---|---|---|---|
 | `AlertCreatedEvent` (`alert.created`) | Sự kiện cảnh báo mới phát trên topic `campus.alerts` hoặc gửi qua `POST /notifications` | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `severity`, `message`, `timestamp` | `target_channels` (`telegram`, `email`, `discord`, `sms`) |
-| `AlertEscalatedEvent` (`alert.escalated`) | Sự kiện leo thang cảnh báo khi quá hạn xử lý | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `escalation_level`, `timestamp` | `target_channels` |
-| `AlertResolvedEvent` (`alert.resolved`) | Sự kiện thông báo cảnh báo đã được giải quyết | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `resolution_note`, `timestamp` | — |
+| `AlertEscalatedEvent` (`alert.escalated`) | Sự kiện leo thang cảnh báo khi quá hạn xử lý | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `escalation_level`, `timestamp` | `severity`, `message`, `target_channels` |
+| `AlertResolvedEvent` (`alert.resolved`) | Sự kiện thông báo cảnh báo đã được giải quyết | `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `resolution_note`, `timestamp` | `target_channels` |
 | `NotificationLog` | Bản ghi trạng thái chuyển phát thông báo đa kênh | `notification_id`, `event_id`, `event_name`, `correlationId`, `source`, `alert_id`, `channel`, `sent`, `status`, `retry_count`, `error_detail`, `created_at`, `delivered_at` | `severity`, `message`, `target_channels` |
 
 ---
@@ -41,18 +41,17 @@
 |---:|---|---|
 | `400 Bad Request` | Payload sai định dạng JSON, thiếu trường bắt buộc (`event_id`, `event_name`, `alert_id`...) hoặc `event_name` không hợp lệ | `Problem` (`application/problem+json` theo chuẩn RFC 9457) |
 | `401 Unauthorized` | Gọi REST API `/notifications` nhưng thiếu hoặc sai `Authorization: Bearer <token>` | `Problem` (`status: 401`, `title: "Chưa xác thực"`) |
-| `403 Forbidden` | Token hợp lệ nhưng không có quyền truy cập danh sách log thông báo | `Problem` (`status: 403`, `title: "Không đủ quyền truy cập"`) |
 | `404 Not Found` | Tra cứu `GET /notifications/{notification_id}` với UUID không tồn tại | `Problem` (`status: 404`, `title: "Không tìm thấy tài nguyên"`) |
 | `409 Conflict` | Gửi trùng sự kiện có cùng `event_id` (vi phạm ràng buộc Idempotency) | `Problem` (`status: 409`, `title: "Trùng lặp sự kiện thông báo"`) |
-| `422 Unprocessable Entity` | Đúng cú pháp JSON nhưng sai pattern `alert_id` (`^ALT-[0-9]{3,6}$`) hoặc sai enum `severity` | `Problem` (`status: 422`, kèm mảng `errors` chỉ rõ `field`, `code`, `message`) |
-| `500 / Retry & DLQ` | Kênh Telegram/Email bên ngoài bị lỗi kết nối hoặc timeout | Tự động retry **3 lần, interval 5s**; nếu vẫn lỗi thì ghi `error_detail` và đẩy vào DLQ |
+| `422 Unprocessable Entity` | Đúng cú pháp JSON nhưng sai pattern `alert_id` (`^ALT-[0-9]{3,}$`) hoặc sai enum `severity` | `Problem` (`status: 422`, kèm mảng `errors` chỉ rõ `field`, `code`, `message`) |
+| `500 / 503 & Retry / DLQ` | Kênh Telegram/Email/Discord bên ngoài bị lỗi kết nối, timeout hoặc DB/Service chưa sẵn sàng | Tự động retry **3 lần, interval 5s**; nếu vẫn lỗi thì ghi `error_detail` và đẩy vào DLQ (`campus.alerts.dlq`), hoặc trả `503` khi `/health` mất kết nối store |
 
 ---
 
 ## 4. Giả định bổ sung
 
 - **Giả định 1:** MQTT Broker chung của lớp tại `mqtt://192.168.1.51:1883` cho phép kết nối Anonymous trong mạng LAN phòng lab; khi chạy độc lập ở máy cá nhân không nối LAN lớp, service có thể kết nối tới container `eclipse-mosquitto:2` local qua biến môi trường `MQTT_BROKER_URL`.
-- **Giả định 2:** Nếu `Core Business` không truyền mảng `target_channels` trong sự kiện `alert.created`, `Notification Service` sẽ tự động định tuyến kênh gửi dựa trên `severity` (`low` → `email`; `medium` → `telegram`; `high` → `telegram`, `email`; `critical` → `telegram`, `email`, `sms`).
+- **Giả định 2:** Nếu `Core Business` không truyền mảng `target_channels` trong sự kiện `alert.created` (hoặc `alert.escalated` / `alert.resolved`), `Notification Service` sẽ tự động định tuyến kênh gửi dựa trên `severity` (`low` → `email`; `medium` → `telegram`, `email`; `high` → `telegram`, `email`, `discord`; `critical` → `telegram`, `email`, `discord`, `sms`).
 - **Giả định 3:** Trường `error_detail` trong bản ghi kết quả luôn tuân thủ chuẩn OpenAPI 3.1 union type `type: [string, "null"]` (bằng `null` khi gửi thành công).
 
 ---

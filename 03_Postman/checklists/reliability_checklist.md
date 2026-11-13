@@ -30,7 +30,7 @@
 ## 3. Negative tests
 
 - [x] Có test thiếu field bắt buộc (`TC10 - POST /notifications` thiếu `message`).
-- [x] Có test sai kiểu dữ liệu / pattern (`TC10` — `alert_id: "BAD_ID"` sai pattern `^ALT-[0-9]{3,6}$`).
+- [x] Có test sai kiểu dữ liệu / pattern (`TC10` — `alert_id: "BAD_ID"` sai pattern `^ALT-[0-9]{3,}$`).
 - [x] Có test sai enum hoặc giá trị ngoài miền (`TC11 - POST /notifications` với `target_channels: ["zalo"]`).
 - [x] Lỗi trả về theo cùng một error model (RFC 9457 `ProblemDetails` — `application/problem+json`).
 

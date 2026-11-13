@@ -93,8 +93,17 @@ node .\scripts\test-event-contract.js 2>&1 | Tee-Object -FilePath .\reports\even
 ```powershell
 cd ..\. # Quay về thư mục 03_Postman
 npm install
+npm run test:queue
 npm run lint:contracts
 # Khởi chạy Prism Mock cho Notification (4010) và Core Business (4011), sau đó chạy:
 npm run test:mock
 npm run test:html
 ```
+
+Trên môi trường Linux/macOS/Git Bash (hoặc WSL), có thể dùng `Makefile` hoặc script trong `scripts/`:
+
+- `make lint` / `make test-queue` / `make mock-notify` / `make mock-core` / `make mock-all` / `make test-mock`
+- `bash scripts/start-prism-mock.sh [notify|core|all]`
+- `bash scripts/run-newman.sh [mock|local|<env-file>]`
+
+> Chi tiết đối soát hợp đồng REST với canonical Queue Event Contract, cấu hình Prism Mock và ghi chú file kế thừa xem tại [`known-issues.md`](./known-issues.md) và [`checklists/submission_checklist.md`](./checklists/submission_checklist.md).

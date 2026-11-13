@@ -5,8 +5,8 @@ info:
   description: |
     Hợp đồng API (OpenAPI 3.1.0) của **Notification Service (Nhóm 6)** trong hệ thống **Smart Campus Operations Platform**.
     
-    - **Luồng chính (Async Pub/Sub — Pair #4):** Subscribe vào **MQTT Broker `mqtt://192.168.1.51:1883` (Anonymous)** trên topic `campus.alerts` để nhận 3 sự kiện bất đồng bộ từ `Core Business Service`: `alert.created`, `alert.escalated`, `alert.resolved` (theo convention `snake_case` đã chốt trong `event-contract-04-core-notification.md`).
-    - **Luồng phụ (REST Sync Fallback & Log Query):** Cung cấp các endpoint REST chuẩn OpenAPI 3.1 (`POST /notifications`, `GET /notifications`, `GET /notifications/recent`, `GET /notifications/{notification_id}`, `GET /health`) để gửi thông báo thủ công (fallback/test), tra cứu lịch sử gửi cho Analytics/Admin và kiểm tra trạng thái sống của service.
+    - **Luồng chính (Async Pub/Sub — Pair #4):** Subscribe vào **MQTT Broker `mqtt://192.168.1.51:1883` (Anonymous)** trên topic `campus.alerts` để nhận 3 sự kiện bất đồng bộ từ `Core Business Service`: `alert.created`, `alert.escalated`, `alert.resolved` (theo canonical contract `queue-contract-tests/pair-04-core-notification/event-contract.md`).
+    - **Luồng phụ (REST Sync Fallback & Log Query):** Cung cấp các endpoint REST chuẩn OpenAPI 3.1 (`POST /notifications`, `GET /notifications`, `GET /notifications/recent`, `GET /notifications/{notification_id}`, `GET /health`; bản runtime Lab 04–05 mở rộng thêm `POST /notifications/{notification_id}/retry` và `GET /ready`) để gửi thông báo thủ công (fallback/test), tra cứu lịch sử gửi cho Analytics/Admin và kiểm tra trạng thái sống của service.
   contact:
     name: Nhóm 6 — Notification Service Team
     email: notification-team@campus.local
@@ -49,6 +49,8 @@ paths:
                     mqtt_broker: mqtt://192.168.1.51:1883
                     subscribed_topic: campus.alerts
                     time: '2026-08-27T15:30:00Z'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /notifications:
     post:
@@ -164,7 +166,7 @@ paths:
           description: Lọc theo mã cảnh báo nghiệp vụ (ví dụ ALT-001).
           schema:
             type: string
-            pattern: '^ALT-[0-9]{3,6}$'
+            pattern: '^ALT-[0-9]{3,}$'
         - name: status
           in: query
           required: false
@@ -262,8 +264,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
@@ -503,7 +503,7 @@ components:
           example: alert.created
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên suốt giữa các service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -514,7 +514,7 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo từ Core Business.
           example: ALT-001
         severity:
@@ -564,7 +564,7 @@ components:
           example: alert.escalated
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên suốt giữa các service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -575,14 +575,14 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo được leo thang.
           example: ALT-001
         escalation_level:
           type: integer
           minimum: 1
-          maximum: 10
-          description: Cấp độ leo thang của cảnh báo.
+          maximum: 5
+          description: Cấp độ leo thang của cảnh báo (1..5 theo canonical Pair 04).
           example: 2
         target_channels:
           type: array
@@ -592,6 +592,14 @@ components:
           items:
             $ref: '#/components/schemas/NotificationChannel'
           description: Danh sách kênh gửi bổ sung khi leo thang.
+        severity:
+          $ref: '#/components/schemas/SeverityLevel'
+        message:
+          type: string
+          minLength: 5
+          maxLength: 500
+          description: Nội dung cảnh báo bổ sung khi leo thang (tùy chọn).
+          example: Cảnh báo chưa được xác nhận sau 5 phút, leo thang tới quản lý ca trực.
         timestamp:
           type: string
           format: date-time
@@ -622,7 +630,7 @@ components:
           example: alert.resolved
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên suốt giữa các service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -633,7 +641,7 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo đã được giải quyết.
           example: ALT-001
         resolution_note:
@@ -642,6 +650,14 @@ components:
           maxLength: 500
           description: Ghi chú kết quả xử lý sự cố.
           example: Đội bảo vệ đã kiểm tra, là nhân viên IT quên thẻ.
+        target_channels:
+          type: array
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+          description: Danh sách kênh cần gửi thông báo đã xử lý (tùy chọn).
         timestamp:
           type: string
           format: date-time
@@ -683,7 +699,7 @@ components:
           example: alert.created
         correlationId:
           type: string
-          minLength: 4
+          minLength: 1
           maxLength: 100
           description: Mã truy vết xuyên service.
           example: req-0196fb3d-4ad7-7d1e-9f49-5d5148d2babc
@@ -695,11 +711,15 @@ components:
           example: core-business
         alert_id:
           type: string
-          pattern: '^ALT-[0-9]{3,6}$'
+          pattern: '^ALT-[0-9]{3,}$'
           description: Mã cảnh báo nghiệp vụ.
           example: ALT-001
         severity:
-          $ref: '#/components/schemas/SeverityLevel'
+          oneOf:
+            - $ref: '#/components/schemas/SeverityLevel'
+            - type: 'null'
+          description: Mức độ nghiêm trọng của cảnh báo gốc (null nếu sự kiện nguồn không gắn severity).
+          example: high
         message:
           type: [string, 'null']
           maxLength: 500
@@ -724,8 +744,7 @@ components:
         retry_count:
           type: integer
           minimum: 0
-          maximum: 3
-          description: Số lần đã thử lại (tối đa 3 lần, interval 5s).
+          description: Số lần đã thử lại (auto-retry tối đa 3 lần, interval 5s; có thể tăng thêm qua manual retry).
           example: 0
         error_detail:
           type: [string, 'null']
@@ -852,18 +871,18 @@ components:
             instance: https://api.campus.local/notifications/recent
             errors: []
 
-    Forbidden:
-      description: Không có quyền truy cập tài nguyên thông báo này
+    ServiceUnavailable:
+      description: Notification Service hoặc kết nối phụ thuộc (MQTT Broker / Store) chưa sẵn sàng
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
           example:
-            type: https://campus.local/errors/forbidden
-            title: Không đủ quyền truy cập
-            status: 403
-            detail: Token hiện tại không có quyền xem log thông báo hệ thống
-            instance: https://api.campus.local/notifications/recent
+            type: https://campus.local/errors/service-unavailable
+            title: Dịch vụ tạm thời chưa sẵn sàng
+            status: 503
+            detail: Kết nối MQTT Broker hoặc lưu trữ nội bộ chưa sẵn sàng
+            instance: https://api.campus.local/health
             errors: []
 
     NotFound:

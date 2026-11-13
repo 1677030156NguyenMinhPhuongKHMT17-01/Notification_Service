@@ -1,4 +1,4 @@
-.PHONY: install lint mock mock-iot mock-vision mock-all test-mock test-local test-html test-ci clean
+.PHONY: install lint test-queue mock mock-notify mock-core mock-all test-mock test-local test-html test-ci clean
 
 install:
 	npm install
@@ -6,16 +6,19 @@ install:
 lint:
 	npm run lint:contracts
 
-mock: mock-iot
+test-queue:
+	npm run test:queue
 
-mock-iot:
-	npm run mock:iot
+mock: mock-notify
 
-mock-vision:
-	npm run mock:vision
+mock-notify:
+	npm run mock:notify
+
+mock-core:
+	npm run mock:core
 
 mock-all:
-	npm run mock:all
+	bash scripts/start-prism-mock.sh all
 
 test-mock:
 	npm run test:mock

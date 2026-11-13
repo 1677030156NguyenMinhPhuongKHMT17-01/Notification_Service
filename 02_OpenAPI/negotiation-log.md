@@ -67,21 +67,42 @@
 - **Proposal:** `Notification Service` chịu trách nhiệm thực hiện **retry tối đa 3 lần, mỗi lần cách nhau 5 giây (interval 5s)**. Nếu sau 3 lần vẫn thất bại, Notification ghi nhận `status: "failed"`, lưu lý do vào `error_detail` và đẩy sự kiện vào **Dead-Letter Queue (`campus.alerts.dlq`)** để xử lý hậu kiểm.
 - **Resolution:** Accepted
 - **Rationale:** Tách biệt hoàn toàn lỗi hạ tầng gửi tin nhắn khỏi Core Business, đồng thời có thông số retry cụ thể (`3 lần, interval 5s`) để kiểm thử ở Lab 03.
-- **Impact:** Thêm trường `retry_count` (0..3) và `error_detail` vào schema `NotificationLog`.
+- **Impact:** Thêm trường `retry_count` (khi auto-retry chạy tối đa 3 lần; cho phép `>= 0` ở schema `NotificationLog` để hỗ trợ kích hoạt gửi lại thủ công `POST /notifications/{notification_id}/retry` ở các Lab triển khai sau) và `error_detail` vào schema `NotificationLog`.
 
 ---
 
 ## Issue #6 — Chuẩn hóa Error Model (RFC 9457 Problem Details) và Union Type `null` trong OpenAPI 3.1
 
 - **Raised by:** Consumer & Provider
-- **Endpoint / Topic:** Toàn bộ REST API `/notifications`, `/notifications/recent`, `/notifications/{notification_id}`
-- **Concern:** Cần thống nhất định dạng trả về khi gọi REST API bị lỗi (`400`, `401`, `403`, `404`, `409`, `422`, `500`) và cách biểu diễn các trường có thể nhận giá trị `null` (như `error_detail`, `delivered_at`, `next_cursor`) theo đúng chuẩn OpenAPI 3.1.0 (không dùng `nullable: true` của 3.0).
+- **Endpoint / Topic:** Toàn bộ REST API `/health`, `/notifications`, `/notifications/recent`, `/notifications/{notification_id}`
+- **Concern:** Cần thống nhất định dạng trả về khi gọi REST API bị lỗi (`400`, `401`, `404`, `409`, `422`, `500`, `503` cho `/health`) và cách biểu diễn các trường có thể nhận giá trị `null` (như `error_detail`, `delivered_at`, `next_cursor`, `severity`) theo đúng chuẩn OpenAPI 3.1.0 (không dùng `nullable: true` của 3.0).
 - **Proposal:**
-  1. Tất cả response lỗi 4xx/5xx đều dùng `application/problem+json` với schema `Problem` theo chuẩn **RFC 9457 Problem Details** (`type`, `title`, `status`, `detail`, `instance`, `errors`).
-  2. Các trường có thể rỗng như `error_detail`, `delivered_at`, `next_cursor` khai báo bằng union type `type: [string, "null"]`.
+  1. Tất cả response lỗi 4xx/5xx đều dùng `application/problem+json` với schema `Problem` theo chuẩn **RFC 9457 Problem Details** (`type`, `title`, `status`, `detail`, `instance`, `errors`). Bỏ mã `403` chưa dùng khỏi `GET /notifications/recent` và bổ sung `503 ServiceUnavailable` cho `GET /health`.
+  2. Các trường có thể rỗng như `error_detail`, `delivered_at`, `next_cursor`, hoặc `NotificationLog.severity` (khi một số bản ghi sự kiện không gắn mức độ) khai báo theo chuẩn JSON Schema 2020-12 / OpenAPI 3.1 (`type: [string, "null"]` hoặc `oneOf` với `type: "null"`).
 - **Resolution:** Accepted
-- **Rationale:** Tuân thủ nghiêm ngặt đặc tả OpenAPI 3.1.0 và vượt qua bộ quy tắc kiểm tra tự động `campus-spectral.yaml`.
+- **Rationale:** Tuân thủ nghiêm ngặt đặc tả OpenAPI 3.1.0 và vượt qua bộ quy tắc kiểm tra tự động `campus-spectral.yaml` (`campus-no-nullable` cấm dùng `nullable: true`).
 - **Impact:** Áp dụng thống nhất trong `openapi.yaml` của cả hai nhóm.
+
+---
+
+## Issue #7 — Đối soát & Chuẩn hóa Schema Canonical Pair 04 (v1.0 Reconciled)
+
+- **Raised by:** Consumer (Nhóm 6 — Notification Service) & QA Contract Review
+- **Endpoint / Topic:** Topic `campus.alerts` (`alert.created`, `alert.escalated`, `alert.resolved`), REST `/notifications*`, `/health`, và quy tắc `SEVERITY_ROUTING`
+- **Concern:** Khi đối chiếu hợp đồng Lab 02 (`02_OpenAPI/openapi.yaml`, `docs/analysis-provider.md`) với bộ kiểm thử hợp đồng chuẩn Pair 04 ở Lab 03 (`03_Postman/queue-contract-tests/pair-04-core-notification/event-contract.md` và JSON Schema Draft 2020-12) cùng dịch vụ thực thi (Lab 04–05), phát hiện các điểm lệch cần chốt thống nhất:
+  1. Pattern `alert_id` cũ `^ALT-[0-9]{3,6}$` chặn các ID dài hơn 6 chữ số trong khi canonical schema dùng `^ALT-[0-9]{3,}$`.
+  2. `correlationId` có thể là chuỗi ngắn (tối thiểu 1 ký tự `minLength: 1`) thay vì `minLength: 4`.
+  3. `AlertEscalatedEvent.escalation_level` chuẩn là `1..5` (thay vì `1..10`), và cần cho phép thêm trường tùy chọn `severity` (`SeverityLevel`) và `message` (5–500 ký tự).
+  4. `AlertResolvedEvent` có thể đính kèm trường tùy chọn `target_channels`.
+  5. Bảng định tuyến `SEVERITY_ROUTING` trong `docs/analysis-provider.md` trước đây thiếu kênh `email` ở mức `medium` và thiếu kênh `discord` ở mức `high` / `critical` so với schema `NotificationChannel` (`telegram`, `email`, `discord`, `sms`).
+  6. Các mở rộng vận hành v1.x ở Lab 04–05 như `POST /notifications/{notification_id}/retry` (cho phép `retry_count >= 0`) và `GET /ready` (kiểm tra Postgres + MQTT ở Lab 05) cần được ghi nhận ranh giới so với hợp đồng nền v1.0.
+- **Proposal:**
+  1. Chuẩn hóa `openapi.yaml` theo canonical Pair 04: `alert_id` pattern `^ALT-[0-9]{3,}$`, `correlationId` `minLength: 1`, `escalation_level` `1..5`, bổ sung optional `severity`/`message` cho `AlertEscalatedEvent` và optional `target_channels` cho `AlertResolvedEvent`, `NotificationLog.severity` hỗ trợ `null` qua `oneOf`, bỏ `maximum: 3` trên `NotificationLog.retry_count`, thêm `503` cho `GET /health` và gỡ `403` khỏi `GET /notifications/recent`.
+  2. Đồng bộ `docs/analysis-provider.md` và `docs/analysis-consumer.md` với bảng `SEVERITY_ROUTING` đầy đủ (`low`: `[email]`; `medium`: `[telegram, email]`; `high`: `[telegram, email, discord]`; `critical`: `[telegram, email, discord, sms]`).
+  3. Giữ `openapi.yaml` của Lab 02 ở hợp đồng nền v1.0 đã ký (`POST /notifications/{notification_id}/retry` và `GET /ready` là phần mở rộng runtime v1.x tại `04_Docker/` và `05_Compose/`, đồng bộ liên thông sang Lab 03).
+- **Resolution:** Accepted
+- **Rationale:** Đảm bảo 100% tương thích xuôi từ Lab 02 → Lab 03 (`event-contract.md`) → Lab 04/05 mà vẫn giữ Spectral lint `0 errors`.
+- **Impact:** Đã cập nhật `02_OpenAPI/openapi.yaml`, `02_OpenAPI/docs/analysis-provider.md`, `02_OpenAPI/docs/analysis-consumer.md` và đối soát với `03_Postman/contracts/notification.openapi.yaml`.
 
 ---
 
