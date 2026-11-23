@@ -1,0 +1,301 @@
+[INFO] Using existing 06_Plugathon/.env (will be preserved on exit).
+
+==> 1/6 Verifying frozen v1.0.0 contracts (SHA-256 parity)
+[PASS] notification.openapi.yaml (40720 bytes, sha256=4747ea4425705621...) version=1.0.0
+[PASS] core-business.openapi.yaml (32601 bytes, sha256=7525b3b06082217d...) version=1.0.0
+[PASS] event-contract.md (9474 bytes, sha256=80a1d3d0a92fbafb...)
+[PASS] producer-consumer-handshake.md (6171 bytes, sha256=94b27fa2651a6a21...)
+[PASS] event-test-matrix.md (6957 bytes, sha256=bbd7f1397a72be67...)
+[PASS] schema/alert.created.schema.json (2090 bytes, sha256=833b96c81b479c2a...)
+[PASS] schema/alert.escalated.schema.json (2226 bytes, sha256=2911245d93c6d953...)
+[PASS] schema/alert.resolved.schema.json (1887 bytes, sha256=1137949dd71c90ad...)
+[PASS] schema/campus.alerts.schema.json (576 bytes, sha256=b0b536cf6f199a8b...)
+Summary: 9/9 frozen contracts verified
+
+==> 2/6 Validating Compose configs (standalone + external class-net overlay)
+[PASS] Both standalone and external-broker Compose configurations are valid.
+
+==> 3/6 Ensuring Node tooling (Spectral + Newman) & linting OpenAPI 3.1 contract
+
+> fit4110-lab06-notification-plugathon@1.0.0 lint:openapi
+> spectral lint contracts/notification.openapi.yaml --ruleset ../05_Compose/.spectral.yaml --fail-severity error
+
+No results with a severity of 'error' found!
+
+==> 4/6 Starting 3-container Plug-a-thon stack (api + db + mqtt-broker)
+ Image fit4110/notification-service:v1.0.0-plugathon Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 669B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2.16kB done
+#2 DONE 0.0s
+
+#3 resolve image config for docker-image://docker.io/docker/dockerfile:1.7
+#3 DONE 0.5s
+
+#4 docker-image://docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+#4 resolve docker.io/docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e 0.0s done
+#4 CACHED
+
+#5 [internal] load metadata for docker.io/library/python:3.11-slim
+#5 DONE 2.3s
+
+#6 [internal] load .dockerignore
+#6 transferring context: 359B done
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 2.06kB done
+#7 DONE 0.0s
+
+#8 [builder 1/5] FROM docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535
+#8 resolve docker.io/library/python:3.11-slim@sha256:07d4824036af339fa1b6ef769cc99d9c10a141769538b52b3b597c84f7a7b535 0.0s done
+#8 DONE 0.0s
+
+#9 [runtime 2/5] WORKDIR /app
+#9 CACHED
+
+#10 [builder 2/5] WORKDIR /build
+#10 CACHED
+
+#11 [runtime 3/5] RUN groupadd --system --gid 10001 appgroup     && useradd --system --uid 10001 --gid appgroup --home-dir /app --shell /usr/sbin/nologin appuser
+#11 CACHED
+
+#12 [builder 4/5] COPY requirements.txt .
+#12 CACHED
+
+#13 [builder 5/5] RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+#13 CACHED
+
+#14 [runtime 4/5] COPY --from=builder /opt/venv /opt/venv
+#14 CACHED
+
+#15 [builder 3/5] RUN python -m venv /opt/venv
+#15 CACHED
+
+#16 [runtime 5/5] COPY --chown=appuser:appgroup src/ ./src/
+#16 CACHED
+
+#17 exporting to image
+#17 exporting layers done
+#17 exporting manifest sha256:8557541bedf60fb8d37449abd850d3c9aae6b16725c1d674b78b5c09e02e51df done
+#17 exporting config sha256:22aea514256e1bad2f4852f5583d4486c0cf6f03db97ba31f9f83476fc619562 done
+#17 exporting attestation manifest sha256:6c8759e234658fc7c3771ef6336c84cf22516d618e5cebf368a186831f2cd9c6
+#17 exporting attestation manifest sha256:6c8759e234658fc7c3771ef6336c84cf22516d618e5cebf368a186831f2cd9c6 0.0s done
+#17 exporting manifest list sha256:dce67c66a7db913cd3ce090c6860f3e06870b496bd74cf9a29e9961cc79d2708 0.0s done
+#17 naming to docker.io/fit4110/notification-service:v1.0.0-plugathon done
+#17 unpacking to docker.io/fit4110/notification-service:v1.0.0-plugathon done
+#17 DONE 0.1s
+
+#18 resolving provenance for metadata file
+#18 DONE 0.0s
+ Image fit4110/notification-service:v1.0.0-plugathon Built 
+ Container fit4110-mqtt-lab06 Running 
+ Container fit4110-api-lab06 Running 
+ Container fit4110-db-lab06 Running 
+ Container fit4110-mqtt-lab06 Waiting 
+ Container fit4110-db-lab06 Waiting 
+ Container fit4110-db-lab06 Healthy 
+ Container fit4110-mqtt-lab06 Healthy 
+ Container fit4110-db-lab06 Waiting 
+ Container fit4110-mqtt-lab06 Waiting 
+ Container fit4110-api-lab06 Waiting 
+ Container fit4110-mqtt-lab06 Healthy 
+ Container fit4110-db-lab06 Healthy 
+ Container fit4110-api-lab06 Healthy 
+NAME                 IMAGE                                                                     COMMAND                  SERVICE       CREATED          STATUS                    PORTS
+fit4110-api-lab06    sha256:5587965bdd7113c626693e783c4f1069b648237180a733c35d0c99187b1d75f8   "sh -c 'exec uvicorn…"   api           35 minutes ago   Up 14 seconds (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+fit4110-db-lab06     postgres:15-alpine                                                        "docker-entrypoint.s…"   db            4 hours ago      Up 14 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+fit4110-mqtt-lab06   eclipse-mosquitto:2                                                       "/docker-entrypoint.…"   mqtt-broker   4 hours ago      Up 14 seconds (healthy)   0.0.0.0:1883->1883/tcp, [::]:1883->1883/tcp
+[PASS] API container user verified: uid=10001(appuser) gid=10001(appgroup) groups=10001(appgroup)
+
+==> 5/6 Verifying /health and /ready endpoints
+GET http://127.0.0.1:8000/health ->
+{
+  "status": "ok",
+  "service": "notification-service",
+  "mqtt_broker": "mqtt://mqtt-broker:1883",
+  "subscribed_topic": "campus.alerts",
+  "time": "2026-11-23T05:31:21Z"
+}
+GET http://127.0.0.1:8000/ready ->
+{
+  "status": "ready",
+  "service": "notification-service",
+  "version": "1.0.0",
+  "dependencies": {
+    "database": {
+      "backend": "postgresql",
+      "ready": true
+    },
+    "mqtt": {
+      "enabled": true,
+      "broker": "mqtt://mqtt-broker:1883",
+      "topic": "campus.alerts",
+      "connected": true
+    }
+  },
+  "time": "2026-11-23T05:31:21Z"
+}
+
+==> 6/6 Running Pair-04 E2E handshake, fault/DLQ injection & Newman verification
+[PASS] health: http=200 status=ok topic=campus.alerts
+[PASS] ready: status=ready db_ready=True mqtt_connected=True
+[PASS] mqtt_alert_created_high_routing: alert_id=ALT-6533 notification_id=8acbeef0-5793-4356-9c55-bedf3aaa4628 channels=['telegram', 'email', 'discord']
+[PASS] mqtt_q05_duplicate_idempotency: event_id=4ad97c4e-7ee9-49b5-93dd-e599883664d8 stored_rows=1
+[PASS] mqtt_alert_escalated_optional_fields: notification_id=8c74fac4-ec82-44b6-b036-d92c7888419c severity=critical channels=['telegram', 'email', 'discord', 'sms']
+[PASS] mqtt_alert_resolved_custom_channels: notification_id=a394b43d-1bed-4298-bad5-6da0542fecbf channels=['email', 'discord']
+[PASS] fault_schema_invalid_dlq: event_id=d4944d05-d5f9-4a5a-8dc0-148ca926a782 reason=SCHEMA_VALIDATION_FAILED dlq_topic=campus.alerts.dlq
+[PASS] fault_q09_out_of_order_suppressed: alert_id=ALT-9598 notification_id=1074ba13-a395-41ff-8ff8-161d623af61d status=duplicate_ignored
+[PASS] rest_duplicate_event_409: http=409 event_id=0d77610f-41a1-4b19-9d2c-516486967820
+[PASS] rest_invalid_token_401: http=401
+[PASS] rest_invalid_channel_422: http=422
+[PASS] rest_detail_and_manual_retry: notification_id=b5da2411-920e-4665-9a84-5f02c7bc5a56 retry_count=1 status=delivered
+[PASS] fault_max_retries_dlq_and_manual_retry_recovery: notification_id=ddefb6e6-f2da-487c-a2a8-999413905472 dlq_reason=MAX_RETRIES_EXCEEDED recovered_status=delivered retry_count=1
+E2E SUMMARY: 13/13 checks PASSED
+
+> fit4110-lab06-notification-plugathon@1.0.0 test:plugathon
+> newman run postman/FIT4110_lab06_plugathon.postman_collection.json -e postman/plugathon.postman_environment.json -r cli,junit,htmlextra --reporter-junit-export reports/newman-plugathon.xml --reporter-htmlextra-export reports/newman-plugathon.html
+
+newman
+
+FIT4110 Lab 06 - Notification Service Plug-a-thon
+
+□ 00_Health
+└ TC01 - GET /health - service is alive and healthy
+  GET http://localhost:8000/health [200 OK, 330B, 31ms]
+  √  Status code is 200
+  √  Health payload has ok status and campus.alerts topic
+
+└ TC01b - GET /ready - PostgreSQL and MQTT Broker are ready
+  GET http://localhost:8000/ready [200 OK, 442B, 10ms]
+  √  Status code is 200
+  √  PostgreSQL and MQTT dependencies are ready
+
+□ 01_Functional
+└ TC02 - POST /notifications (alert.created) - happy path saves notificationId
+  POST http://localhost:8000/notifications [201 Created, 786B, 64ms]
+  √  Status code is 201
+  √  NotificationLog created and delivered
+
+└ TC03 - POST /notifications (alert.escalated) - honors optional severity and message
+  POST http://localhost:8000/notifications [201 Created, 788B, 51ms]
+  √  Escalated event returns 201
+  √  Optional severity/message honored and auto-routed with discord
+
+└ TC04 - POST /notifications (alert.resolved) - honors custom target_channels
+  POST http://localhost:8000/notifications [201 Created, 821B, 54ms]
+  √  Resolved event returns 201
+  √  Custom target_channels delivered cleanly
+
+└ TC05 - GET /notifications - list notification logs filtered by alert_id
+  GET http://localhost:8000/notifications?alert_id=ALT-8621&limit=10 [200 OK, 1.89kB, 14ms]
+  √  Status code is 200
+  √  Response contains all 3 lifecycle events and pagination metadata
+
+└ TC06 - GET /notifications/recent - list recent notifications
+  GET http://localhost:8000/notifications/recent?limit=5 [200 OK, 2.86kB, 15ms]
+  √  Status code is 200
+  √  Recent items have valid channel enum
+
+└ TC07 - GET /notifications/{{notificationId}} - get notification detail
+  GET http://localhost:8000/notifications/05c567a6-d399-4a87-aa18-74222997e11b [200 OK, 718B, 12ms]
+  √  Status code is 200
+  √  Response matches requested notification_id
+
+└ TC08 - POST /notifications/{{notificationId}}/retry - manual retry
+  POST http://localhost:8000/notifications/05c567a6-d399-4a87-aa18-74222997e11b/retry [200 OK, 718B, 48ms]
+  √  Status code is 200
+  √  Retry count incremented to >= 1
+
+□ 02_Auth
+└ TC09 - GET /notifications/recent - valid token accepted
+  GET http://localhost:8000/notifications/recent?limit=1 [200 OK, 802B, 14ms]
+  √  Valid token returns 200
+
+└ TC10 - POST /notifications - missing token returns 401 ProblemDetails
+  POST http://localhost:8000/notifications [401 Unauthorized, 459B, 6ms]
+  √  Missing token returns 401
+  √  Unauthorized response follows ProblemDetails
+
+└ TC11 - POST /notifications - invalid token returns 401 ProblemDetails
+  POST http://localhost:8000/notifications [401 Unauthorized, 445B, 7ms]
+  √  Invalid token returns 401 ProblemDetails
+
+□ 03_Negative
+└ TC12 - POST /notifications - invalid payload returns 422 ProblemDetails
+  POST http://localhost:8000/notifications [422 Unprocessable Entity, 1.92kB, 6ms]
+  √  Invalid payload returns 422
+  √  Error follows RFC 9457 ProblemDetails
+
+└ TC13 - POST /notifications - invalid channel (zalo) returns 422 ProblemDetails
+  POST http://localhost:8000/notifications [422 Unprocessable Entity, 2.03kB, 4ms]
+  √  Invalid channel returns 422
+  √  Error response includes detail and errors
+
+└ TC14 - GET /notifications/{unknown} - returns 404 ProblemDetails
+  GET http://localhost:8000/notifications/00000000-0000-0000-0000-000000000000 [404 Not Found, 494B, 14ms]
+  √  Unknown notification returns 404
+  √  404 follows ProblemDetails
+
+□ 04_Boundary_Reliability
+└ TC15 - POST /notifications - high severity auto-routing includes discord
+  POST http://localhost:8000/notifications [201 Created, 778B, 58ms]
+  √  Auto-routing returns 201
+  √  High severity auto-routes to [telegram, email, discord]
+
+└ TC16 - GET /notifications/recent - limit=101 returns 400 ProblemDetails
+  GET http://localhost:8000/notifications/recent?limit=101 [400 Bad Request, 613B, 5ms]
+  √  Limit=101 returns 400
+  √  Boundary rejection follows ProblemDetails
+
+└ TC17 - POST /notifications - duplicate event_id returns 409 Conflict
+  POST http://localhost:8000/notifications [409 Conflict, 531B, 11ms]
+  √  Duplicate event_id returns 409 Conflict
+  √  Conflict response follows ProblemDetails
+
+└ TC18 - POST /notifications - container latency under 1000ms
+  POST http://localhost:8000/notifications [201 Created, 744B, 57ms]
+  √  Container responds 201 under 1000ms
+
+└ TC19a - POST /notifications (alert.resolved) - Q09 setup resolved alert
+  POST http://localhost:8000/notifications [201 Created, 797B, 56ms]
+  √  Q09 resolved baseline returns 201 delivered
+
+└ TC19b - POST /notifications (late alert.created) - Q09 suppressed out-of-order
+  POST http://localhost:8000/notifications [201 Created, 871B, 50ms]
+  √  Late alert.created is suppressed cleanly without dispatch
+
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │         executed │           failed │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              iterations │                1 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│                requests │               21 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│            test-scripts │               21 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│      prerequest-scripts │               28 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              assertions │               37 │                0 │
+├─────────────────────────┴──────────────────┴──────────────────┤
+│ total run duration: 2.3s                                      │
+├───────────────────────────────────────────────────────────────┤
+│ total data received: 15.39kB (approx)                         │
+├───────────────────────────────────────────────────────────────┤
+│ average response time: 27ms [min: 4ms, max: 64ms, s.d.: 21ms] │
+└───────────────────────────────────────────────────────────────┘
+
+============================================================
+ FIT4110 Lab 06 Demo Pack — ALL CHECKS PASSED
+============================================================
+ Elapsed time : 28.6s (target <= 300s)
+ Demo UI      : http://127.0.0.1:8000/
+ Swagger UI   : http://127.0.0.1:8000/docs
+ Health/Ready : http://127.0.0.1:8000/health | http://127.0.0.1:8000/ready
+ Newman HTML  : 06_Plugathon/reports/newman-plugathon.html
+ Newman XML   : 06_Plugathon/reports/newman-plugathon.xml
+ Cleanup cmd  : docker compose -f 06_Plugathon/docker-compose.yml down -v
+============================================================

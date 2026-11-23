@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "fit4110-lab04-notification-docker",
     "name": "FIT4110 Lab04 - Notification Service Docker Verification",
-    "description": "Bộ kiểm thử Postman/Newman cho Notification Service (Nhóm 6) đóng gói trong Docker container (Pair 04: Core Business -> Notification). Bao gồm Health, Functional (alert.created/escalated/resolved + query + retry), Auth thật, Negative (RFC 9457 ProblemDetails), Boundary, Idempotency (409) và Latency (<1000ms).",
+    "description": "Bộ kiểm thử Postman/Newman cho Notification Service (Nhóm 7) đóng gói trong Docker container (Pair 04: Core Business -> Notification). Bao gồm Health, Functional (alert.created/escalated/resolved + query + retry), Auth thật, Negative (RFC 9457 ProblemDetails), Boundary, Idempotency (409) và Latency (<1000ms).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [

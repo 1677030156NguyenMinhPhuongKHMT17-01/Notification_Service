@@ -1,4 +1,4 @@
-"""Notification Service (Nhóm 6) – FastAPI implementation for Lab 04.
+"""Notification Service (Nhóm 7) – FastAPI implementation for Lab 04.
 
 Implements contracts/notification.openapi.yaml (OpenAPI 3.1.0):
     GET  /health                                  (public, used by Docker HEALTHCHECK)
@@ -120,7 +120,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Smart Campus — Notification Service API (Nhóm 6)",
+    title="Smart Campus — Notification Service API (Nhóm 7)",
     version=settings.service_version,
     description="Lab 04 – Notification Service packaged with Docker (Pair 04: Core Business -> Notification).",
     lifespan=lifespan,

@@ -10,12 +10,13 @@ together with the validation error (consumer rule Q04 in the event contract).
 
 from __future__ import annotations
 
+from collections import deque
 import concurrent.futures
 from concurrent.futures import Future, ThreadPoolExecutor
 import json
 import logging
 import threading
-from typing import Optional, Set
+from typing import Deque, List, Optional, Set
 from urllib.parse import urlparse
 
 from pydantic import ValidationError
@@ -25,6 +26,48 @@ from .models import event_adapter, iso_utc
 from .store import store
 
 logger = logging.getLogger("notification.mqtt")
+
+DLQ_BUFFER_MAX = 50
+_dlq_lock = threading.RLock()
+_dlq_buffer: Deque[dict] = deque(maxlen=DLQ_BUFFER_MAX)
+
+
+def _record_dlq_item(payload: dict) -> None:
+    with _dlq_lock:
+        _dlq_buffer.appendleft(dict(payload))
+
+
+def get_dlq_items() -> List[dict]:
+    with _dlq_lock:
+        return [dict(item) for item in _dlq_buffer]
+
+
+def dlq_count() -> int:
+    with _dlq_lock:
+        return len(_dlq_buffer)
+
+
+def clear_dlq_buffer() -> None:
+    with _dlq_lock:
+        _dlq_buffer.clear()
+
+
+def build_max_retries_dlq_payload(record: dict) -> dict:
+    return {
+        "topic": settings.mqtt_dlq_topic,
+        "reason": "MAX_RETRIES_EXCEEDED",
+        "error_detail": record.get("error_detail") or "Delivery failed after max retries",
+        "retry_count": record.get("retry_count", 0),
+        "failed_at": iso_utc(),
+        "notification_id": record.get("notification_id"),
+        "event_id": record.get("event_id"),
+        "alert_id": record.get("alert_id"),
+        "notification": dict(record),
+    }
+
+
+def record_dlq_from_store(record: dict) -> None:
+    _record_dlq_item(build_max_retries_dlq_payload(record))
 
 
 class MqttConsumer:
@@ -149,28 +192,33 @@ class MqttConsumer:
 
     # ---------------------------------------------------------------- publishing
     def publish_dlq(self, record: dict) -> None:
-        self._publish(
-            settings.mqtt_dlq_topic,
-            {
-                "topic": settings.mqtt_dlq_topic,
-                "reason": "MAX_RETRIES_EXCEEDED",
-                "error_detail": record.get("error_detail") or "Delivery failed after max retries",
-                "retry_count": record.get("retry_count", 0),
-                "failed_at": iso_utc(),
-                "notification_id": record.get("notification_id"),
-                "event_id": record.get("event_id"),
-                "alert_id": record.get("alert_id"),
-                "notification": record,
-            },
-        )
+        self._publish(settings.mqtt_dlq_topic, build_max_retries_dlq_payload(record))
+
+    def publish_raw(self, raw_text: str) -> None:
+        if self._client is None:
+            raise RuntimeError("MQTT client is not initialized")
+        info = self._client.publish(settings.mqtt_topic, raw_text, qos=1)
+        if info is not None and hasattr(info, "wait_for_publish"):
+            try:
+                info.wait_for_publish(timeout=2.0)
+            except Exception as exc:
+                raise RuntimeError(f"MQTT publish failed: {exc}") from exc
 
     def _publish(self, topic: str, body: dict) -> None:
+        if topic == settings.mqtt_dlq_topic:
+            _record_dlq_item(body)
         if self._client is None:
             return
         self._client.publish(topic, json.dumps(body, ensure_ascii=False), qos=1)
 
 
 consumer: Optional[MqttConsumer] = None
+
+
+def publish_raw(raw_text: str) -> None:
+    if consumer is None:
+        raise RuntimeError("MQTT consumer is not initialized")
+    consumer.publish_raw(raw_text)
 
 
 def start_consumer() -> Optional[MqttConsumer]:

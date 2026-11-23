@@ -16,11 +16,14 @@ import threading
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Callable, Dict, FrozenSet, Iterable, Iterator, List, Optional, Tuple, Union
 
 from .config import settings
+from . import delivery as delivery_mod
 from .delivery import deliver_all
 from .models import AlertCreatedEvent, AlertEscalatedEvent, AlertResolvedEvent, iso_utc
+
+_UNSET = object()
 
 logger = logging.getLogger("notification.store")
 
@@ -174,6 +177,36 @@ class MemoryBackend:
             self._by_id.clear()
             self._by_event.clear()
             self._resolved_at.clear()
+
+    def aggregate(self) -> dict:
+        by_status = {"delivered": 0, "retrying": 0, "failed": 0, "duplicate_ignored": 0, "queued": 0}
+        by_event_name = {"alert.created": 0, "alert.escalated": 0, "alert.resolved": 0}
+        by_severity = {"low": 0, "medium": 0, "high": 0, "critical": 0, "none": 0}
+        by_channel = {"telegram": 0, "email": 0, "discord": 0, "sms": 0}
+        with self._lock:
+            total = len(self._logs)
+            for item in self._logs:
+                status = item.get("status")
+                if status in by_status:
+                    by_status[status] += 1
+                event_name = item.get("event_name")
+                if event_name in by_event_name:
+                    by_event_name[event_name] += 1
+                severity = item.get("severity") or "none"
+                if severity in by_severity:
+                    by_severity[severity] += 1
+                else:
+                    by_severity["none"] += 1
+                for channel in item.get("target_channels") or []:
+                    if channel in by_channel:
+                        by_channel[channel] += 1
+        return {
+            "total": total,
+            "by_status": by_status,
+            "by_event_name": by_event_name,
+            "by_severity": by_severity,
+            "by_channel": by_channel,
+        }
 
 
 class PostgresBackend:
@@ -359,6 +392,54 @@ class PostgresBackend:
             conn.execute("TRUNCATE TABLE notifications RESTART IDENTITY")
             conn.commit()
 
+    def aggregate(self) -> dict:
+        by_status = {"delivered": 0, "retrying": 0, "failed": 0, "duplicate_ignored": 0, "queued": 0}
+        by_event_name = {"alert.created": 0, "alert.escalated": 0, "alert.resolved": 0}
+        by_severity = {"low": 0, "medium": 0, "high": 0, "critical": 0, "none": 0}
+        by_channel = {"telegram": 0, "email": 0, "discord": 0, "sms": 0}
+        with self._conn() as conn:
+            total_row = conn.execute("SELECT COUNT(*) AS cnt FROM notifications").fetchone()
+            total = int((total_row or {}).get("cnt") or 0)
+
+            for row in conn.execute("SELECT status AS key, COUNT(*) AS cnt FROM notifications GROUP BY status").fetchall():
+                key = row.get("key")
+                if key in by_status:
+                    by_status[key] = int(row.get("cnt") or 0)
+
+            for row in conn.execute(
+                "SELECT event_name AS key, COUNT(*) AS cnt FROM notifications GROUP BY event_name"
+            ).fetchall():
+                key = row.get("key")
+                if key in by_event_name:
+                    by_event_name[key] = int(row.get("cnt") or 0)
+
+            for row in conn.execute(
+                "SELECT COALESCE(NULLIF(severity, ''), 'none') AS key, COUNT(*) AS cnt "
+                "FROM notifications GROUP BY COALESCE(NULLIF(severity, ''), 'none')"
+            ).fetchall():
+                key = row.get("key") or "none"
+                if key in by_severity:
+                    by_severity[key] = int(row.get("cnt") or 0)
+                else:
+                    by_severity["none"] += int(row.get("cnt") or 0)
+
+            for row in conn.execute(
+                "SELECT ch AS key, COUNT(*) AS cnt "
+                "FROM notifications, jsonb_array_elements_text(target_channels) AS ch "
+                "GROUP BY ch"
+            ).fetchall():
+                key = row.get("key")
+                if key in by_channel:
+                    by_channel[key] = int(row.get("cnt") or 0)
+
+        return {
+            "total": total,
+            "by_status": by_status,
+            "by_event_name": by_event_name,
+            "by_severity": by_severity,
+            "by_channel": by_channel,
+        }
+
 
 def _create_backend():
     if settings.database_url:
@@ -372,6 +453,93 @@ class NotificationStore:
         self._backend = backend or _create_backend()
         self._timers: List[threading.Timer] = []
         self.dlq_publisher: Optional[Callable[[dict], None]] = None
+        self._max_retries_override: Optional[int] = None
+        self._retry_interval_override: Optional[float] = None
+
+    @property
+    def max_retries_override(self) -> Optional[int]:
+        with self._lock:
+            return self._max_retries_override
+
+    @max_retries_override.setter
+    def max_retries_override(self, value: Optional[int]) -> None:
+        with self._lock:
+            self._max_retries_override = value
+
+    @property
+    def retry_interval_override(self) -> Optional[float]:
+        with self._lock:
+            return self._retry_interval_override
+
+    @retry_interval_override.setter
+    def retry_interval_override(self, value: Optional[float]) -> None:
+        with self._lock:
+            self._retry_interval_override = value
+
+    @property
+    def fail_channels_override(self) -> Optional[FrozenSet[str]]:
+        return delivery_mod.get_fail_channels_override()
+
+    def effective_max_retries(self) -> int:
+        with self._lock:
+            if self._max_retries_override is not None:
+                return self._max_retries_override
+        return settings.max_retries
+
+    def effective_retry_interval(self) -> float:
+        with self._lock:
+            if self._retry_interval_override is not None:
+                return self._retry_interval_override
+        return settings.retry_interval_seconds
+
+    def configure_faults(
+        self,
+        *,
+        fail_channels: object = _UNSET,
+        max_retries: object = _UNSET,
+        retry_interval_seconds: object = _UNSET,
+    ) -> dict:
+        if fail_channels is not _UNSET:
+            delivery_mod.set_fail_channels_override(fail_channels)  # type: ignore[arg-type]
+        with self._lock:
+            if max_retries is not _UNSET:
+                self._max_retries_override = max_retries  # type: ignore[assignment]
+            if retry_interval_seconds is not _UNSET:
+                self._retry_interval_override = retry_interval_seconds  # type: ignore[assignment]
+        return self.active_faults()
+
+    def reset_faults(self) -> dict:
+        delivery_mod.set_fail_channels_override(None)
+        with self._lock:
+            self._max_retries_override = None
+            self._retry_interval_override = None
+        return self.active_faults()
+
+    def active_faults(self) -> dict:
+        with self._lock:
+            max_retries_ovr = self._max_retries_override
+            retry_interval_ovr = self._retry_interval_override
+        return {
+            "fail_channels": sorted(delivery_mod.effective_fail_channels()),
+            "max_retries_override": max_retries_ovr,
+            "retry_interval_override": retry_interval_ovr,
+            "effective_max_retries": settings.max_retries if max_retries_ovr is None else max_retries_ovr,
+            "effective_retry_interval_seconds": (
+                settings.retry_interval_seconds if retry_interval_ovr is None else retry_interval_ovr
+            ),
+        }
+
+    def overview(self) -> dict:
+        from . import mqtt_consumer as mqtt_mod
+
+        agg = self._backend.aggregate()
+        return {
+            **agg,
+            "dlq_count": mqtt_mod.dlq_count(),
+            "delivery_feed_count": delivery_mod.delivery_feed_count(),
+            "active_faults": self.active_faults(),
+            "time": iso_utc(),
+        }
 
     @property
     def backend_name(self) -> str:
@@ -481,16 +649,17 @@ class NotificationStore:
     def _attempt(self, record: dict) -> None:
         ok, errors = deliver_all(record["target_channels"], record["alert_id"], record["message"] or "", record["correlationId"])
         with self._lock:
+            max_retries = self.effective_max_retries()
             if ok:
                 record.update(sent=True, status="delivered", error_detail=None, delivered_at=iso_utc())
-            elif record["retry_count"] >= settings.max_retries:
+            elif record["retry_count"] >= max_retries:
                 record.update(sent=False, status="failed", error_detail="; ".join(errors)[:500])
             else:
                 record.update(sent=False, status="retrying", error_detail="; ".join(errors)[:500])
             self._backend.update(record)
 
     def _schedule_auto_retry(self, notification_id: str) -> None:
-        timer = threading.Timer(settings.retry_interval_seconds, self._auto_retry, args=(notification_id,))
+        timer = threading.Timer(self.effective_retry_interval(), self._auto_retry, args=(notification_id,))
         timer.daemon = True
         with self._lock:
             self._timers.append(timer)
@@ -515,11 +684,21 @@ class NotificationStore:
             "DLQ topic=%s notification_id=%s event_id=%s after %s retries: %s",
             settings.mqtt_dlq_topic, record["notification_id"], record["event_id"], record["retry_count"], record["error_detail"],
         )
+        handled_by_consumer = False
         if self.dlq_publisher is not None:
             try:
                 self.dlq_publisher(dict(record))
+                if (
+                    getattr(self.dlq_publisher, "__name__", None) == "publish_dlq"
+                    and getattr(self.dlq_publisher, "__self__", None) is not None
+                ):
+                    handled_by_consumer = True
             except Exception:  # pragma: no cover
                 logger.exception("failed to publish to DLQ")
+        if not handled_by_consumer:
+            from . import mqtt_consumer as mqtt_mod
+
+            mqtt_mod.record_dlq_from_store(dict(record))
 
     def manual_retry(self, notification_id: str) -> Optional[dict]:
         with self._lock:
@@ -531,9 +710,10 @@ class NotificationStore:
                 raise RetryLimitReached(
                     f"Notification {notification_id} đang ở trạng thái {status} nên không thể retry thủ công"
                 )
-            if status == "delivered" and record["retry_count"] >= settings.max_retries:
+            max_retries = self.effective_max_retries()
+            if status == "delivered" and record["retry_count"] >= max_retries:
                 raise RetryLimitReached(
-                    f"Notification {notification_id} đã giao thành công và đạt tối đa {settings.max_retries} lần retry"
+                    f"Notification {notification_id} đã giao thành công và đạt tối đa {max_retries} lần retry"
                 )
             record["retry_count"] += 1
             record["status"] = "retrying"
@@ -567,11 +747,18 @@ class NotificationStore:
         }
 
     def reset(self) -> None:
+        from . import mqtt_consumer as mqtt_mod
+
         with self._lock:
             for timer in self._timers:
                 timer.cancel()
             self._timers.clear()
+            self._max_retries_override = None
+            self._retry_interval_override = None
             self._backend.clear()
+        delivery_mod.set_fail_channels_override(None)
+        delivery_mod.clear_delivery_feed()
+        mqtt_mod.clear_dlq_buffer()
 
 
 def encode_cursor(offset: int) -> str:

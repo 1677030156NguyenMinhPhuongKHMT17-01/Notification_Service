@@ -1,0 +1,15 @@
+# Captured at 2026-11-13T18:46:33.4490250+07:00
+$ docker compose ps -a
+NAME                 IMAGE                                           COMMAND                  SERVICE       CREATED          STATUS                    PORTS
+fit4110-api-lab06    fit4110/notification-service:v1.0.0-plugathon   "sh -c 'exec uvicorn…"   api           29 seconds ago   Up 28 seconds (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+fit4110-db-lab06     postgres:15-alpine                              "docker-entrypoint.s…"   db            53 seconds ago   Up 52 seconds (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+fit4110-mqtt-lab06   eclipse-mosquitto:2                             "/docker-entrypoint.…"   mqtt-broker   53 seconds ago   Up 52 seconds (healthy)   0.0.0.0:1883->1883/tcp, [::]:1883->1883/tcp
+
+$ docker compose exec -T api id
+uid=10001(appuser) gid=10001(appgroup) groups=10001(appgroup)
+
+$ docker compose exec -T db pg_isready -U plugathon -d notificationdb
+/var/run/postgresql:5432 - accepting connections
+
+$ docker compose exec -T mqtt-broker mosquitto_pub -h 127.0.0.1 -p 1883 -t health/ping -m ok
+exit=0

@@ -1,0 +1,205 @@
+{
+  "captured_at": "2026-11-13T11:46:33Z",
+  "health": {
+    "status": "ok",
+    "service": "notification-service",
+    "mqtt_broker": "mqtt://mqtt-broker:1883",
+    "subscribed_topic": "campus.alerts",
+    "time": "2026-11-13T11:46:33Z"
+  },
+  "ready": {
+    "status": "ready",
+    "service": "notification-service",
+    "version": "1.0.0",
+    "dependencies": {
+      "database": {
+        "backend": "postgresql",
+        "ready": true
+      },
+      "mqtt": {
+        "enabled": true,
+        "broker": "mqtt://mqtt-broker:1883",
+        "topic": "campus.alerts",
+        "connected": true
+      }
+    },
+    "time": "2026-11-13T11:46:33Z"
+  },
+  "notifications_recent_sample": {
+    "items": [
+      {
+        "notification_id": "32a7dc36-2553-4742-aaaa-59c3d9fe1bf3",
+        "event_id": "325b02a4-0b6c-4725-9317-dd9ebfc88bc6",
+        "event_name": "alert.created",
+        "correlationId": "req-plugathon-q09",
+        "source": "core-business",
+        "alert_id": "ALT-9904",
+        "severity": "critical",
+        "message": "Q09: Event tạo trễ cần bị SUPPRESSED_OUT_OF_ORDER",
+        "channel": "telegram",
+        "target_channels": [
+          "telegram",
+          "email",
+          "discord",
+          "sms"
+        ],
+        "sent": false,
+        "status": "duplicate_ignored",
+        "retry_count": 0,
+        "error_detail": "SUPPRESSED_OUT_OF_ORDER: alert ALT-9904 already resolved at 2026-11-13T12:00:00Z (>= 2026-11-13T11:50:00Z)",
+        "created_at": "2026-11-13T11:46:14Z",
+        "delivered_at": null
+      },
+      {
+        "notification_id": "8c90f4bb-d082-45ad-a94c-82a3fb2835d6",
+        "event_id": "1dead36d-f9f2-424d-8fbf-264f8441b1ea",
+        "event_name": "alert.resolved",
+        "correlationId": "req-plugathon-q09",
+        "source": "core-business",
+        "alert_id": "ALT-9904",
+        "severity": null,
+        "message": "Cảnh báo ALT-9904 đã được xử lý: Q09: Sự cố đã xử lý trước khi alert.created tới.",
+        "channel": "telegram",
+        "target_channels": [
+          "telegram"
+        ],
+        "sent": true,
+        "status": "delivered",
+        "retry_count": 0,
+        "error_detail": null,
+        "created_at": "2026-11-13T11:46:14Z",
+        "delivered_at": "2026-11-13T11:46:14Z"
+      },
+      {
+        "notification_id": "ca57248e-5e35-4175-a6a4-c7d8e4f43c92",
+        "event_id": "d181cc8b-6353-4443-82dd-0f1de074d1ee",
+        "event_name": "alert.created",
+        "correlationId": "req-plugathon-latency-01",
+        "source": "core-business",
+        "alert_id": "ALT-6002",
+        "severity": "medium",
+        "message": "Kiểm tra độ trễ container Plug-a-thon",
+        "channel": "telegram",
+        "target_channels": [
+          "telegram"
+        ],
+        "sent": true,
+        "status": "delivered",
+        "retry_count": 0,
+        "error_detail": null,
+        "created_at": "2026-11-13T11:46:13Z",
+        "delivered_at": "2026-11-13T11:46:13Z"
+      },
+      {
+        "notification_id": "ff9d588f-a9da-458b-a3a5-26ef64940082",
+        "event_id": "e12a1192-90a3-473b-b31d-d5848b2c182a",
+        "event_name": "alert.created",
+        "correlationId": "req-plugathon-auto-01",
+        "source": "core-business",
+        "alert_id": "ALT-9349",
+        "severity": "high",
+        "message": "Kiểm tra tự động định tuyến discord khi severity=high",
+        "channel": "telegram",
+        "target_channels": [
+          "telegram",
+          "email",
+          "discord"
+        ],
+        "sent": true,
+        "status": "delivered",
+        "retry_count": 0,
+        "error_detail": null,
+        "created_at": "2026-11-13T11:46:13Z",
+        "delivered_at": "2026-11-13T11:46:13Z"
+      },
+      {
+        "notification_id": "2618e503-8b6c-45e5-b189-5548f2b64ae5",
+        "event_id": "86ad6e7b-1a0e-4ca4-8042-11573b98c299",
+        "event_name": "alert.resolved",
+        "correlationId": "req-plugathon-happy-01",
+        "source": "core-business",
+        "alert_id": "ALT-6643",
+        "severity": "critical",
+        "message": "Cảnh báo ALT-6643 đã được xử lý: Đội bảo vệ đã kiểm tra, sự cố đã xử lý hoàn tất.",
+        "channel": "email",
+        "target_channels": [
+          "email",
+          "discord"
+        ],
+        "sent": true,
+        "status": "delivered",
+        "retry_count": 0,
+        "error_detail": null,
+        "created_at": "2026-11-13T11:46:12Z",
+        "delivered_at": "2026-11-13T11:46:12Z"
+      },
+      {
+        "notification_id": "5ff29485-e968-4e25-9de4-102165c9b660",
+        "event_id": "0143fe55-fd87-4fd0-8d00-54700fc9fa76",
+        "event_name": "alert.escalated",
+        "correlationId": "req-plugathon-happy-01",
+        "source": "core-business",
+        "alert_id": "ALT-6643",
+        "severity": "critical",
+        "message": "Cảnh báo leo thang cấp 3 từ Core Business (Plug-a-thon)",
+        "channel": "telegram",
+        "target_channels": [
+          "telegram",
+          "email",
+          "discord",
+          "sms"
+        ],
+        "sent": true,
+        "status": "delivered",
+        "retry_count": 0,
+        "error_detail": null,
+        "created_at": "2026-11-13T11:46:12Z",
+        "delivered_at": "2026-11-13T11:46:12Z"
+      },
+      {
+        "notification_id": "dc87d674-08ea-48ab-ac90-22f7bbf6ed65",
+        "event_id": "c24ce274-70d0-4b86-9b11-fc45ed825084",
+        "event_name": "alert.created",
+        "correlationId": "req-plugathon-happy-01",
+        "source": "core-business",
+        "alert_id": "ALT-6643",
+        "severity": "high",
+        "message": "Phát hiện sự cố an ninh khẩn cấp từ Core Business (Plug-a-thon)",
+        "channel": "telegram",
+        "target_channels": [
+          "telegram",
+          "email",
+          "sms"
+        ],
+        "sent": true,
+        "status": "delivered",
+        "retry_count": 1,
+        "error_detail": null,
+        "created_at": "2026-11-13T11:46:12Z",
+        "delivered_at": "2026-11-13T11:46:12Z"
+      },
+      {
+        "notification_id": "7007d913-170e-4c92-bf7b-a1c70e4339a2",
+        "event_id": "5887ded1-548a-474a-a634-a0c1c5505c9d",
+        "event_name": "alert.created",
+        "correlationId": "req-dlq-rec-2132cc",
+        "source": "core-business",
+        "alert_id": "ALT-8279",
+        "severity": "critical",
+        "message": "E2E transient sms failure for ALT-8279",
+        "channel": "sms",
+        "target_channels": [
+          "sms"
+        ],
+        "sent": true,
+        "status": "delivered",
+        "retry_count": 1,
+        "error_detail": null,
+        "created_at": "2026-11-13T11:46:02Z",
+        "delivered_at": "2026-11-13T11:46:09Z"
+      }
+    ],
+    "next_cursor": "bzo4",
+    "has_more": true
+  }
+}

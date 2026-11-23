@@ -10,7 +10,7 @@ services:
   api:
     environment:
       MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://192.168.1.51:1883}
-      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-notification-service-g6-plugathon}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-notification-service-g7-plugathon}
     networks:
       team-internal: {}
       class-net:

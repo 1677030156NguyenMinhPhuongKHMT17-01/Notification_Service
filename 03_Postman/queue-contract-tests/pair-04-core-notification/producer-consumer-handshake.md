@@ -8,7 +8,7 @@
 
 - **Pair:** Pair 04 (`Core Business → Notification Service`)
 - **Event Producer:** Nhóm 5 — Core Business Service (`source: "core-business"`)
-- **Event Consumer:** Nhóm 6 — Notification Service
+- **Event Consumer:** Nhóm 7 — Notification Service
 - **Hạ tầng đích (Lab 05 / Plug-a-thon):** MQTT Broker `mqtt://192.168.1.51:1883` (Anonymous) — Topic `campus.alerts`
 - **Các Event Type đã kiểm tra:**
   1. `alert.created`
@@ -82,5 +82,5 @@
 - **Trạng thái:** **READY** cho giai đoạn Implementation (Lab 04) và Broker Integration (Lab 05 / Plug-a-thon).
 - **Xác nhận hai bên:**
   - **Đại diện Event Producer (Nhóm 5 — Core Business):** Đã đồng bộ payload `snake_case` và topic `campus.alerts`.
-  - **Đại diện Event Consumer (Nhóm 6 — Notification Service):** `<Họ tên / MSSV>` — Đã hoàn tất JSON Schema, bộ mẫu kiểm thử và script tự động PASS 100%.
+  - **Đại diện Event Consumer (Nhóm 7 — Notification Service):** `<Họ tên / MSSV>` — Đã hoàn tất JSON Schema, bộ mẫu kiểm thử và script tự động PASS 100%.
 

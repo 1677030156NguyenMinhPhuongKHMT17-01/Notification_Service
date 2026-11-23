@@ -1,0 +1,46 @@
+fit4110-api-lab06  | INFO:     Started server process [1]
+fit4110-api-lab06  | INFO:     Waiting for application startup.
+fit4110-api-lab06  | 2026-11-13 11:47:33,102 level=INFO logger=notification.api starting service=notification-service version=1.0.0 env=plugathon backend=postgresql mqtt_enabled=True broker=mqtt://mqtt-broker:1883 topic=campus.alerts
+fit4110-api-lab06  | 2026-11-13 11:47:33,156 level=INFO logger=notification.store PostgreSQL schema ready
+fit4110-api-lab06  | 2026-11-13 11:47:33,166 level=INFO logger=notification.mqtt connecting to MQTT broker mqtt-broker:1883 topic=campus.alerts
+fit4110-api-lab06  | INFO:     Application startup complete.
+fit4110-api-lab06  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+fit4110-api-lab06  | 2026-11-13 11:47:33,168 level=INFO logger=notification.mqtt MQTT connected, subscribed to campus.alerts (qos=1)
+fit4110-api-lab06  | 2026-11-13 11:47:37,627 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=7.4 trace_id=-
+fit4110-api-lab06  | INFO:     127.0.0.1:44290 - "GET /health HTTP/1.1" 200 OK
+fit4110-api-lab06  | 2026-11-13 11:47:38,034 level=INFO logger=notification.api http method=GET path=/ready status=200 duration_ms=9.4 trace_id=-
+fit4110-api-lab06  | INFO:     172.18.0.1:59692 - "GET /ready HTTP/1.1" 200 OK
+fit4110-api-lab06  | 2026-11-13 11:47:38,080 level=INFO logger=notification.delivery channel=sms alert_id=ALT-888 correlationId=req-fault-dlq-a8a40b delivered message='Simulated SMS gateway failure for DLQ MAX_RETRIES_EXCEEDED and manual retry recovery'
+fit4110-api-lab06  | 2026-11-13 11:47:38,090 level=INFO logger=notification.api http method=POST path=/notifications/91c6e8a5-5230-4fd1-adb9-2032477ef7ed/retry status=200 duration_ms=34.3 trace_id=-
+fit4110-api-lab06  | INFO:     172.18.0.1:59704 - "POST /notifications/91c6e8a5-5230-4fd1-adb9-2032477ef7ed/retry HTTP/1.1" 200 OK
+fit4110-api-lab06  | 2026-11-13 11:47:38,103 level=INFO logger=notification.api http method=POST path=/notifications status=401 duration_ms=1.1 trace_id=-
+fit4110-api-lab06  | INFO:     172.18.0.1:59708 - "POST /notifications HTTP/1.1" 401 Unauthorized
+fit4110-api-lab06  | 2026-11-13 11:47:38,107 level=INFO logger=notification.api http method=POST path=/notifications status=422 duration_ms=0.9 trace_id=-
+fit4110-api-lab06  | INFO:     172.18.0.1:51384 - "POST /notifications HTTP/1.1" 422 Unprocessable Entity
+fit4110-api-lab06  | 2026-11-13 11:47:38,111 level=INFO logger=notification.api http method=GET path=/notifications/recent status=400 duration_ms=0.6 trace_id=-
+fit4110-api-lab06  | INFO:     172.18.0.1:51400 - "GET /notifications/recent?limit=101 HTTP/1.1" 400 Bad Request
+fit4110-api-lab06  | 2026-11-13 11:47:38,120 level=INFO logger=notification.store duplicate event_id=3e047528-1ace-4b21-8cee-f2e7e9cb9bdb origin=rest ignored
+fit4110-api-lab06  | 2026-11-13 11:47:38,121 level=INFO logger=notification.api http method=POST path=/notifications status=409 duration_ms=7.7 trace_id=-
+fit4110-api-lab06  | INFO:     172.18.0.1:51406 - "POST /notifications HTTP/1.1" 409 Conflict
+fit4110-api-lab06  | 2026-11-13 11:47:47,827 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=7.7 trace_id=-
+fit4110-api-lab06  | INFO:     127.0.0.1:39140 - "GET /health HTTP/1.1" 200 OK
+fit4110-api-lab06  | 2026-11-13 11:47:58,014 level=INFO logger=notification.api http method=GET path=/health status=200 duration_ms=6.6 trace_id=-
+fit4110-api-lab06  | INFO:     127.0.0.1:55110 - "GET /health HTTP/1.1" 200 OK
+fit4110-api-lab06  | 2026-11-13 11:48:03,176 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.created event_id=5ccb3396-7c12-4cf5-a35e-1ebe2f7a1c9f alert_id=ALT-602 origin=mqtt channels=['telegram', 'email', 'discord'] correlationId=req-cb-sim-851965bf0b
+fit4110-api-lab06  | 2026-11-13 11:48:03,176 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='[Core Business Sim] Phát hiện sự cố mức high tại ALT-602 (auto-routing discord)'
+fit4110-api-lab06  | 2026-11-13 11:48:03,176 level=INFO logger=notification.delivery channel=email alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='[Core Business Sim] Phát hiện sự cố mức high tại ALT-602 (auto-routing discord)'
+fit4110-api-lab06  | 2026-11-13 11:48:03,176 level=INFO logger=notification.delivery channel=discord alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='[Core Business Sim] Phát hiện sự cố mức high tại ALT-602 (auto-routing discord)'
+fit4110-api-lab06  | 2026-11-13 11:48:03,548 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.escalated event_id=7006f1e2-4c6d-4021-a128-946bb7d49383 alert_id=ALT-602 origin=mqtt channels=['telegram', 'email', 'discord', 'sms'] correlationId=req-cb-sim-851965bf0b
+fit4110-api-lab06  | 2026-11-13 11:48:03,548 level=INFO logger=notification.delivery channel=telegram alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='[Core Business Sim] Cảnh báo ALT-602 leo thang cấp 3 (critical)'
+fit4110-api-lab06  | 2026-11-13 11:48:03,548 level=INFO logger=notification.delivery channel=email alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='[Core Business Sim] Cảnh báo ALT-602 leo thang cấp 3 (critical)'
+fit4110-api-lab06  | 2026-11-13 11:48:03,549 level=INFO logger=notification.delivery channel=discord alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='[Core Business Sim] Cảnh báo ALT-602 leo thang cấp 3 (critical)'
+fit4110-api-lab06  | 2026-11-13 11:48:03,549 level=INFO logger=notification.delivery channel=sms alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='[Core Business Sim] Cảnh báo ALT-602 leo thang cấp 3 (critical)'
+fit4110-api-lab06  | 2026-11-13 11:48:03,919 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.resolved event_id=1d9a3274-b967-4093-a974-d33cef5761e4 alert_id=ALT-602 origin=mqtt channels=['email', 'discord'] correlationId=req-cb-sim-851965bf0b
+fit4110-api-lab06  | 2026-11-13 11:48:03,919 level=INFO logger=notification.delivery channel=email alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='Cảnh báo ALT-602 đã được xử lý: Đội trực ban Core Business xác nhận đã khắc phục sự cố.'
+fit4110-api-lab06  | 2026-11-13 11:48:03,919 level=INFO logger=notification.delivery channel=discord alert_id=ALT-602 correlationId=req-cb-sim-851965bf0b delivered message='Cảnh báo ALT-602 đã được xử lý: Đội trực ban Core Business xác nhận đã khắc phục sự cố.'
+fit4110-api-lab06  | 2026-11-13 11:48:04,257 level=WARNING logger=notification.mqtt invalid event on campus.alerts -> DLQ: 1 validation error for tagged-union[AlertCreatedEvent,AlertEscalatedEvent,AlertResolvedEvent]
+fit4110-api-lab06  |   Input tag 'alert.deleted' found using 'event_name' does not match any of the expected tags: 'alert.created', 'alert.escalated', 'alert.resolved' [type=union_tag_invalid, input_value={'event_id': 'cdae4713-6a... '2026-11-13T11:48:03Z'}, input_type=dict]
+fit4110-api-lab06  |     For further information visit https://errors.pydantic.dev/2.10/v/union_tag_invalid
+fit4110-api-lab06  | 2026-11-13 11:48:04,641 level=INFO logger=notification.store accepted backend=postgresql event_name=alert.resolved event_id=aa3555df-8849-47bf-bb30-0850e7c8231f alert_id=ALT-692 origin=mqtt channels=['email'] correlationId=req-cb-ooo-5b297e8f
+fit4110-api-lab06  | 2026-11-13 11:48:04,641 level=INFO logger=notification.delivery channel=email alert_id=ALT-692 correlationId=req-cb-ooo-5b297e8f delivered message='Cảnh báo ALT-692 đã được xử lý: Q09 simulator: sự cố đã đóng trước khi event tạo trễ tới broker.'
+fit4110-api-lab06  | 2026-11-13 11:48:05,006 level=WARNING logger=notification.store suppressed out-of-order event_name=alert.created event_id=07acefde-22ba-4010-a359-218b09e8fbef alert_id=ALT-692 origin=mqtt

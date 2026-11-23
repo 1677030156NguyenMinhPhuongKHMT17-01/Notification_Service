@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification Service (Nhóm 7) — FIT4110 Lab 06 Plug-a-thon Architecture Presentation</title>
+<style>
+  @page {
+    size: 1280px 720px;
+    margin: 0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0f172a;
+    --slate: #1e293b;
+    --teal: #0d9488;
+    --sky: #0284c7;
+    --emerald: #059669;
+    --amber: #d97706;
+    --rose: #e11d48;
+    --indigo: #4f46e5;
+    --bg: #f8fafc;
+    --border: #cbd5e1;
+    --text: #0f172a;
+    --muted: #475569;
+  }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #0f172a;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 64px;
+    gap: 24px;
+  }
+
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Cover Slide */
+  .slide.cover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f3d3e 100%);
+    color: #f8fafc;
+    padding: 46px 64px;
+    justify-content: space-between;
+  }
+  .cover-top {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.16); padding-bottom: 18px;
+  }
+  .cover-course { font-size: 15px; font-weight: 700; color: #5eead4; letter-spacing: 0.6px; text-transform: uppercase; }
+  .cover-pill {
+    font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 999px;
+    background: rgba(20,184,166,0.2); border: 1px solid #2dd4bf; color: #ccfbf1;
+  }
+  .cover-main h1 { font-size: 46px; line-height: 1.16; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.6px; }
+  .cover-main .subtitle { font-size: 21px; color: #cbd5e1; line-height: 1.45; max-width: 980px; }
+  .cover-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .chip {
+    font-size: 13.5px; font-weight: 600; padding: 7px 14px; border-radius: 8px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #f1f5f9;
+  }
+  .cover-footer {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    border-top: 1px solid rgba(255,255,255,0.16); padding-top: 20px;
+  }
+  .cover-meta span { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .cover-meta strong { display: block; font-size: 15.5px; color: #ffffff; margin-top: 4px; }
+
+  /* Content Slides Header & Footer */
+  .s-header {
+    height: 76px;
+    padding: 14px 40px;
+    background: linear-gradient(90deg, #0f172a 0%, #1e293b 70%, #0f3d3e 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--teal);
+    flex-shrink: 0;
+  }
+  .s-header h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+  .s-header .s-sub { font-size: 13px; color: #cbd5e1; margin-top: 2px; }
+  .s-badge {
+    font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+    background: rgba(20,184,166,0.22); border: 1px solid #2dd4bf; color: #ccfbf1; white-space: nowrap;
+  }
+
+  .s-body {
+    flex: 1;
+    padding: 24px 40px 18px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+  }
+
+  .s-footer {
+    height: 36px;
+    padding: 0 40px;
+    background: #f1f5f9;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #475569;
+    flex-shrink: 0;
+  }
+
+  /* Grid & Cards */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; flex: 1; }
+  .grid-2-wide { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; flex: 1; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+  .card {
+    background: #ffffff;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card.teal { border-top: 4px solid var(--teal); }
+  .card.blue { border-top: 4px solid var(--sky); }
+  .card.indigo { border-top: 4px solid var(--indigo); }
+  .card.amber { border-top: 4px solid var(--amber); background: #fffdf7; }
+  .card.rose { border-top: 4px solid var(--rose); background: #fff9fa; }
+  .card.emerald { border-top: 4px solid var(--emerald); }
+
+  .card h3 {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--navy);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+  }
+  .tag {
+    font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 5px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .t-teal { background: #ccfbf1; color: #0f766e; }
+  .t-blue { background: #dbeafe; color: #1d4ed8; }
+  .t-rose { background: #ffe4e6; color: #be123c; }
+  .t-amber { background: #fef3c7; color: #b45309; }
+  .t-emerald { background: #d1fae5; color: #047857; }
+  .t-indigo { background: #e0e7ff; color: #3730a3; }
+
+  ul.bullets { list-style: none; font-size: 13.5px; line-height: 1.48; color: #334155; }
+  ul.bullets li { padding-left: 14px; position: relative; margin-bottom: 6px; }
+  ul.bullets li::before { content: "•"; position: absolute; left: 0; color: var(--teal); font-weight: 800; }
+  ul.bullets.compact li { font-size: 12.8px; line-height: 1.42; margin-bottom: 4.5px; }
+
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; color: #0f172a;
+  }
+
+  table.tbl { width: 100%; border-collapse: collapse; font-size: 12.6px; }
+  table.tbl th, table.tbl td { border: 1px solid #cbd5e1; padding: 6px 9px; text-align: left; }
+  table.tbl th { background: #f1f5f9; font-weight: 700; color: #1e293b; }
+
+  .callout {
+    border-radius: 9px; padding: 11px 16px; font-size: 13px; line-height: 1.45;
+    border: 1.5px solid #99f6e4; background: #f0fdfa; color: #115e59;
+  }
+  .callout.warn { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+  .callout.rose { border-color: #fecdd3; background: #fff1f2; color: #9f1239; }
+
+  .flow-strip {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 12px 16px;
+  }
+  .flow-node {
+    flex: 1; text-align: center; padding: 8px 10px; border-radius: 8px;
+    border: 1.5px solid #94a3b8; background: #f8fafc; font-size: 12.5px;
+  }
+  .flow-node strong { display: block; font-size: 13.5px; color: var(--navy); margin-bottom: 2px; }
+  .flow-arrow { font-size: 20px; font-weight: 800; color: var(--teal); }
+
+  .metric-box {
+    background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px;
+    padding: 12px 14px; text-align: center;
+  }
+  .metric-val { font-size: 26px; font-weight: 800; color: var(--teal); }
+  .metric-lbl { font-size: 12px; font-weight: 700; color: var(--navy); margin-top: 2px; }
+  .metric-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Fixed Bottom Controls (hidden when printing) */
+  .nav-bar {
+    position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.92); color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 999px;
+    padding: 7px 16px; display: flex; align-items: center; gap: 14px;
+    font-size: 13px; z-index: 100; backdrop-filter: blur(8px);
+  }
+  .nav-bar button {
+    background: #0d9488; color: #fff; border: none; border-radius: 999px;
+    padding: 4px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .nav-bar button:hover { background: #14b8a6; }
+
+  @media print {
+    body { background: #ffffff; padding: 0; gap: 0; display: block; }
+    .slide {
+      border-radius: 0; box-shadow: none; margin: 0;
+      page-break-after: always; break-after: page;
+    }
+    .slide:last-of-type { page-break-after: auto; break-after: auto; }
+    .nav-bar { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= SLIDE 1: COVER ================= -->
+  <section class="slide cover" id="s1">
+    <div class="cover-top">
+      <div class="cover-course">FIT4110 — Dịch vụ kết nối &amp; Công nghệ nền tảng · Smart Campus Operations Platform</div>
+      <div class="cover-pill">Lab 06 Plug-a-thon &amp; Demo Pack</div>
+    </div>
+    <div class="cover-main">
+      <h1>Notification Service<br>Kiến trúc Kết nối &amp; Triển khai Plug-a-thon</h1>
+      <p class="subtitle">
+        Dịch vụ thông báo đa kênh bất đồng bộ theo <strong>Pair 04 (Core Business → Notification Service)</strong>:
+        hợp đồng đóng băng <code>v1.0.0</code>, định tuyến theo mức độ nghiêm trọng, khử trùng lặp &amp; thứ tự sự cố,
+        hàng đợi lỗi DLQ và triển khai Docker Compose hai chế độ (Standalone &amp; <code>class-net</code> LAN).
+      </p>
+      <div class="cover-chips">
+        <span class="chip">Python 3.11 + FastAPI</span>
+        <span class="chip">Pydantic v2 + OpenAPI 3.1.0 (RFC 9457)</span>
+        <span class="chip">Eclipse Mosquitto 2 (QoS 1)</span>
+        <span class="chip">PostgreSQL 15 (event_id UNIQUE)</span>
+        <span class="chip">Non-Root Runtime (uid=10001)</span>
+      </div>
+    </div>
+    <div class="cover-footer">
+      <div class="cover-meta">
+        <span>Sinh viên thực hiện</span>
+        <strong>Nguyễn Minh Phượng (&lt;MãSinhViên&gt;)</strong>
+      </div>
+      <div class="cover-meta">
+        <span>Nhóm / Dịch vụ</span>
+        <strong>Nhóm 7 (A7 / B7) — Notification</strong>
+      </div>
+      <div class="cover-meta">
+        <span>Cặp tích hợp chính</span>
+        <strong>Pair 04 (Core Business · Nhóm 5)</strong>
+      </div>
+      <div class="cover-meta">
+        <span>Thư mục đồ án</span>
+        <strong>FIT4110_MSSV/06_Plugathon/</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 2: SERVICE BOUNDARY ================= -->
+  <section class="slide" id="s2">
+    <header class="s-header">
+      <div>
+        <h2>1. Ranh giới Dịch vụ &amp; Quyền sở hữu Dữ liệu</h2>
+        <div class="s-sub">Tuân thủ Luật 1 FIT4110: Tách biệt tuyệt đối dữ liệu, nghiệp vụ và phần cứng nguồn</div>
+      </div>
+      <span class="s-badge">docs/service_boundary.md</span>
+    </header>
+    <div class="s-body">
+      <div class="grid-2">
+        <div class="card teal">
+          <h3>WE OWN — Notification Service sở hữu <span class="tag t-teal">Inside Boundary</span></h3>
+          <ul class="bullets">
+            <li><strong>Async MQTT Consumer (<code>mqtt_consumer.py</code>):</strong> Subscribe <code>campus.alerts</code> (QoS 1, <code>clean_session=False</code>), đẩy việc sang <code>ThreadPoolExecutor</code> (<code>MQTT_WORKER_THREADS=4</code>).</li>
+            <li><strong>Edge Contract Validation (<code>models.py</code>):</strong> Kiểm tra payload bằng Pydantic v2 <code>event_adapter</code> (<code>extra="forbid"</code>, <code>^ALT-[0-9]{3,}$</code>).</li>
+            <li><strong>FastAPI REST Gateway (<code>main.py</code>):</strong> 7 endpoints tại cổng <code>:8000</code>, Bearer Auth &amp; chuẩn lỗi <strong>RFC 9457</strong>.</li>
+            <li><strong>Routing &amp; Resilience Engine (<code>store.py</code>):</strong> <code>SEVERITY_ROUTING</code>, idempotency <code>event_id</code>, chống lệch thứ tự <code>Q09</code>, auto-retry <code>3×5s</code> &amp; manual retry.</li>
+            <li><strong>Private PostgreSQL 15 (<code>fit4110-db-lab06</code>):</strong> Volume <code>plugathon-db-data</code>, bảng <code>notifications</code> (không ai ngoài service được đọc/ghi DB trực tiếp).</li>
+            <li><strong>Channel Dispatcher (<code>delivery.py</code>):</strong> Tiêm lỗi <code>FAIL_CHANNELS</code>, stdout mock an toàn &amp; opt-in HTTPS webhook <code>&le;5s</code>.</li>
+          </ul>
+        </div>
+        <div class="card rose">
+          <h3>OUT OF SCOPE — Tuyệt đối không thực hiện <span class="tag t-rose">Strict Boundary</span></h3>
+          <ul class="bullets">
+            <li><strong>1. Không kết nối phần cứng / dữ liệu thô:</strong> Không đọc trực tiếp ESP32/IoT sensor, thẻ RFID Access Gate hay Camera Stream.</li>
+            <li><strong>2. Không chạy AI hoặc Rule nghiệp vụ:</strong> Không suy luận AI Vision, không đánh giá ngưỡng cảnh báo hay tự nâng cấp mức độ; mọi sự kiện đều do Core Business chuẩn hóa trước.</li>
+            <li><strong>3. Không chỉnh sửa hợp đồng đối tác:</strong> File <code>contracts/core-business.openapi.yaml</code> thuộc Nhóm 5 (chỉ đọc); mọi điểm lệch được ghi minh bạch ở <code>known-issues.md</code>.</li>
+            <li><strong>4. Không commit secret hay hard-code IP:</strong> Không lưu <code>.env</code>, bot token, webhook thật hoặc IP cố định vào Git/code (tuân thủ Luật 3).</li>
+          </ul>
+          <div class="callout warn" style="margin-top: auto;">
+            <strong>Giao tiếp hợp lệ duy nhất:</strong> Upstream từ <strong>Core Business (Nhóm 5)</strong> qua MQTT <code>campus.alerts</code> (hoặc sync fallback <code>POST /notifications</code>); Downstream tra cứu qua REST Bearer Auth hoặc topic <code>campus.alerts.dlq</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nhóm 7 (Notification Service)</span>
+      <span>Slide 2 / 9 · Service Boundary</span>
+    </footer>
+  </section>
+
+  <!-- ================= SLIDE 3: FROZEN CONTRACT ================= -->
+  <section class="slide" id="s3">
+    <header class="s-header">
+      <div>
+        <h2>2. Hợp đồng Đóng băng Pair 04 (Frozen Baseline v1.0.0)</h2>
+        <div class="s-sub">Khóa 9 tệp hợp đồng từ Lab 02/03/05 và kiểm tra byte-for-byte SHA-256 trước khi chạy</div>
+      </div>
+      <span class="s-badge">9/9 SHA-256 Verified</span>
+    </header>
+    <div class="s-body">
+      <div class="grid-2-wide">
+        <div class="card blue">
+          <h3>Danh mục REST Endpoints (OpenAPI 3.1.0) <span class="tag t-blue">notification.openapi.yaml</span></h3>
+          <table class="tbl">
+            <thead>
+              <tr><th>Method &amp; Path</th><th>Auth</th><th>Success / Error (<code>problem+json</code>)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>GET /health</code></td><td>No</td><td><code>200</code> / <code>503</code> (DB ping <code>SELECT 1</code>)</td></tr>
+              <tr><td><code>GET /ready</code></td><td>No</td><td><code>200</code> / <code>503</code> (DB ready + MQTT connected)</td></tr>
+              <tr><td><code>POST /notifications</code></td><td>Bearer</td><td><code>201</code> / <code>400, 401, 409, 422</code></td></tr>
+              <tr><td><code>GET /notifications</code></td><td>Bearer</td><td><code>200</code> / <code>400, 401, 422</code> (cursor + filter)</td></tr>
+              <tr><td><code>GET /notifications/recent</code></td><td>Bearer</td><td><code>200</code> / <code>400, 401, 422</code> (<code>limit=101 → 400</code>)</td></tr>
+              <tr><td><code>GET /notifications/{id}</code></td><td>Bearer</td><td><code>200</code> / <code>401, 404</code></td></tr>
+              <tr><td><code>POST /notifications/{id}/retry</code></td><td>Bearer</td><td><code>200</code> / <code>401, 404</code> (tăng <code>retry_count</code>)</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size: 12.2px; color: #475569; margin-top: 4px;">
+            Kiểm tra tự động: <code>npm run lint:openapi</code> (Spectral) đạt <strong>0 errors</strong>; <code>python scripts/verify_frozen_contracts.py</code> xác nhận parity <strong>9/9</strong> với <code>03_Postman</code> &amp; <code>05_Compose</code>.
+          </p>
+        </div>
+        <div class="card indigo">
+          <h3>3 Sự kiện MQTT Pair 04 (Draft 2020-12) <span class="tag t-indigo">campus.alerts</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Cấu trúc phẳng <code>snake_case</code></strong> (giữ nguyên <code>correlationId</code>), không bọc lồng, <code>additionalProperties: false</code>.</li>
+            <li><strong><code>alert.created</code>:</strong> Yêu cầu <code>severity</code> (<code>low..critical</code>), <code>message</code>; optional <code>target_channels</code>.</li>
+            <li><strong><code>alert.escalated</code>:</strong> Yêu cầu <code>escalation_level</code> (<code>1..5</code>); optional <code>severity</code>, <code>message</code>, <code>target_channels</code>.</li>
+            <li><strong><code>alert.resolved</code>:</strong> Yêu cầu <code>resolution_note</code> (<code>3..500</code> ký tự); optional <code>target_channels</code> (lưu <code>severity: null</code>).</li>
+            <li><strong>Ràng buộc chung:</strong> <code>event_id</code> (UUID), <code>source: "core-business"</code>, <code>alert_id</code> khớp <code>^ALT-[0-9]{3,}$</code>, <code>timestamp</code> UTC ISO 8601.</li>
+          </ul>
+          <div class="callout" style="margin-top: auto;">
+            <strong>Ghi chú Issue #7 (Lab 02 → Lab 06):</strong> Đồng bộ thêm <code>discord</code> cho mức <code>high</code> và chuẩn hóa phân biệt <code>400</code> (query/JSON hỏng) với <code>422</code> (lỗi Pydantic body).
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nhóm 7 (Notification Service)</span>
+      <span>Slide 3 / 9 · Frozen Contracts v1.0.0</span>
+    </footer>
+  </section>
+
+  <!-- ================= SLIDE 4: ARCHITECTURE & SEVERITY ROUTING ================= -->
+  <section class="slide" id="s4">
+    <header class="s-header">
+      <div>
+        <h2>3. Kiến trúc Xử lý Nội bộ &amp; Định tuyến Kênh (SEVERITY_ROUTING)</h2>
+        <div class="s-sub">Luồng bất đồng bộ tách thread, lưu bền vững PostgreSQL 15 và định tuyến linh hoạt</div>
+      </div>
+      <span class="s-badge">store.py · delivery.py</span>
+    </header>
+    <div class="s-body">
+      <div class="flow-strip">
+        <div class="flow-node" style="border-color: #4f46e5; background: #eef2ff;">
+          <strong>Core Business / Sim</strong>
+          MQTT QoS 1 (<code>campus.alerts</code>)
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node" style="border-color: #0d9488; background: #f0fdfa;">
+          <strong>MqttConsumer</strong>
+          <code>ThreadPoolExecutor(4)</code>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node" style="border-color: #0284c7; background: #f0f9ff;">
+          <strong>Pydantic v2</strong>
+          Validate Schema (forbid extra)
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node" style="border-color: #059669; background: #ecfdf5;">
+          <strong>NotificationStore</strong>
+          Idempotency · Q09 · Routing · DB
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node" style="border-color: #d97706; background: #fffbeb;">
+          <strong>ChannelDispatcher</strong>
+          <code>FAIL_CHANNELS</code> / Mock / Webhook
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card emerald">
+          <h3><span>Ma trận Định tuyến mặc định (<code>SEVERITY_ROUTING</code>)</span> <span class="tag t-emerald">store.py</span></h3>
+          <table class="tbl">
+            <thead><tr><th>Severity</th><th>Auto Target Channels (khi không truyền tường minh)</th></tr></thead>
+            <tbody>
+              <tr><td><code>low</code></td><td><code>["email"]</code></td></tr>
+              <tr><td><code>medium</code></td><td><code>["telegram", "email"]</code></td></tr>
+              <tr><td><code>high</code></td><td><code>["telegram", "email", "discord"]</code></td></tr>
+              <tr><td><code>critical</code></td><td><code>["telegram", "email", "discord", "sms"]</code></td></tr>
+            </tbody>
+          </table>
+          <p style="font-size: 12.6px; color: #334155;">
+            Nếu producer truyền tường minh <code>target_channels</code> (ví dụ <code>alert.resolved</code> chỉ định <code>["email", "discord"]</code>), engine ưu tiên danh sách đó thay vì bảng mặc định.
+          </p>
+        </div>
+
+        <div class="card teal">
+          <h3>Channel Dispatcher &amp; Postgres Ownership <span class="tag t-teal">Runtime Mechanics</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Zero-Secret Clean Clone:</strong> Mặc định chạy <strong>stdout mock có cấu trúc</strong> (ghi log kèm <code>alert_id</code>, <code>correlationId</code>), đảm bảo AI/giảng viên <code>git clone</code> chạy pass ngay không cần token.</li>
+            <li><strong>Opt-in Webhook Thật:</strong> Nếu cấu hình <code>DISCORD_WEBHOOK_URL</code> hoặc <code>TELEGRAM_BOT_TOKEN</code> + <code>TELEGRAM_CHAT_ID</code>, dùng stdlib <code>urllib.request</code> timeout bị chặn <code>&le; 5.0s</code>.</li>
+            <li><strong>Schema Persistence (PostgreSQL 15):</strong> Bảng <code>notifications</code> lưu <code>notification_id</code>, <code>event_id UNIQUE</code>, <code>target_channels JSONB</code>, <code>status</code>, <code>retry_count</code>, <code>error_detail</code>, <code>event_timestamp</code>.</li>
+            <li><strong>Build-Stage Fallback:</strong> Khi <code>DATABASE_URL</code> rỗng, tự dùng <code>MemoryBackend</code> để chạy <code>pytest</code> cô lập ngay trong Docker build stage.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nhóm 7 (Notification Service)</span>
+      <span>Slide 4 / 9 · Internal Architecture &amp; Routing</span>
+    </footer>
+  </section>
+
+  <!-- ================= SLIDE 5: FAULT TOLERANCE & DLQ ================= -->
+  <section class="slide" id="s5">
+    <header class="s-header">
+      <div>
+        <h2>4. Chịu lỗi, Dead-Letter Queue (campus.alerts.dlq) &amp; Bảo vệ Q09</h2>
+        <div class="s-sub">Xử lý tất định lỗi hợp đồng, lỗi kênh gửi tạm thời, sự kiện trùng &amp; sự kiện đến muộn</div>
+      </div>
+      <span class="s-badge">Q05 · Q07 · Q08 · Q09</span>
+    </header>
+    <div class="s-body">
+      <div class="grid-3" style="flex: 1;">
+        <div class="card rose">
+          <h3>1. Schema Fail (Q08) <span class="tag t-rose">No Retry → DLQ</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Trigger:</strong> JSON lỗi cú pháp, thiếu trường, sai regex <code>ALT-xxx</code>, <code>extra="forbid"</code> (như <code>alert.deleted</code> / <code>EXTREME</code>).</li>
+            <li><strong>Hành vi:</strong> Reject ngay ở consumer với <code>retry_count = 0</code> (không lãng phí retry).</li>
+            <li><strong>DLQ Output (<code>campus.alerts.dlq</code>):</strong> Envelope gồm <code>topic</code>, <code>reason: "SCHEMA_VALIDATION_FAILED"</code>, <code>error_detail</code>, <code>source_topic</code>, <code>original_payload</code>, <code>failed_at</code>.</li>
+          </ul>
+        </div>
+        <div class="card amber">
+          <h3>2. Channel Fail (Q07) <span class="tag t-amber">Retry → DLQ → Retry API</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Trigger:</strong> Kênh nằm trong <code>FAIL_CHANNELS</code> (như <code>sms</code>) hoặc webhook ngoài lỗi.</li>
+            <li><strong>Auto-Retry:</strong> Thử tối đa <code>MAX_RETRIES=3</code> lần, cách nhau <code>RETRY_INTERVAL_SECONDS=5s</code>.</li>
+            <li><strong>Restart Safe:</strong> Khi khởi động lại, <code>store.init()</code> chuyển bản ghi kẹt <code>retrying → failed</code>.</li>
+            <li><strong>DLQ &amp; Recovery:</strong> Quá hạn → <code>failed</code> + publish DLQ <code>MAX_RETRIES_EXCEEDED</code>; sau khi sửa lỗi gọi <code>POST /notifications/{id}/retry</code> → <code>delivered</code>.</li>
+          </ul>
+        </div>
+        <div class="card indigo">
+          <h3>3. Idempotency &amp; Out-of-Order <span class="tag t-indigo">Q05 / Q09 Guard</span></h3>
+          <ul class="bullets compact">
+            <li><strong><code>Q05</code> Duplicate <code>event_id</code>:</strong> Khóa <code>event_id UNIQUE</code> chặn gửi lặp kể cả khi container khởi động lại: REST trả <code>409 Conflict</code>, MQTT skip an toàn.</li>
+            <li><strong><code>Q09</code> Out-of-Order:</strong> Nếu <code>alert_id</code> đã ghi nhận <code>alert.resolved</code> với <code>event_timestamp</code> mới hơn event đến sau (<code>T &lt; T_resolved</code>), từ chối phát kênh.</li>
+            <li><strong>Audit Log:</strong> Ghi bản ghi với <code>status: "duplicate_ignored"</code>, <code>sent: false</code>, <code>error_detail: "SUPPRESSED_OUT_OF_ORDER:..."</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>Trạng thái vòng đời chuẩn (<code>DeliveryStatus</code>):</strong> <code>queued</code> → <code>retrying</code> (nếu gặp lỗi tạm thời) → <code>delivered</code> | <code>failed</code> (và đẩy DLQ) | <code>duplicate_ignored</code> (khi bị triệt tiêu bởi <code>Q09</code>).
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nhóm 7 (Notification Service)</span>
+      <span>Slide 5 / 9 · Fault Tolerance &amp; DLQ</span>
+    </footer>
+  </section>
+
+  <!-- ================= SLIDE 6: DOCKER & COMPOSE SETUP ================= -->
+  <section class="slide" id="s6">
+    <header class="s-header">
+      <div>
+        <h2>5. Đóng gói Docker &amp; Chế độ Standalone Compose (06_Plugathon)</h2>
+        <div class="s-sub">Multi-stage Dockerfile an toàn non-root (uid=10001) &amp; kiểm thử độc lập 1 lệnh</div>
+      </div>
+      <span class="s-badge">docker-compose.yml</span>
+    </header>
+    <div class="s-body">
+      <div class="grid-2">
+        <div class="card teal">
+          <h3>3 Services trong Stack Standalone <span class="tag t-teal">plugathon-internal</span></h3>
+          <table class="tbl">
+            <thead><tr><th>Service / Container</th><th>Image &amp; User</th><th>Port / Healthcheck</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>api</code><br><code>fit4110-api-lab06</code></td>
+                <td>Build từ <code>../05_Compose</code> (<code>target: runtime</code>), <code>user: 10001:10001</code></td>
+                <td><code>${APP_PORT:-8000}:8000</code><br>Check <code>GET /health</code> (10s×5)</td>
+              </tr>
+              <tr>
+                <td><code>db</code><br><code>fit4110-db-lab06</code></td>
+                <td><code>postgres:15-alpine</code>, volume <code>plugathon-db-data</code></td>
+                <td><code>${POSTGRES_PORT:-5432}:5432</code><br><code>pg_isready -U plugathon</code></td>
+              </tr>
+              <tr>
+                <td><code>mqtt-broker</code><br><code>fit4110-mqtt-lab06</code></td>
+                <td><code>eclipse-mosquitto:2</code>, config RO từ <code>../05_Compose</code></td>
+                <td><code>${MQTT_PORT:-1883}:1883</code><br><code>mosquitto_pub health/ping</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card blue">
+          <h3><span>Luồng Clean-Clone Startup (<code>RUN_PLUGATHON.md</code>)</span> <span class="tag t-blue">Zero-Secret</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Bước 1 — Cấu hình an toàn:</strong> <code>cp .env.example .env</code> (tự tách khỏi Git bằng <code>.gitignore</code>).</li>
+            <li><strong>Bước 2 — Cài CLI &amp; kiểm tra hợp đồng:</strong>
+              <code>npm ci &amp;&amp; python scripts/verify_frozen_contracts.py &amp;&amp; npm run lint:openapi</code></li>
+            <li><strong>Bước 3 — Build &amp; Chạy (Docker build stage tự chạy <code>pytest</code> 13/13):</strong>
+              <code>docker compose up -d --build --wait</code></li>
+            <li><strong>Bước 4 — Xác minh non-root &amp; readiness:</strong>
+              <code>docker compose exec -T api id</code> → <code>uid=10001(appuser)</code>; <code>GET /health</code> &amp; <code>GET /ready</code> đều HTTP <code>200</code>.</li>
+          </ul>
+          <div class="callout" style="margin-top: auto;">
+            <strong>Makefile Shortcuts:</strong> <code>make install</code> · <code>make verify-contracts</code> · <code>make lint</code> · <code>make up</code> · <code>make readiness</code> · <code>make sim</code> · <code>make e2e</code> · <code>make test-plugathon</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nhóm 7 (Notification Service)</span>
+      <span>Slide 6 / 9 · Docker &amp; Standalone Compose</span>
+    </footer>
+  </section>
+
+  <!-- ================= SLIDE 7: PLUG-A-THON INTEGRATION TOPOLOGY ================= -->
+  <section class="slide" id="s7">
+    <header class="s-header">
+      <div>
+        <h2>6. Tích hợp Plug-a-thon Mạng Chung (class-net + Broker Lớp)</h2>
+        <div class="s-sub">Chuyển đổi sang hạ tầng chung bằng file overlay — không sửa code, không đụng cổng 1883</div>
+      </div>
+      <span class="s-badge">docker-compose.external-broker.yml</span>
+    </header>
+    <div class="s-body">
+      <div class="grid-2-wide">
+        <div class="card teal">
+          <h3><span>Cơ chế Overlay <code>docker-compose.external-broker.yml</code></span> <span class="tag t-teal">Dual-Homed Network</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Tắt Mosquitto cục bộ tránh đụng cổng:</strong> Gán <code>profiles: ["local-broker"]</code> và <code>ports: !override []</code> cho service <code>mqtt-broker</code>.</li>
+            <li><strong>Giữ DB cô lập riêng:</strong> Container <code>db</code> chỉ nằm trên <code>plugathon-internal</code>, tuyệt đối không phơi sang mạng lớp <code>class-net</code>.</li>
+            <li><strong>Phơi API lên mạng lớp:</strong> Service <code>api</code> gắn cả <code>plugathon-internal</code> lẫn <code>class-net</code> (<code>external: true</code>) với DNS alias <strong><code>notification-service</code></strong>.</li>
+            <li><strong>Ghi đè Broker động qua ENV (Luật 3):</strong> <code>MQTT_BROKER_URL=${MQTT_BROKER_URL:-mqtt://192.168.1.51:1883}</code> và <code>MQTT_CLIENT_ID=notification-service-g7-plugathon</code>.</li>
+          </ul>
+        </div>
+        <div class="card indigo">
+          <h3>Lệnh ghép &amp; Khai báo phía Đối tác <span class="tag t-indigo">Inter-Group Onboarding</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Tạo mạng dùng chung (1 lần):</strong> <code>docker network create class-net</code></li>
+            <li><strong>Khởi chạy chế độ Plug-a-thon:</strong><br>
+              <code>MQTT_BROKER_URL=mqtt://192.168.1.51:1883 docker compose -f docker-compose.yml -f docker-compose.external-broker.yml up -d --build --wait</code></li>
+            <li><strong>Core Business (Nhóm 5) kết nối:</strong> Publish <code>alert.*</code> lên topic <code>campus.alerts</code> của broker lớp; fallback HTTP gọi <code>http://notification-service:8000/notifications</code>.</li>
+            <li><strong>Analytics / Dashboard:</strong> Truy vấn <code>GET http://notification-service:8000/notifications/recent</code> với header <code>Authorization: Bearer &lt;AUTH_TOKEN&gt;</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>Kiểm tra ghép mạng thành công:</strong> <code>GET /ready</code> bắt buộc trả HTTP <code>200</code> với <code>dependencies.database.ready: true</code> và <code>dependencies.mqtt.connected: true</code> trên địa chỉ broker lớp.
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nhóm 7 (Notification Service)</span>
+      <span>Slide 7 / 9 · Plug-a-thon Overlay Topology</span>
+    </footer>
+  </section>
+
+  <!-- ================= SLIDE 8: VERIFICATION & CI ================= -->
+  <section class="slide" id="s8">
+    <header class="s-header">
+      <div>
+        <h2>7. Chiến lược Kiểm thử Tự động, Metrics &amp; CI Pipeline</h2>
+        <div class="s-sub">Kiểm chứng đa tầng từ Hợp đồng tĩnh → Unit Build → Container E2E → Newman → GitHub Actions</div>
+      </div>
+      <span class="s-badge">lab06-plugathon-demo.yml</span>
+    </header>
+    <div class="s-body">
+      <div class="grid-4">
+        <div class="metric-box">
+          <div class="metric-val">9 / 9</div>
+          <div class="metric-lbl">Frozen Contracts SHA-256</div>
+          <div class="metric-sub">verify_frozen_contracts.py (Verified)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">0 Err</div>
+          <div class="metric-lbl">Spectral OpenAPI Lint</div>
+          <div class="metric-sub">npm run lint:openapi (Verified)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">13 / 13</div>
+          <div class="metric-lbl">Automated E2E + DLQ</div>
+          <div class="metric-sub">run_plugathon_e2e.py (Live PASS)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">21 / 37</div>
+          <div class="metric-lbl">Postman Req / Assertions</div>
+          <div class="metric-sub">Newman: 0 failed · 2.3s (Live PASS)</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="flex: 1;">
+        <div class="card blue">
+          <h3>Phạm vi Bộ Kiểm thử Tự động Lab 06 <span class="tag t-blue">E2E + Newman</span></h3>
+          <ul class="bullets compact">
+            <li><strong><code>demo/run_demo.ps1</code> Walkthrough:</strong> Khởi chạy từ sạch <code>40.9s</code> (&le; 300s), 3/3 container <code>healthy</code>, non-root <code>uid=10001(appuser)</code>, ghi log <code>demo_walkthrough.log</code>.</li>
+            <li><strong><code>run_plugathon_e2e.py --with-compose-dlq-recovery</code>:</strong> Đạt <code>13/13</code> checks PASS: probes, Pair-04 lifecycle (<code>high → discord</code>), <code>Q05</code>, <code>Q09</code>, DLQ <code>SCHEMA_VALIDATION_FAILED</code>, <code>409/401/422</code>, tiêm <code>FAIL_CHANNELS=sms</code> → <code>MAX_RETRIES_EXCEEDED</code> → <code>/retry</code> phục hồi <code>delivered</code>.</li>
+            <li><strong>Newman Collection:</strong> <code>21/21</code> requests, <code>37/37</code> assertions PASS (0 failed, 2.3s), xuất <code>reports/newman-plugathon.{html,xml}</code>.</li>
+          </ul>
+        </div>
+        <div class="card emerald">
+          <h3>Bằng chứng Thực thi &amp; CI Pipeline <span class="tag t-emerald">Live Verified</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Đã kiểm chứng tĩnh &amp; build:</strong> <code>9/9</code> SHA-256 parity, Spectral lint <code>0</code> errors, Dual Compose config <code>exit 0</code>, <code>pytest</code> <code>13/13</code> tests.</li>
+            <li><strong>Bằng chứng trực tiếp đã thu nhận (<code>2026-11-13</code>):</strong> Đủ 6 file log trong <code>evidence/logs/</code>, 3 screenshot (<code>swagger-ui.png</code>, <code>ready-endpoint.png</code>, <code>newman-report.png</code>) và biên bản <code>evidence/fault_record.md</code>.</li>
+            <li><strong>CI Workflow (<code>.github/workflows/lab06-plugathon-demo.yml</code>):</strong> Tự động hóa toàn trình trên <code>ubuntu-latest</code> sau khi push GitHub.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nhóm 7 (Notification Service)</span>
+      <span>Slide 8 / 9 · Verification &amp; CI Pipeline</span>
+    </footer>
+  </section>
+
+  <!-- ================= SLIDE 9: KNOWN ISSUES & REFLECTION ================= -->
+  <section class="slide" id="s9">
+    <header class="s-header">
+      <div>
+        <h2>8. Vấn đề Đã biết, Tiến hóa Lab 01–06 &amp; Phản tư Cá nhân</h2>
+        <div class="s-sub">Ghi nhận trung thực giới hạn kỹ thuật và bài học kiến trúc dịch vụ kết nối</div>
+      </div>
+      <span class="s-badge">known-issues.md · reflection</span>
+    </header>
+    <div class="s-body">
+      <div class="grid-2">
+        <div class="card amber">
+          <h3>Known Issues &amp; Giới hạn Minh bạch <span class="tag t-amber">known-issues.md</span></h3>
+          <ul class="bullets compact">
+            <li><strong>KI-01 (Read-only Upstream):</strong> <code>contracts/core-business.openapi.yaml</code> còn sót ví dụ <code>service: lab02-contract-template</code> ở <code>/health</code>; Nhóm 7 giữ nguyên quyền sở hữu của Nhóm 5 (Luật 1 &amp; 2).</li>
+            <li><strong>KI-04 (Stdout Mock Email/SMS):</strong> Email &amp; SMS mô phỏng có cấu trúc ra stdout log; chỉ Discord/Telegram hỗ trợ HTTPS webhook thật opt-in.</li>
+            <li><strong>KI-05/06 (Dev Auth):</strong> Broker dev chạy anonymous và API dùng static Bearer token <code>AUTH_TOKEN</code> phù hợp môi trường LAN lớp học.</li>
+            <li><strong>KI-07 (LAN Live &amp; Video Demo):</strong> Phiên ghép mạng LAN thật (<code>192.168.1.51</code>) thực hiện trực tiếp tại buổi Plug-a-thon; URL video ở <code>evidence/demo_video_link.txt</code> giữ placeholder trung thực chờ sinh viên quay &amp; dán link thật.</li>
+          </ul>
+        </div>
+        <div class="card teal">
+          <h3>Bài học &amp; Hướng Phát triển Tiếp <span class="tag t-teal">individual_reflection.md</span></h3>
+          <ul class="bullets compact">
+            <li><strong>Contract-First + Executable Tests:</strong> OpenAPI YAML &amp; JSON Schema chỉ đáng tin khi khóa SHA-256 kết hợp Spectral, E2E và Newman.</li>
+            <li><strong>Tiến hóa rõ rệt (Lab 01 → Lab 06):</strong> Giải quyết dứt điểm Issue #7 (<code>high → discord</code>, <code>400</code> vs <code>422</code> RFC 9457), chuyển từ in-memory sang PostgreSQL 15 bền vững + Mosquitto 2 + <code>Q09</code> + DLQ recovery.</li>
+            <li><strong>Observability trước Tích hợp:</strong> <code>/health</code> + <code>/ready</code> + DLQ envelope chuẩn giúp tách bạch lỗi mạng broker khỏi lỗi tầng DB hoặc payload.</li>
+            <li><strong>Hướng mở rộng sau môn học:</strong> Bổ sung MQTT TLS + ACL, adapter SMTP/SMS thật và xuất <code>/metrics</code> Prometheus theo từng kênh gửi.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <footer class="s-footer">
+      <span>FIT4110 · Nguyễn Minh Phượng (&lt;MãSinhViên&gt;) · Nhóm 7</span>
+      <span>Slide 9 / 9 · Known Issues &amp; Reflection</span>
+    </footer>
+  </section>
+
+  <!-- Navigation bar for interactive viewing -->
+  <div class="nav-bar">
+    <button type="button" onclick="stepSlide(-1)">← Trước</button>
+    <span id="nav-status">Slide 1 / 9 (In/Export PDF: Ctrl+P)</span>
+    <button type="button" onclick="stepSlide(1)">Sau →</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    let current = 0;
+    function updateStatus() {
+      document.getElementById('nav-status').textContent = `Slide ${current + 1} / ${slides.length} · Phím ←/→ · Print PDF: 1280×720`;
+    }
+    function stepSlide(delta) {
+      current = Math.max(0, Math.min(slides.length - 1, current + delta));
+      slides[current].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      updateStatus();
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') stepSlide(1);
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') stepSlide(-1);
+    });
+    updateStatus();
+  </script>
+</body>
+</html>

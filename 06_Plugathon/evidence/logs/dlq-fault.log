@@ -1,0 +1,254 @@
+# Lab 06 Plug-a-thon Fault Injection, DLQ & Recovery Capture Log
+# Captured at: 2026-11-13T11:47:38Z
+
+## Fault 1 (Q08): SCHEMA_VALIDATION_FAILED -> campus.alerts.dlq
+# Published event_id=8974d986-ef6d-4e3a-a5b7-6482a8e24b53 correlationId=req-fault-schema-0b80c0
+{
+  "topic": "campus.alerts.dlq",
+  "observed_at": "2026-11-13T11:47:22Z",
+  "payload": {
+    "topic": "campus.alerts.dlq",
+    "reason": "SCHEMA_VALIDATION_FAILED",
+    "error_detail": "1 validation error for tagged-union[AlertCreatedEvent,AlertEscalatedEvent,AlertResolvedEvent]\n  Input tag 'alert.deleted' found using 'event_name' does not match any of the expected tags: 'alert.created', 'alert.escalated', 'alert.resolved' [type=union_tag_invalid, input_value={'event_id': '8974d986-ef... '2026-11-13T11:47:22Z'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.10/v/union_tag_invalid",
+    "retry_count": 0,
+    "failed_at": "2026-11-13T11:47:22Z",
+    "source_topic": "campus.alerts",
+    "original_payload": "{\"event_id\": \"8974d986-ef6d-4e3a-a5b7-6482a8e24b53\", \"event_name\": \"alert.deleted\", \"correlationId\": \"req-fault-schema-0b80c0\", \"source\": \"core-business\", \"alert_id\": \"ALT-601\", \"severity\": \"EXTREME\", \"message\": \"Schema-invalid event from Core Business simulator\", \"timestamp\": \"2026-11-13T11:47:22Z\"}",
+    "event": {
+      "event_id": "8974d986-ef6d-4e3a-a5b7-6482a8e24b53",
+      "event_name": "alert.deleted",
+      "correlationId": "req-fault-schema-0b80c0",
+      "source": "core-business",
+      "alert_id": "ALT-601",
+      "severity": "EXTREME",
+      "message": "Schema-invalid event from Core Business simulator",
+      "timestamp": "2026-11-13T11:47:22Z"
+    }
+  }
+}
+
+## Fault 2 (Q09): Out-of-Order Late alert.created -> SUPPRESSED_OUT_OF_ORDER
+# First (alert.resolved):
+{
+  "notification_id": "ed118256-1809-4ee4-9143-b6382a62e05f",
+  "event_id": "b2da41d2-bdb6-45d5-9c91-2648cadb249d",
+  "event_name": "alert.resolved",
+  "correlationId": "req-cb-ooo-f78b9c35",
+  "source": "core-business",
+  "alert_id": "ALT-690",
+  "severity": null,
+  "message": "Cảnh báo ALT-690 đã được xử lý: Q09 simulator: sự cố đã đóng trước khi event tạo trễ tới broker.",
+  "channel": "email",
+  "target_channels": [
+    "email"
+  ],
+  "sent": true,
+  "status": "delivered",
+  "retry_count": 0,
+  "error_detail": null,
+  "created_at": "2026-11-13T11:47:22Z",
+  "delivered_at": "2026-11-13T11:47:22Z"
+}
+# Second (late alert.created, T_created = T_resolved - 10m):
+{
+  "notification_id": "6eb68d0a-cebf-4b6a-8c7e-ad74003d194e",
+  "event_id": "ac2e1e8c-3bbf-4452-af50-4d1de59f2989",
+  "event_name": "alert.created",
+  "correlationId": "req-cb-ooo-f78b9c35",
+  "source": "core-business",
+  "alert_id": "ALT-690",
+  "severity": "critical",
+  "message": "Q09 simulator: event alert.created trễ cho ALT-690 (cần SUPPRESSED_OUT_OF_ORDER)",
+  "channel": "telegram",
+  "target_channels": [
+    "telegram",
+    "email",
+    "discord",
+    "sms"
+  ],
+  "sent": false,
+  "status": "duplicate_ignored",
+  "retry_count": 0,
+  "error_detail": "SUPPRESSED_OUT_OF_ORDER: alert ALT-690 already resolved at 2026-11-13T11:47:22Z (>= 2026-11-13T11:37:22Z)",
+  "created_at": "2026-11-13T11:47:23Z",
+  "delivered_at": null
+}
+
+## Fault 3 (Q07): FAIL_CHANNELS=sms MAX_RETRIES=0 -> MAX_RETRIES_EXCEEDED DLQ -> POST /notifications/{id}/retry
+### 3a. Initial failed record in PostgreSQL:
+{
+  "notification_id": "91c6e8a5-5230-4fd1-adb9-2032477ef7ed",
+  "event_id": "3e047528-1ace-4b21-8cee-f2e7e9cb9bdb",
+  "event_name": "alert.created",
+  "correlationId": "req-fault-dlq-a8a40b",
+  "source": "core-business",
+  "alert_id": "ALT-888",
+  "severity": "critical",
+  "message": "Simulated SMS gateway failure for DLQ MAX_RETRIES_EXCEEDED and manual retry recovery",
+  "channel": "sms",
+  "target_channels": [
+    "sms"
+  ],
+  "sent": false,
+  "status": "failed",
+  "retry_count": 0,
+  "error_detail": "sms gateway unavailable (simulated by FAIL_CHANNELS)",
+  "created_at": "2026-11-13T11:47:30Z",
+  "delivered_at": null
+}
+### 3b. Raw DLQ message observed on topic `campus.alerts.dlq`:
+{
+  "topic": "campus.alerts.dlq",
+  "observed_at": "2026-11-13T11:47:30Z",
+  "payload": {
+    "topic": "campus.alerts.dlq",
+    "reason": "MAX_RETRIES_EXCEEDED",
+    "error_detail": "sms gateway unavailable (simulated by FAIL_CHANNELS)",
+    "retry_count": 0,
+    "failed_at": "2026-11-13T11:47:30Z",
+    "notification_id": "91c6e8a5-5230-4fd1-adb9-2032477ef7ed",
+    "event_id": "3e047528-1ace-4b21-8cee-f2e7e9cb9bdb",
+    "alert_id": "ALT-888",
+    "notification": {
+      "notification_id": "91c6e8a5-5230-4fd1-adb9-2032477ef7ed",
+      "event_id": "3e047528-1ace-4b21-8cee-f2e7e9cb9bdb",
+      "event_name": "alert.created",
+      "correlationId": "req-fault-dlq-a8a40b",
+      "source": "core-business",
+      "alert_id": "ALT-888",
+      "severity": "critical",
+      "message": "Simulated SMS gateway failure for DLQ MAX_RETRIES_EXCEEDED and manual retry recovery",
+      "channel": "sms",
+      "target_channels": [
+        "sms"
+      ],
+      "sent": false,
+      "status": "failed",
+      "retry_count": 0,
+      "error_detail": "sms gateway unavailable (simulated by FAIL_CHANNELS)",
+      "created_at": "2026-11-13T11:47:30Z",
+      "delivered_at": null
+    }
+  }
+}
+### 3c. Manual Recovery `POST /notifications/91c6e8a5-5230-4fd1-adb9-2032477ef7ed/retry` -> HTTP 200:
+{
+  "notification_id": "91c6e8a5-5230-4fd1-adb9-2032477ef7ed",
+  "event_id": "3e047528-1ace-4b21-8cee-f2e7e9cb9bdb",
+  "event_name": "alert.created",
+  "correlationId": "req-fault-dlq-a8a40b",
+  "source": "core-business",
+  "alert_id": "ALT-888",
+  "severity": "critical",
+  "message": "Simulated SMS gateway failure for DLQ MAX_RETRIES_EXCEEDED and manual retry recovery",
+  "channel": "sms",
+  "target_channels": [
+    "sms"
+  ],
+  "sent": true,
+  "status": "delivered",
+  "retry_count": 1,
+  "error_detail": null,
+  "created_at": "2026-11-13T11:47:30Z",
+  "delivered_at": "2026-11-13T11:47:38Z"
+}
+
+## Fault 4: REST RFC 9457 Error Snapshots (401 / 422 / 400 / 409)
+{
+  "401_invalid_token": {
+    "http": 401,
+    "body": {
+      "type": "https://campus.local/errors/unauthorized",
+      "title": "Chưa xác thực",
+      "status": 401,
+      "detail": "Bearer token không hợp lệ",
+      "instance": "http://127.0.0.1:8000/notifications",
+      "errors": []
+    }
+  },
+  "422_invalid_channel": {
+    "http": 422,
+    "body": {
+      "type": "https://campus.local/errors/unprocessable",
+      "title": "Vi phạm ràng buộc nghiệp vụ",
+      "status": 422,
+      "detail": "Payload không đúng JSON Schema của sự kiện thông báo (event-contract-04). AlertCreatedEvent.target_channels.0: Input should be 'telegram', 'email', 'discord' or 'sms'; AlertEscalatedEvent.event_name: Input should be 'alert.escalated'; AlertEscalatedEvent.escalation_level: Field required",
+      "instance": "http://127.0.0.1:8000/notifications",
+      "errors": [
+        {
+          "field": "AlertCreatedEvent.target_channels.0",
+          "code": "ENUM_MISMATCH",
+          "message": "AlertCreatedEvent.target_channels.0: Input should be 'telegram', 'email', 'discord' or 'sms'"
+        },
+        {
+          "field": "AlertEscalatedEvent.event_name",
+          "code": "ENUM_MISMATCH",
+          "message": "AlertEscalatedEvent.event_name: Input should be 'alert.escalated'"
+        },
+        {
+          "field": "AlertEscalatedEvent.escalation_level",
+          "code": "REQUIRED",
+          "message": "AlertEscalatedEvent.escalation_level: Field required"
+        },
+        {
+          "field": "AlertEscalatedEvent.target_channels.0",
+          "code": "ENUM_MISMATCH",
+          "message": "AlertEscalatedEvent.target_channels.0: Input should be 'telegram', 'email', 'discord' or 'sms'"
+        },
+        {
+          "field": "AlertResolvedEvent.event_name",
+          "code": "ENUM_MISMATCH",
+          "message": "AlertResolvedEvent.event_name: Input should be 'alert.resolved'"
+        },
+        {
+          "field": "AlertResolvedEvent.resolution_note",
+          "code": "REQUIRED",
+          "message": "AlertResolvedEvent.resolution_note: Field required"
+        },
+        {
+          "field": "AlertResolvedEvent.target_channels.0",
+          "code": "ENUM_MISMATCH",
+          "message": "AlertResolvedEvent.target_channels.0: Input should be 'telegram', 'email', 'discord' or 'sms'"
+        },
+        {
+          "field": "AlertResolvedEvent.severity",
+          "code": "UNKNOWN_FIELD",
+          "message": "AlertResolvedEvent.severity: Extra inputs are not permitted"
+        },
+        {
+          "field": "AlertResolvedEvent.message",
+          "code": "UNKNOWN_FIELD",
+          "message": "AlertResolvedEvent.message: Extra inputs are not permitted"
+        }
+      ]
+    }
+  },
+  "400_limit_101": {
+    "http": 400,
+    "body": {
+      "type": "https://campus.local/errors/validation",
+      "title": "Dữ liệu không hợp lệ",
+      "status": 400,
+      "detail": "Request sai định dạng JSON hoặc tham số truy vấn không hợp lệ. limit: Input should be less than or equal to 100",
+      "instance": "http://127.0.0.1:8000/notifications/recent?limit=101",
+      "errors": [
+        {
+          "field": "limit",
+          "code": "OUT_OF_RANGE",
+          "message": "limit: Input should be less than or equal to 100"
+        }
+      ]
+    }
+  },
+  "409_duplicate_event_id": {
+    "http": 409,
+    "body": {
+      "type": "https://campus.local/errors/duplicate-event",
+      "title": "Trùng lặp sự kiện thông báo",
+      "status": 409,
+      "detail": "Sự kiện có event_id 3e047528-1ace-4b21-8cee-f2e7e9cb9bdb đã được xử lý trước đó (notification_id 91c6e8a5-5230-4fd1-adb9-2032477ef7ed)",
+      "instance": "http://127.0.0.1:8000/notifications",
+      "errors": []
+    }
+  }
+}

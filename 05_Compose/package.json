@@ -1,7 +1,7 @@
 {
   "name": "fit4110-lab05-notification-compose",
   "version": "0.5.0",
-  "description": "FIT4110 Lab 05 - Docker Compose readiness and end-to-end verification for Notification Service (Group 6)",
+  "description": "FIT4110 Lab 05 - Docker Compose readiness and end-to-end verification for Notification Service (Group 7)",
   "private": true,
   "scripts": {
     "mock:notify": "prism mock contracts/notification.openapi.yaml --host 0.0.0.0 --port 4010",

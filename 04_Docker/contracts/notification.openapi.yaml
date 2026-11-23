@@ -1,14 +1,14 @@
 openapi: 3.1.0
 info:
-  title: Smart Campus — Notification Service API (Nhóm 6)
+  title: Smart Campus — Notification Service API (Nhóm 7)
   version: 1.0.0
   description: |
-    Hợp đồng API (OpenAPI 3.1.0) của **Notification Service (Nhóm 6)** trong hệ thống **Smart Campus Operations Platform**.
+    Hợp đồng API (OpenAPI 3.1.0) của **Notification Service (Nhóm 7)** trong hệ thống **Smart Campus Operations Platform**.
     
     - **Luồng chính (Async Pub/Sub — Pair #4):** Subscribe vào **MQTT Broker `mqtt://192.168.1.51:1883` (Anonymous)** trên topic `campus.alerts` để nhận 3 sự kiện bất đồng bộ từ `Core Business Service`: `alert.created`, `alert.escalated`, `alert.resolved` (theo convention `snake_case` đã chốt trong hợp đồng Pair 04 `event-contract.md`).
     - **Luồng phụ (REST Sync Fallback & Log Query):** Cung cấp các endpoint REST chuẩn OpenAPI 3.1 (`POST /notifications`, `GET /notifications`, `GET /notifications/recent`, `GET /notifications/{notification_id}`, `POST /notifications/{notification_id}/retry`, `GET /health`) để gửi thông báo thủ công (fallback/test), kích hoạt gửi lại thông báo lỗi (`/retry`), tra cứu lịch sử gửi cho Analytics/Admin và kiểm tra trạng thái sống của service.
   contact:
-    name: Nhóm 6 — Notification Service Team
+    name: Nhóm 7 — Notification Service Team
     email: notification-team@campus.local
 servers:
   - url: http://localhost:4010

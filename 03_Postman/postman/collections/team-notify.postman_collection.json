@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "fit4110-lab03-notification-service",
     "name": "FIT4110 Lab03 - Notification Service Contract & Consumer Smoke Tests",
-    "description": "Postman Collection cho Nhóm 6 (Notification Service): kiểm thử REST Fallback & Admin Query API theo OpenAPI 3.1.0 và Consumer-side Smoke Test với Core Business Mock Server. (Lưu ý: Luồng Queue Async campus.alerts được kiểm thử riêng bằng Ajv JSON Schema tại queue-contract-tests/pair-04-core-notification/).",
+    "description": "Postman Collection cho Nhóm 7 (Notification Service): kiểm thử REST Fallback & Admin Query API theo OpenAPI 3.1.0 và Consumer-side Smoke Test với Core Business Mock Server. (Lưu ý: Luồng Queue Async campus.alerts được kiểm thử riêng bằng Ajv JSON Schema tại queue-contract-tests/pair-04-core-notification/).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [

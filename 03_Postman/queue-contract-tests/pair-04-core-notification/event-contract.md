@@ -10,7 +10,7 @@
 |---|---|
 | **Dependency Pair** | Pair 04 (`Core Business → Notification Service`) |
 | **Event Producer** | Core Business Service (Nhóm 5) |
-| **Event Consumer** | Notification Service (Nhóm 6) |
+| **Event Consumer** | Notification Service (Nhóm 7) |
 | **Cơ chế giao tiếp chính** | Queue / Pub-Sub Async |
 | **MQTT Broker chung của lớp** | `mqtt://192.168.1.51:1883` (Anonymous) |
 | **Topic chính (Subscribe)** | `campus.alerts` |

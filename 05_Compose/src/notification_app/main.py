@@ -1,4 +1,4 @@
-"""Notification Service (Nhóm 6) – FastAPI implementation for Lab 05 (Docker Compose).
+"""Notification Service (Nhóm 7) – FastAPI implementation for Lab 05 (Docker Compose).
 
 Orchestrated with PostgreSQL (`db`) and Mosquitto (`mqtt-broker`):
     GET  /health                                  (OpenAPI 3.1 HealthStatus + live DB ping)
@@ -21,10 +21,12 @@ from typing import List, Optional
 from fastapi import Body, Depends, FastAPI, Header, Query, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import mqtt_consumer
 from .config import settings
+from .demo_routes import STATIC_DIR, demo_router
 from .models import (
     ALERT_ID_PATTERN,
     DeliveryStatus,
@@ -118,7 +120,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Smart Campus — Notification Service API (Nhóm 6)",
+    title="Smart Campus — Notification Service API (Nhóm 7)",
     version=settings.service_version,
     description="Lab 05 – Multi-container Notification Service (API + PostgreSQL + MQTT Broker).",
     lifespan=lifespan,
@@ -358,4 +360,8 @@ def retry_notification(notification_id: str) -> NotificationLog:
     if record is None:
         raise _not_found(notification_id)
     return NotificationLog(**record)
+
+
+app.mount("/demo-assets", StaticFiles(directory=str(STATIC_DIR), check_dir=False), name="demo-assets")
+app.include_router(demo_router)
 

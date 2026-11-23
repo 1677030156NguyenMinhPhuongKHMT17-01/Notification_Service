@@ -1,0 +1,25 @@
+# Lab 06 Plug-a-thon External Broker & Shared Class Network Overlay
+# Prerequisite: docker network create class-net
+# Usage:
+#   MQTT_BROKER_URL=mqtt://192.168.1.51:1883 docker compose -f docker-compose.yml -f docker-compose.external-broker.yml up -d --build --wait
+services:
+  mqtt-broker:
+    profiles: ["local-broker"]
+    ports: !override []
+
+  api:
+    depends_on: !override
+      db:
+        condition: service_healthy
+    environment:
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://192.168.1.51:1883}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-notification-service-g7-plugathon}
+    networks:
+      plugathon-internal: {}
+      class-net:
+        aliases:
+          - notification-service
+
+networks:
+  class-net:
+    external: true

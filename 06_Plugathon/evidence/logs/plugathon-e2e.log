@@ -1,0 +1,124 @@
+# Command: python scripts/run_plugathon_e2e.py --with-compose-dlq-recovery
+# Captured at: 2026-11-13T18:46:51.8754707+07:00
+[PASS] health: http=200 status=ok topic=campus.alerts
+[PASS] ready: status=ready db_ready=True mqtt_connected=True
+[PASS] mqtt_alert_created_high_routing: alert_id=ALT-6611 notification_id=12d276c0-c574-44b2-88fc-3a51a37452fb channels=['telegram', 'email', 'discord']
+[PASS] mqtt_q05_duplicate_idempotency: event_id=856afb19-2c38-459e-b0a4-14d3b025b520 stored_rows=1
+[PASS] mqtt_alert_escalated_optional_fields: notification_id=65a45996-f095-4d3d-a93e-07d7ea268122 severity=critical channels=['telegram', 'email', 'discord', 'sms']
+[PASS] mqtt_alert_resolved_custom_channels: notification_id=1712b579-1a09-4c1b-9e24-3ea05a6d42f3 channels=['email', 'discord']
+[PASS] fault_schema_invalid_dlq: event_id=d0dfe898-b406-4003-85bd-269589d44f9e reason=SCHEMA_VALIDATION_FAILED dlq_topic=campus.alerts.dlq
+[PASS] fault_q09_out_of_order_suppressed: alert_id=ALT-9885 notification_id=fe52fba5-a559-45fc-989d-fb6a2af1a2fb status=duplicate_ignored
+[PASS] rest_duplicate_event_409: http=409 event_id=4bcb9b37-8f8f-4239-8c32-4a53c091e531
+[PASS] rest_invalid_token_401: http=401
+[PASS] rest_invalid_channel_422: http=422
+[PASS] rest_detail_and_manual_retry: notification_id=4f37c536-1cdc-42f7-b668-ba3f1a7b3e0d retry_count=1 status=delivered
+[PASS] fault_max_retries_dlq_and_manual_retry_recovery: notification_id=375a274c-3c46-49c7-abb9-36c8e838b26f dlq_reason=MAX_RETRIES_EXCEEDED recovered_status=delivered retry_count=1
+E2E SUMMARY: 13/13 checks PASSED
+
+# Diagnostic JSON Summary
+{
+  "ok": true,
+  "base_url": "http://127.0.0.1:8000",
+  "broker": "mqtt://127.0.0.1:1883",
+  "passed": 13,
+  "total": 13,
+  "checks": [
+    {
+      "check": "health",
+      "ok": true,
+      "http": 200,
+      "status": "ok",
+      "topic": "campus.alerts"
+    },
+    {
+      "check": "ready",
+      "ok": true,
+      "status": "ready",
+      "db_ready": true,
+      "mqtt_connected": true
+    },
+    {
+      "check": "mqtt_alert_created_high_routing",
+      "ok": true,
+      "alert_id": "ALT-6611",
+      "notification_id": "12d276c0-c574-44b2-88fc-3a51a37452fb",
+      "channels": [
+        "telegram",
+        "email",
+        "discord"
+      ]
+    },
+    {
+      "check": "mqtt_q05_duplicate_idempotency",
+      "ok": true,
+      "event_id": "856afb19-2c38-459e-b0a4-14d3b025b520",
+      "stored_rows": 1
+    },
+    {
+      "check": "mqtt_alert_escalated_optional_fields",
+      "ok": true,
+      "notification_id": "65a45996-f095-4d3d-a93e-07d7ea268122",
+      "severity": "critical",
+      "channels": [
+        "telegram",
+        "email",
+        "discord",
+        "sms"
+      ]
+    },
+    {
+      "check": "mqtt_alert_resolved_custom_channels",
+      "ok": true,
+      "notification_id": "1712b579-1a09-4c1b-9e24-3ea05a6d42f3",
+      "channels": [
+        "email",
+        "discord"
+      ]
+    },
+    {
+      "check": "fault_schema_invalid_dlq",
+      "ok": true,
+      "event_id": "d0dfe898-b406-4003-85bd-269589d44f9e",
+      "reason": "SCHEMA_VALIDATION_FAILED",
+      "dlq_topic": "campus.alerts.dlq"
+    },
+    {
+      "check": "fault_q09_out_of_order_suppressed",
+      "ok": true,
+      "alert_id": "ALT-9885",
+      "notification_id": "fe52fba5-a559-45fc-989d-fb6a2af1a2fb",
+      "status": "duplicate_ignored"
+    },
+    {
+      "check": "rest_duplicate_event_409",
+      "ok": true,
+      "http": 409,
+      "event_id": "4bcb9b37-8f8f-4239-8c32-4a53c091e531"
+    },
+    {
+      "check": "rest_invalid_token_401",
+      "ok": true,
+      "http": 401
+    },
+    {
+      "check": "rest_invalid_channel_422",
+      "ok": true,
+      "http": 422
+    },
+    {
+      "check": "rest_detail_and_manual_retry",
+      "ok": true,
+      "notification_id": "4f37c536-1cdc-42f7-b668-ba3f1a7b3e0d",
+      "retry_count": 1,
+      "status": "delivered"
+    },
+    {
+      "check": "fault_max_retries_dlq_and_manual_retry_recovery",
+      "ok": true,
+      "notification_id": "375a274c-3c46-49c7-abb9-36c8e838b26f",
+      "dlq_reason": "MAX_RETRIES_EXCEEDED",
+      "recovered_status": "delivered",
+      "retry_count": 1
+    }
+  ]
+}

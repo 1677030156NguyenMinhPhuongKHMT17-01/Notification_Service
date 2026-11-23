@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Campus Notification Center · Nhóm 7 (Pair 04)</title>
+  <meta name="description" content="Operations control center for Smart Campus Notification Service (Nhóm 7) — Pair 04 Core Business to Notification telemetry, MQTT/REST simulator, log explorer, DLQ fault recovery, and OpenAPI tester.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338BDF8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.73 21a2 2 0 0 1-3.46 0'/%3E%3Ccircle cx='19' cy='5' r='2.5' fill='%2322C55E' stroke='none'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/demo-assets/styles.css">
+  <script src="/demo-assets/charts.js" defer></script>
+  <script src="/demo-assets/scenarios.js" defer></script>
+  <script src="/demo-assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <div class="ambient-backdrop" aria-hidden="true"></div>
+
+  <header class="topbar" role="banner">
+    <div class="topbar-inner">
+      <div class="topbar-row topbar-primary">
+        <div class="brand-cluster">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              <circle cx="19" cy="5" r="2.5" fill="currentColor" stroke="none"></circle>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <div class="brand-kicker">Smart Campus Operations Platform</div>
+            <h1 class="brand-title">Notification Service (Nhóm 7)</h1>
+            <p class="brand-sub">Pair 04: Core Business (Nhóm 5) → Notification (Nhóm 7)</p>
+          </div>
+        </div>
+
+        <div class="status-cluster" aria-label="Live service dependencies">
+          <span class="status-pill status-neutral" id="status-health" role="status">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+            <span>Health: Checking</span>
+          </span>
+          <span class="status-pill status-neutral" id="status-db" role="status">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+              <path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"></path>
+              <path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"></path>
+            </svg>
+            <span>DB: Checking</span>
+          </span>
+          <span class="status-pill status-neutral" id="status-mqtt" role="status">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path>
+              <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path>
+              <circle cx="12" cy="12" r="2"></circle>
+              <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path>
+              <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"></path>
+            </svg>
+            <span>MQTT: Checking</span>
+          </span>
+          <span class="status-pill status-warning fault-pill" id="status-fault-banner" role="status" hidden>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>Fault Override Active</span>
+          </span>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="polling-group">
+            <span class="sync-label" id="last-updated-label">Sync pending</span>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-poll-toggle" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+              <span>Pause</span>
+            </button>
+            <label class="sr-only" for="poll-interval">Polling interval</label>
+            <select id="poll-interval" class="select-sm" aria-label="Polling interval">
+              <option value="3000">3s</option>
+              <option value="5000" selected>5s</option>
+              <option value="10000">10s</option>
+            </select>
+          </div>
+
+          <button type="button" class="btn btn-icon" id="btn-theme-toggle" aria-label="Switch to light theme" title="Toggle color theme">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2"></path>
+              <path d="M12 20v2"></path>
+              <path d="m4.93 4.93 1.41 1.41"></path>
+              <path d="m17.66 17.66 1.41 1.41"></path>
+              <path d="M2 12h2"></path>
+              <path d="M20 12h2"></path>
+              <path d="m6.34 17.66-1.41 1.41"></path>
+              <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="topbar-row topbar-secondary">
+        <div class="auth-cluster">
+          <label class="auth-label" for="auth-token-input">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>Bearer Token</span>
+          </label>
+          <input id="auth-token-input" type="password" class="input-sm mono" placeholder="Enter AUTH_TOKEN..." autocomplete="off" spellcheck="false">
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-use-dev-token">Use Dev Token</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-auth-apply">Apply Token</button>
+          <div class="auth-banner" id="auth-status-banner" role="status" hidden>Token required for protected APIs</div>
+        </div>
+
+        <nav class="quick-links" aria-label="Service endpoints">
+          <a class="quick-link" href="/docs" target="_blank" rel="noopener noreferrer">Swagger /docs</a>
+          <a class="quick-link" href="/redoc" target="_blank" rel="noopener noreferrer">ReDoc</a>
+          <a class="quick-link" href="/health" target="_blank" rel="noopener noreferrer">/health</a>
+          <a class="quick-link" href="/ready" target="_blank" rel="noopener noreferrer">/ready</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs-bar" aria-label="Control center navigation">
+    <div class="tabs-inner" role="tablist">
+      <button type="button" class="tab-btn is-active" role="tab" id="tab-overview" data-tab="overview" aria-controls="panel-overview" aria-selected="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+          <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+          <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+          <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+        </svg>
+        <span>Overview</span>
+      </button>
+
+      <button type="button" class="tab-btn" role="tab" id="tab-simulator" data-tab="simulator" aria-controls="panel-simulator" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Simulator</span>
+      </button>
+
+      <button type="button" class="tab-btn" role="tab" id="tab-explorer" data-tab="explorer" aria-controls="panel-explorer" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>Log Explorer</span>
+      </button>
+
+      <button type="button" class="tab-btn" role="tab" id="tab-faults" data-tab="faults" aria-controls="panel-faults" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>Faults &amp; DLQ</span>
+      </button>
+
+      <button type="button" class="tab-btn" role="tab" id="tab-channels" data-tab="channels" aria-controls="panel-channels" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>Channels &amp; 7 REST APIs</span>
+      </button>
+    </div>
+  </nav>
+
+  <main id="main-content" class="main-shell">
+    <!-- ========================================================== TAB 1: OVERVIEW -->
+    <section id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview">
+      <div class="kpi-grid" aria-label="Delivery summary metrics">
+        <article class="glass-card kpi-card kpi-total">
+          <div class="kpi-head">
+            <span class="kpi-label">Total Logged</span>
+            <span class="kpi-icon kpi-icon-info" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-total">0</div>
+          <p class="kpi-note">PostgreSQL / Memory ledger</p>
+        </article>
+
+        <article class="glass-card kpi-card kpi-delivered">
+          <div class="kpi-head">
+            <span class="kpi-label">Delivered</span>
+            <span class="kpi-icon kpi-icon-success" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-delivered">0</div>
+          <p class="kpi-note">All target channels ok</p>
+        </article>
+
+        <article class="glass-card kpi-card kpi-retrying">
+          <div class="kpi-head">
+            <span class="kpi-label">Retrying</span>
+            <span class="kpi-icon kpi-icon-warning" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-retrying">0</div>
+          <p class="kpi-note">Auto-backoff timers active</p>
+        </article>
+
+        <article class="glass-card kpi-card kpi-failed">
+          <div class="kpi-head">
+            <span class="kpi-label">Failed / DLQ</span>
+            <span class="kpi-icon kpi-icon-danger" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-failed">0</div>
+          <p class="kpi-note">Max retries exhausted</p>
+        </article>
+
+        <article class="glass-card kpi-card kpi-suppressed">
+          <div class="kpi-head">
+            <span class="kpi-label">Suppressed (Q09)</span>
+            <span class="kpi-icon kpi-icon-info" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-value" id="kpi-suppressed">0</div>
+          <p class="kpi-note">Out-of-order ignored</p>
+        </article>
+      </div>
+
+      <div class="charts-grid">
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <h2 class="card-title">Status Breakdown</h2>
+            <span class="card-meta">Live DB aggregate</span>
+          </div>
+          <div id="chart-status-donut" class="chart-host"></div>
+        </section>
+
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <h2 class="card-title">Channel Dispatch Volume</h2>
+            <span class="card-meta">Target fan-out</span>
+          </div>
+          <div id="chart-channel-bars" class="chart-host"></div>
+        </section>
+
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <h2 class="card-title">API Round-Trip Latency</h2>
+            <span class="card-meta">Last 30 polls &amp; calls</span>
+          </div>
+          <div id="chart-latency" class="chart-host"></div>
+        </section>
+      </div>
+
+      <div class="overview-split">
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Pair-04 Processing Pipeline</h2>
+              <p class="card-subtitle">Event flow from Core Business (Nhóm 5) through validation, PostgreSQL deduplication, and channel adapters</p>
+            </div>
+            <span class="badge badge-info">campus.alerts → campus.alerts.dlq</span>
+          </div>
+
+          <div id="pipeline-visualizer" class="pipeline-visualizer" aria-label="Notification processing pipeline">
+            <div class="pipeline-track">
+              <div class="pipe-node is-active state-ok" data-stage="core">
+                <span class="pipe-title">Core Business</span>
+                <span class="pipe-sub">Nhóm 5 Producer</span>
+              </div>
+              <span class="pipe-connector is-active state-ok" data-connector="core" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
+              <div class="pipe-node is-active state-ok" data-stage="mqtt">
+                <span class="pipe-title">MQTT / REST</span>
+                <span class="pipe-sub">Broker &amp; Fallback</span>
+              </div>
+              <span class="pipe-connector is-active state-ok" data-connector="mqtt" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
+              <div class="pipe-node is-active state-ok" data-stage="validator">
+                <span class="pipe-title">Validator</span>
+                <span class="pipe-sub">Pydantic v2 + Q09</span>
+              </div>
+              <span class="pipe-connector is-active state-ok" data-connector="validator" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
+              <div class="pipe-node is-active state-ok" data-stage="store">
+                <span class="pipe-title">Store</span>
+                <span class="pipe-sub">Q05 Idempotent DB</span>
+              </div>
+              <span class="pipe-connector is-active state-ok" data-connector="store" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
+              <div class="pipe-node is-active state-ok" data-stage="delivery">
+                <span class="pipe-title">Delivery</span>
+                <span class="pipe-sub">Adapters &amp; Retry</span>
+              </div>
+            </div>
+            <div class="pipeline-dlq-row">
+              <span class="pipe-branch-label">Error / Exhausted Branch</span>
+              <div class="pipe-node pipe-node-dlq" data-stage="dlq">
+                <span class="pipe-title">Dead-Letter Queue</span>
+                <span class="pipe-sub">SCHEMA_VALIDATION_FAILED / MAX_RETRIES_EXCEEDED</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <h2 class="card-title">Severity Routing Matrix</h2>
+            <span class="card-meta">Default when target_channels omitted</span>
+          </div>
+          <div class="routing-matrix">
+            <div class="routing-row">
+              <span class="sev-badge sev-low">low</span>
+              <div class="channel-chip-row">
+                <span class="channel-chip ch-email">email</span>
+              </div>
+            </div>
+            <div class="routing-row">
+              <span class="sev-badge sev-medium">medium</span>
+              <div class="channel-chip-row">
+                <span class="channel-chip ch-telegram">telegram</span>
+                <span class="channel-chip ch-email">email</span>
+              </div>
+            </div>
+            <div class="routing-row">
+              <span class="sev-badge sev-high">high</span>
+              <div class="channel-chip-row">
+                <span class="channel-chip ch-telegram">telegram</span>
+                <span class="channel-chip ch-email">email</span>
+                <span class="channel-chip ch-discord">discord</span>
+              </div>
+            </div>
+            <div class="routing-row">
+              <span class="sev-badge sev-critical">critical</span>
+              <div class="channel-chip-row">
+                <span class="channel-chip ch-telegram">telegram</span>
+                <span class="channel-chip ch-email">email</span>
+                <span class="channel-chip ch-discord">discord</span>
+                <span class="channel-chip ch-sms">sms</span>
+              </div>
+            </div>
+            <p class="routing-footnote">
+              <code>alert.resolved</code> inherits the alert's prior channels (or defaults to <code>["telegram"]</code>).
+              <code>alert.escalated</code> with <code>escalation_level &gt;= 3</code> promotes severity to <code>critical</code> when omitted.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <section class="glass-card panel-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Recent Notifications (Newest 6)</h2>
+            <p class="card-subtitle">Click any row to open the full payload &amp; retry inspector drawer</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Created (UTC)</th>
+                <th scope="col">Alert ID</th>
+                <th scope="col">Event</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Target Channels</th>
+                <th scope="col">Status</th>
+                <th scope="col">Retries</th>
+                <th scope="col">Inspect</th>
+              </tr>
+            </thead>
+            <tbody id="overview-recent-body">
+              <tr>
+                <td colspan="8" class="table-empty">Waiting for initial sync...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- ========================================================== TAB 2: SIMULATOR -->
+    <section id="panel-simulator" class="tab-panel" role="tabpanel" aria-labelledby="tab-simulator" hidden>
+      <section class="glass-card panel-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">1-Click Defense &amp; Contract Scenarios</h2>
+            <p class="card-subtitle">Execute Pair 04 MQTT lifecycle, REST fallback, idempotency (Q05), out-of-order suppression (Q09), DLQ schema rejection (Q08), and RFC 9457 error cases</p>
+          </div>
+        </div>
+
+        <div class="scenario-groups">
+          <div class="scenario-group">
+            <h3 class="group-heading">Async MQTT &amp; Sync REST Lifecycles</h3>
+            <div class="scenario-btn-grid">
+              <button type="button" class="scenario-btn" data-scenario="mqtt-lifecycle">
+                <span class="scenario-tag tag-mqtt">MQTT</span>
+                <strong>Full Alert Lifecycle</strong>
+                <span>created (high) → escalated (L3) → resolved</span>
+              </button>
+              <button type="button" class="scenario-btn" data-scenario="rest-lifecycle">
+                <span class="scenario-tag tag-rest">REST</span>
+                <strong>REST Sync Lifecycle</strong>
+                <span>3 sequential POST /notifications</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="scenario-group">
+            <h3 class="group-heading">Quality &amp; Ordering Guarantees (Q05 / Q08 / Q09)</h3>
+            <div class="scenario-btn-grid">
+              <button type="button" class="scenario-btn" data-scenario="mqtt-q05">
+                <span class="scenario-tag tag-info">Q05</span>
+                <strong>MQTT Duplicate Event</strong>
+                <span>Same event_id twice → 1 DB record</span>
+              </button>
+              <button type="button" class="scenario-btn" data-scenario="rest-q05">
+                <span class="scenario-tag tag-info">Q05</span>
+                <strong>REST Duplicate → 409</strong>
+                <span>POST twice → 201 then 409 Conflict</span>
+              </button>
+              <button type="button" class="scenario-btn" data-scenario="mqtt-q09">
+                <span class="scenario-tag tag-warn">Q09</span>
+                <strong>Out-of-Order Suppression</strong>
+                <span>resolved before stale created → ignored</span>
+              </button>
+              <button type="button" class="scenario-btn" data-scenario="mqtt-q08-dlq">
+                <span class="scenario-tag tag-danger">Q08</span>
+                <strong>Invalid Schema → DLQ</strong>
+                <span>alert.deleted / EXTREME → DLQ capture</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="scenario-group">
+            <h3 class="group-heading">RFC 9457 ProblemDetails Error Demos</h3>
+            <div class="scenario-btn-grid scenario-btn-grid-3">
+              <button type="button" class="scenario-btn" data-scenario="err-401">
+                <span class="scenario-tag tag-danger">401</span>
+                <strong>Unauthorized</strong>
+                <span>Missing / invalid Bearer token</span>
+              </button>
+              <button type="button" class="scenario-btn" data-scenario="err-422">
+                <span class="scenario-tag tag-danger">422</span>
+                <strong>Unprocessable Schema</strong>
+                <span>Invalid channel "zalo" rejected</span>
+              </button>
+              <button type="button" class="scenario-btn" data-scenario="err-400">
+                <span class="scenario-tag tag-danger">400</span>
+                <strong>Bad Query Param</strong>
+                <span>GET /notifications?limit=101</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="simulator-split">
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Custom Event Composer</h2>
+              <p class="card-subtitle">Validate and dispatch custom events via MQTT broker or REST fallback</p>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-composer-fill-uuid">New UUID &amp; Time</button>
+          </div>
+
+          <form id="event-composer-form" novalidate>
+            <div id="composer-error-summary" class="error-summary" role="alert" tabindex="-1" hidden></div>
+
+            <fieldset class="field-group transport-fieldset">
+              <legend class="field-label">Transport Mode</legend>
+              <div class="radio-pill-row">
+                <label class="radio-pill">
+                  <input type="radio" name="transport" value="mqtt" id="transport-mqtt" checked>
+                  <span>MQTT Broker (<code>campus.alerts</code>)</span>
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="transport" value="rest" id="transport-rest">
+                  <span>REST Sync (<code>POST /notifications</code>)</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <div class="form-grid-2">
+              <div class="field-group">
+                <label class="field-label" for="composer-event-name">event_name</label>
+                <select id="composer-event-name" class="input">
+                  <option value="alert.created">alert.created</option>
+                  <option value="alert.escalated">alert.escalated</option>
+                  <option value="alert.resolved">alert.resolved</option>
+                </select>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="composer-alert-id">alert_id (<code>^ALT-[0-9]{3,}$</code>)</label>
+                <input id="composer-alert-id" type="text" class="input mono" value="ALT-101" placeholder="ALT-101" required>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="composer-event-id">event_id (UUIDv4)</label>
+                <input id="composer-event-id" type="text" class="input mono" placeholder="Auto-generated UUIDv4">
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="composer-correlation-id">correlationId</label>
+                <input id="composer-correlation-id" type="text" class="input mono" value="corr-demo-101" required>
+              </div>
+
+              <div class="field-group" data-composer-field="severity">
+                <label class="field-label" for="composer-severity">severity</label>
+                <select id="composer-severity" class="input">
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high" selected>high</option>
+                  <option value="critical">critical</option>
+                  <option value="">(inherit on escalate)</option>
+                </select>
+              </div>
+
+              <div class="field-group" data-composer-field="escalation_level">
+                <label class="field-label" for="composer-escalation-level">escalation_level (1–5)</label>
+                <input id="composer-escalation-level" type="number" class="input mono" min="1" max="5" value="2">
+              </div>
+
+              <div class="field-group form-span-2">
+                <label class="field-label" for="composer-timestamp">timestamp (RFC 3339 UTC)</label>
+                <input id="composer-timestamp" type="text" class="input mono" placeholder="2026-11-23T04:30:00Z">
+              </div>
+
+              <div class="field-group form-span-2" data-composer-field="message">
+                <label class="field-label" for="composer-message">message (5–500 chars)</label>
+                <textarea id="composer-message" class="input" rows="2">Smoke detector triggered in Building B3 Server Room</textarea>
+              </div>
+
+              <div class="field-group form-span-2" data-composer-field="resolution_note" hidden>
+                <label class="field-label" for="composer-resolution-note">resolution_note (3–500 chars)</label>
+                <textarea id="composer-resolution-note" class="input" rows="2">Facility team cleared sensor fault and verified room safety</textarea>
+              </div>
+            </div>
+
+            <fieldset class="field-group">
+              <legend class="field-label">Optional target_channels override (leave all unchecked for auto-routing)</legend>
+              <div class="checkbox-pill-row">
+                <label class="check-pill"><input type="checkbox" name="target_channels" value="telegram"><span>Telegram</span></label>
+                <label class="check-pill"><input type="checkbox" name="target_channels" value="email"><span>Email</span></label>
+                <label class="check-pill"><input type="checkbox" name="target_channels" value="discord"><span>Discord</span></label>
+                <label class="check-pill"><input type="checkbox" name="target_channels" value="sms"><span>SMS</span></label>
+              </div>
+            </fieldset>
+
+            <div class="routing-preview-box">
+              <span class="field-label">Predicted Delivery Channels</span>
+              <div id="composer-routing-preview" class="channel-chip-row">
+                <span class="channel-chip ch-telegram">telegram</span>
+                <span class="channel-chip ch-email">email</span>
+                <span class="channel-chip ch-discord">discord</span>
+              </div>
+            </div>
+
+            <div class="raw-json-bar">
+              <label class="check-inline">
+                <input type="checkbox" id="composer-raw-toggle">
+                <span>Edit Raw JSON Payload</span>
+              </label>
+            </div>
+            <div class="field-group" id="composer-raw-wrap">
+              <label class="sr-only" for="composer-raw-json">Raw event JSON</label>
+              <textarea id="composer-raw-json" class="input mono json-textarea" rows="8" spellcheck="false" readonly></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="btn-composer-submit">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                <span>Dispatch Event</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Live Response &amp; RFC 9457 Inspector</h2>
+              <p class="card-subtitle">Status code, RTT latency, response headers, and parsed JSON payload</p>
+            </div>
+          </div>
+          <div id="composer-response" class="response-inspector">
+            <div class="empty-inspector">
+              Run any defense scenario or submit the composer to inspect live HTTP / MQTT responses here.
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ========================================================== TAB 3: LOG EXPLORER -->
+    <section id="panel-explorer" class="tab-panel" role="tabpanel" aria-labelledby="tab-explorer" hidden>
+      <section class="glass-card panel-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Notification Ledger Explorer</h2>
+            <p class="card-subtitle">Keyset/offset cursor pagination across <code>GET /notifications</code> with real-time filters</p>
+          </div>
+          <span class="badge badge-neutral" id="explorer-count-label">0 items shown</span>
+        </div>
+
+        <div class="filter-bar">
+          <div class="field-group">
+            <label class="field-label" for="filter-alert-id">Alert ID</label>
+            <input id="filter-alert-id" type="text" class="input input-sm mono" placeholder="e.g. ALT-101">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="filter-status">Status</label>
+            <select id="filter-status" class="input input-sm">
+              <option value="">All statuses</option>
+              <option value="delivered">delivered</option>
+              <option value="retrying">retrying</option>
+              <option value="failed">failed</option>
+              <option value="duplicate_ignored">duplicate_ignored</option>
+              <option value="queued">queued</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="filter-channel">Channel</label>
+            <select id="filter-channel" class="input input-sm">
+              <option value="">All channels</option>
+              <option value="telegram">telegram</option>
+              <option value="email">email</option>
+              <option value="discord">discord</option>
+              <option value="sms">sms</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="filter-limit">Page Size</label>
+            <select id="filter-limit" class="input input-sm">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+
+          <div class="filter-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-filter-apply">Apply Filters</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-filter-reset">Reset</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Created (UTC)</th>
+                <th scope="col">Notification ID</th>
+                <th scope="col">Alert ID</th>
+                <th scope="col">Event</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Channels</th>
+                <th scope="col">Status</th>
+                <th scope="col">Retry</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="explorer-table-body">
+              <tr>
+                <td colspan="9" class="table-empty">No notification records loaded yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination-bar">
+          <span class="cursor-label mono" id="cursor-indicator">Page 1</span>
+          <div class="pagination-btns">
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-page-prev" disabled>Previous</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-page-next" disabled>Next</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ========================================================== TAB 4: FAULTS & DLQ -->
+    <section id="panel-faults" class="tab-panel" role="tabpanel" aria-labelledby="tab-faults" hidden>
+      <div class="faults-split">
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Runtime Fault Injection Controls</h2>
+              <p class="card-subtitle">Simulate downstream gateway failures (<code>FAIL_CHANNELS</code>) and retry ceilings without container restarts</p>
+            </div>
+          </div>
+
+          <fieldset class="field-group">
+            <legend class="field-label">Simulated Failing Channels</legend>
+            <div class="checkbox-pill-row">
+              <label class="check-pill check-pill-danger"><input type="checkbox" data-fault-channel="telegram"><span>Telegram</span></label>
+              <label class="check-pill check-pill-danger"><input type="checkbox" data-fault-channel="email"><span>Email</span></label>
+              <label class="check-pill check-pill-danger"><input type="checkbox" data-fault-channel="discord"><span>Discord</span></label>
+              <label class="check-pill check-pill-danger"><input type="checkbox" data-fault-channel="sms"><span>SMS</span></label>
+            </div>
+          </fieldset>
+
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label class="field-label" for="fault-max-retries">MAX_RETRIES Override (0–10)</label>
+              <input id="fault-max-retries" type="number" class="input mono" min="0" max="10" placeholder="Default (env MAX_RETRIES)">
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="fault-retry-interval">RETRY_INTERVAL_SECONDS (0.1–30.0)</label>
+              <input id="fault-retry-interval" type="number" class="input mono" min="0.1" max="30" step="0.1" placeholder="Default (env interval)">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-danger" id="btn-apply-faults">Apply Fault Overrides</button>
+            <button type="button" class="btn btn-ghost" id="btn-reset-faults">Reset to Normal</button>
+          </div>
+
+          <div id="fault-active-summary" class="fault-summary-box" role="status">
+            No active fault overrides (using service environment defaults).
+          </div>
+        </section>
+
+        <section class="glass-card panel-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Guided 3-Step Fault &amp; Recovery Demo</h2>
+              <p class="card-subtitle">Walk through live failure injection, DLQ capture, and manual <code>/retry</code> recovery</p>
+            </div>
+          </div>
+
+          <div class="guided-steps">
+            <button type="button" class="step-btn" data-fault-step="1">
+              <span class="step-num">1</span>
+              <span class="step-copy">
+                <strong>Inject SMS Fault + MAX_RETRIES=0 &amp; Fire Critical Alert</strong>
+                <span>Forces immediate SMS channel failure so the record lands in DLQ.</span>
+              </span>
+            </button>
+
+            <button type="button" class="step-btn" data-fault-step="2">
+              <span class="step-num">2</span>
+              <span class="step-copy">
+                <strong>Inspect DLQ (MAX_RETRIES_EXCEEDED)</strong>
+                <span>Refreshes DLQ capture feed and highlights the failed alert event.</span>
+              </span>
+            </button>
+
+            <button type="button" class="step-btn" data-fault-step="3">
+              <span class="step-num">3</span>
+              <span class="step-copy">
+                <strong>Reset Faults &amp; Manual Retry Last Failed Record</strong>
+                <span>Clears overrides and invokes <code>POST /notifications/{id}/retry</code> → <code>delivered</code>.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <section class="glass-card panel-card">
+        <div class="card-header">
+          <div class="header-with-badge">
+            <h2 class="card-title">Dead-Letter Queue Capture (<code>campus.alerts.dlq</code>)</h2>
+            <span class="badge badge-danger" id="dlq-count-badge">0</span>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-dlq">Refresh DLQ</button>
+        </div>
+        <div id="dlq-list" class="card-feed-list">
+          <div class="empty-inspector">No DLQ records captured in this session yet.</div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ========================================================== TAB 5: CHANNELS & 7 REST APIS -->
+    <section id="panel-channels" class="tab-panel" role="tabpanel" aria-labelledby="tab-channels" hidden>
+      <section class="glass-card panel-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Live Channel Delivery Previews</h2>
+            <p class="card-subtitle">Dispatched messages formatted per channel adapter (Telegram, Discord, Email, SMS)</p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-feed">Refresh Feed</button>
+        </div>
+
+        <div class="chip-filter-bar" role="group" aria-label="Filter delivery feed by channel">
+          <button type="button" class="filter-chip is-active" data-feed-channel="all" aria-pressed="true">All Channels</button>
+          <button type="button" class="filter-chip" data-feed-channel="telegram" aria-pressed="false">Telegram</button>
+          <button type="button" class="filter-chip" data-feed-channel="email" aria-pressed="false">Email</button>
+          <button type="button" class="filter-chip" data-feed-channel="discord" aria-pressed="false">Discord</button>
+          <button type="button" class="filter-chip" data-feed-channel="sms" aria-pressed="false">SMS</button>
+        </div>
+
+        <div id="delivery-feed-list" class="delivery-feed-grid">
+          <div class="empty-inspector">No channel deliveries recorded yet. Trigger an alert from Overview or Simulator.</div>
+        </div>
+      </section>
+
+      <section class="glass-card panel-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">7 Official OpenAPI 3.1.0 REST Endpoints Tester</h2>
+            <p class="card-subtitle">Execute live requests against all 7 frozen contract endpoints with editable parameters and RFC 9457 inspection</p>
+          </div>
+          <span class="badge badge-info">Zero OpenAPI Drift</span>
+        </div>
+
+        <div class="api-tester-split">
+          <div id="api-tester-grid" class="api-tester-grid"></div>
+          <div id="api-tester-output" class="response-inspector">
+            <div class="empty-inspector">Select any of the 7 endpoints to edit inputs and execute a live request.</div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- ========================================================== DETAIL DRAWER -->
+  <div id="detail-drawer" class="drawer-root" role="dialog" aria-modal="true" aria-labelledby="detail-drawer-title" hidden>
+    <div class="drawer-backdrop" data-drawer-close="true"></div>
+    <aside class="drawer-panel">
+      <div class="drawer-header">
+        <div>
+          <span class="drawer-kicker">Notification Record Inspector</span>
+          <h2 id="detail-drawer-title" class="drawer-title">Notification Detail</h2>
+        </div>
+        <button type="button" class="btn btn-icon" id="btn-close-drawer" aria-label="Close detail drawer">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="detail-drawer-body" class="drawer-body"></div>
+      <div class="drawer-footer">
+        <button type="button" class="btn btn-primary" id="btn-drawer-retry">Manual Retry</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ========================================================== TOAST REGION -->
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>

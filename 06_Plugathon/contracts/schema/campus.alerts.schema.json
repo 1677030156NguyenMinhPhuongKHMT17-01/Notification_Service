@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campus.local/schemas/pair-04/campus.alerts.schema.json",
+  "title": "CampusAlertsTopicEvent",
+  "description": "Schema tổng hợp cho mọi message trên topic campus.alerts (alert.created, alert.escalated, alert.resolved)",
+  "oneOf": [
+    { "$ref": "https://campus.local/schemas/pair-04/alert.created.schema.json" },
+    { "$ref": "https://campus.local/schemas/pair-04/alert.escalated.schema.json" },
+    { "$ref": "https://campus.local/schemas/pair-04/alert.resolved.schema.json" }
+  ]
+}
+

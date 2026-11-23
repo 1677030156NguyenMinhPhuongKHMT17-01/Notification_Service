@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://campus.local/schemas/pair-04/alert.resolved.schema.json",
+  "title": "AlertResolvedEvent",
+  "description": "Canonical JSON Schema cho event alert.resolved trên topic campus.alerts (Pair 04: Core Business -> Notification Service)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_name",
+    "correlationId",
+    "source",
+    "alert_id",
+    "resolution_note",
+    "timestamp"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID định danh duy nhất của event, dùng làm idempotency key"
+    },
+    "event_name": {
+      "const": "alert.resolved",
+      "description": "Loại sự kiện cố định là alert.resolved"
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Mã truy vết xuyên service"
+    },
+    "source": {
+      "const": "core-business",
+      "description": "Service phát sự kiện"
+    },
+    "alert_id": {
+      "type": "string",
+      "pattern": "^ALT-[0-9]{3,}$",
+      "description": "Mã định danh cảnh báo đã xử lý"
+    },
+    "resolution_note": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 500,
+      "description": "Ghi chú kết quả giải quyết sự cố"
+    },
+    "target_channels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["telegram", "email", "discord", "sms"]
+      },
+      "description": "Danh sách kênh gửi thông báo giải quyết (tùy chọn)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Thời điểm giải quyết theo chuẩn ISO 8601"
+    }
+  }
+}
+

@@ -48,7 +48,7 @@ class Settings:
     mqtt_broker_url: str = field(default_factory=lambda: os.getenv("MQTT_BROKER_URL", "mqtt://mqtt-broker:1883"))
     mqtt_topic: str = field(default_factory=lambda: os.getenv("MQTT_TOPIC", "campus.alerts"))
     mqtt_dlq_topic: str = field(default_factory=lambda: os.getenv("MQTT_DLQ_TOPIC", "campus.alerts.dlq"))
-    mqtt_client_id: str = field(default_factory=lambda: os.getenv("MQTT_CLIENT_ID", "notification-service-g6"))
+    mqtt_client_id: str = field(default_factory=lambda: os.getenv("MQTT_CLIENT_ID", "notification-service-g7"))
     mqtt_worker_threads: int = field(default_factory=lambda: max(1, int(os.getenv("MQTT_WORKER_THREADS", "4"))))
 
     # Delivery policy (event-contract-04: max 3 retries, 5 s apart)

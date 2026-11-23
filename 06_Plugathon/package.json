@@ -1,0 +1,17 @@
+{
+  "name": "fit4110-lab06-notification-plugathon",
+  "version": "1.0.0",
+  "description": "FIT4110 Lab 06 - Plug-a-thon integration, contract verification, and Newman suite for Notification Service (Group 7)",
+  "private": true,
+  "scripts": {
+    "lint:openapi": "spectral lint contracts/notification.openapi.yaml --ruleset ../05_Compose/.spectral.yaml --fail-severity error",
+    "test:plugathon": "newman run postman/FIT4110_lab06_plugathon.postman_collection.json -e postman/plugathon.postman_environment.json -r cli,junit,htmlextra --reporter-junit-export reports/newman-plugathon.xml --reporter-htmlextra-export reports/newman-plugathon.html"
+  },
+  "devDependencies": {
+    "@stoplight/prism-cli": "^5.14.2",
+    "@stoplight/spectral-cli": "^6.11.1",
+    "newman": "^6.2.1",
+    "newman-reporter-htmlextra": "^1.23.1",
+    "wait-on": "^7.2.0"
+  }
+}

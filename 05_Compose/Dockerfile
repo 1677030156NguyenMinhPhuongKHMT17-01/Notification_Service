@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# FIT4110 Lab 05 – Notification Service (Nhóm 6)
+# FIT4110 Lab 05 – Notification Service (Nhóm 7)
 
 ARG PYTHON_IMAGE=python:3.11-slim
 
@@ -44,7 +44,7 @@ RUN /opt/venv/bin/python -m pytest -q tests
 FROM ${PYTHON_IMAGE} AS runtime
 
 LABEL org.opencontainers.image.title="fit4110-notification-service" \
-      org.opencontainers.image.description="Smart Campus Notification Service (Nhóm 6) – Lab 05 Compose Stack" \
+      org.opencontainers.image.description="Smart Campus Notification Service (Nhóm 7) – Lab 05 Compose Stack" \
       org.opencontainers.image.version="0.5.0" \
       org.opencontainers.image.source="FIT4110_MSSV/05_Compose"
 

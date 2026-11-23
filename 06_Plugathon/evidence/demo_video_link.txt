@@ -1,0 +1,16 @@
+# Link Video Demo (2–3 phút) — Lab 06 Plug-a-thon (Notification Service · Nhóm 6)
+# Sinh viên: Nguyễn Minh Phượng (<MãSinhViên>)
+
+VIDEO_STATUS=PENDING_STUDENT_RECORDING_UPLOAD
+VIDEO_URL=<Chưa gắn link YouTube Unlisted / Google Drive / OneDrive — Sinh viên quay theo kịch bản demo và dán URL thật tại đây trước khi nộp>
+
+# Ghi chú trung thực (Anti-fabrication):
+# File này cố ý giữ placeholder thay vì tự điền một URL video giả.
+# Video demo chính thức do sinh viên tự quay màn hình trên máy local/LAN theo kịch bản chuẩn dưới đây.
+
+# Kịch bản & Script demo chuẩn đi kèm trong repo:
+# - Kịch bản thoại 2–3 phút: ../../demo/video_script_2_3min.md
+# - Script demo tự động (Linux/macOS/Git Bash): ../../demo/run_demo.sh
+# - Script demo tự động (Windows PowerShell): ../../demo/run_demo.ps1
+# - Hướng dẫn chạy Lab 06 từ clean clone: ../RUN_PLUGATHON.md
+

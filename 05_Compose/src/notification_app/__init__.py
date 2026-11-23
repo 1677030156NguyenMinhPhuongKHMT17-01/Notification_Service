@@ -1,2 +1,2 @@
-"""Notification Service (Nhóm 6) – Smart Campus Operations Platform."""
+"""Notification Service (Nhóm 7) – Smart Campus Operations Platform."""
 

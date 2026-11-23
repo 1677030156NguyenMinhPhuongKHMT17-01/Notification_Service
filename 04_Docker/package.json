@@ -1,7 +1,7 @@
 {
   "name": "fit4110-lab04-notification-docker",
   "version": "0.4.0",
-  "description": "FIT4110 Lab 04 - Docker packaging and Newman verification for Notification Service (Group 6)",
+  "description": "FIT4110 Lab 04 - Docker packaging and Newman verification for Notification Service (Group 7)",
   "private": true,
   "scripts": {
     "mock:notify": "prism mock contracts/notification.openapi.yaml --host 0.0.0.0 --port 4010",

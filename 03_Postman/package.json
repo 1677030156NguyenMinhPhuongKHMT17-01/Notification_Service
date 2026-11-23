@@ -2,7 +2,7 @@
   "name": "fit4110_lab03_notification_contract_testing",
   "version": "1.0.0",
   "private": true,
-  "description": "FIT4110 Lab 03 - Notification Service (Team 6): Queue Async Event Contract Testing (Ajv) + REST Fallback Postman/Newman/Prism CI",
+  "description": "FIT4110 Lab 03 - Notification Service (Team 7): Queue Async Event Contract Testing (Ajv) + REST Fallback Postman/Newman/Prism CI",
   "scripts": {
     "mock:notify": "prism mock contracts/notification.openapi.yaml -p 4010 --host 0.0.0.0",
     "mock:core": "prism mock contracts/core-business.openapi.yaml -p 4011 --host 0.0.0.0",

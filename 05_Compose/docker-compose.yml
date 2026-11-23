@@ -60,7 +60,7 @@ services:
       MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://mqtt-broker:1883}
       MQTT_TOPIC: ${MQTT_TOPIC:-campus.alerts}
       MQTT_DLQ_TOPIC: ${MQTT_DLQ_TOPIC:-campus.alerts.dlq}
-      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-notification-service-g6}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-notification-service-g7}
       MQTT_WORKER_THREADS: ${MQTT_WORKER_THREADS:-4}
       MAX_RETRIES: ${MAX_RETRIES:-3}
       RETRY_INTERVAL_SECONDS: ${RETRY_INTERVAL_SECONDS:-5}

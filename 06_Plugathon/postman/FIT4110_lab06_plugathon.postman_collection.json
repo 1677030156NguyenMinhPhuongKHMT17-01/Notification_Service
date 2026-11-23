@@ -1,0 +1,876 @@
+{
+  "info": {
+    "_postman_id": "fit4110-lab06-plugathon",
+    "name": "FIT4110 Lab 06 - Notification Service Plug-a-thon",
+    "description": "Bộ kiểm thử tích hợp Lab 06 Plug-a-thon cho Notification Service (Nhóm 7, Pair 04 Core Business -> Notification).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const prefix = pm.environment.get('tracePrefix') || 'fit4110-lab06-plugathon';",
+          "pm.variables.set('traceId', prefix + '-' + Date.now());",
+          "pm.request.headers.upsert({ key: 'X-Trace-Id', value: pm.variables.get('traceId') });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "notificationId", "value": "0196fb3e-9999-7d1e-9f49-5d5148d2c001" },
+    { "key": "happyAlertId", "value": "ALT-6001" },
+    { "key": "autoAlertId", "value": "ALT-6901" },
+    { "key": "oooAlertId", "value": "ALT-9501" },
+    { "key": "evCreated", "value": "123e4567-e89b-12d3-a456-426614174000" },
+    { "key": "evEscalated", "value": "123e4567-e89b-12d3-a456-426614174001" },
+    { "key": "evResolved", "value": "123e4567-e89b-12d3-a456-426614174002" },
+    { "key": "evBoundary", "value": "123e4567-e89b-12d3-a456-426614174010" },
+    { "key": "evLatency", "value": "123e4567-e89b-12d3-a456-426614174088" },
+    { "key": "evOooResolved", "value": "123e4567-e89b-12d3-a456-426614174091" },
+    { "key": "evOooLateCreated", "value": "123e4567-e89b-12d3-a456-426614174092" },
+    { "key": "tsCreated", "value": "2026-11-13T11:50:00Z" },
+    { "key": "tsEscalated", "value": "2026-11-13T11:55:00Z" },
+    { "key": "tsResolved", "value": "2026-11-13T12:00:00Z" }
+  ],
+  "item": [
+    {
+      "name": "00_Health",
+      "item": [
+        {
+          "name": "TC01 - GET /health - service is alive and healthy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Health payload has ok status and campus.alerts topic', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 'ok');",
+                  "  pm.expect(json).to.have.property('service', 'notification-service');",
+                  "  pm.expect(json).to.have.property('subscribed_topic', 'campus.alerts');",
+                  "  pm.expect(json).to.have.property('mqtt_broker');",
+                  "  pm.expect(json).to.have.property('time');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC01b - GET /ready - PostgreSQL and MQTT Broker are ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["ready"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('PostgreSQL and MQTT dependencies are ready', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 'ready');",
+                  "  pm.expect(json.dependencies.database).to.have.property('backend', 'postgresql');",
+                  "  pm.expect(json.dependencies.database).to.have.property('ready', true);",
+                  "  pm.expect(json.dependencies.mqtt).to.have.property('connected', true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01_Functional",
+      "item": [
+        {
+          "name": "TC02 - POST /notifications (alert.created) - happy path saves notificationId",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evCreated}}\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-happy-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"{{happyAlertId}}\",\n  \"severity\": \"high\",\n  \"message\": \"Phát hiện sự cố an ninh khẩn cấp từ Core Business (Plug-a-thon)\",\n  \"target_channels\": [\"telegram\", \"email\", \"sms\"],\n  \"timestamp\": \"{{tsCreated}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const now = Date.now();",
+                  "pm.collectionVariables.set('evCreated', pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.collectionVariables.set('happyAlertId', 'ALT-' + (6000 + Math.floor(Math.random() * 2999)));",
+                  "pm.collectionVariables.set('tsCreated', new Date(now - 20000).toISOString());",
+                  "pm.collectionVariables.set('tsEscalated', new Date(now - 10000).toISOString());",
+                  "pm.collectionVariables.set('tsResolved', new Date(now).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('NotificationLog created and delivered', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('notification_id');",
+                  "  pm.expect(json).to.have.property('event_id', pm.collectionVariables.get('evCreated'));",
+                  "  pm.expect(json).to.have.property('alert_id', pm.collectionVariables.get('happyAlertId'));",
+                  "  pm.expect(json).to.have.property('sent', true);",
+                  "  pm.expect(json).to.have.property('status', 'delivered');",
+                  "  pm.collectionVariables.set('notificationId', json.notification_id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC03 - POST /notifications (alert.escalated) - honors optional severity and message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evEscalated}}\",\n  \"event_name\": \"alert.escalated\",\n  \"correlationId\": \"req-plugathon-happy-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"{{happyAlertId}}\",\n  \"escalation_level\": 3,\n  \"severity\": \"critical\",\n  \"message\": \"Cảnh báo leo thang cấp 3 từ Core Business (Plug-a-thon)\",\n  \"timestamp\": \"{{tsEscalated}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('evEscalated', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Escalated event returns 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Optional severity/message honored and auto-routed with discord', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('sent', true);",
+                  "  pm.expect(json).to.have.property('status', 'delivered');",
+                  "  pm.expect(json).to.have.property('severity', 'critical');",
+                  "  pm.expect(json.message).to.include('leo thang cấp 3');",
+                  "  pm.expect(json.target_channels).to.include.members(['telegram', 'email', 'discord', 'sms']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC04 - POST /notifications (alert.resolved) - honors custom target_channels",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evResolved}}\",\n  \"event_name\": \"alert.resolved\",\n  \"correlationId\": \"req-plugathon-happy-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"{{happyAlertId}}\",\n  \"resolution_note\": \"Đội bảo vệ đã kiểm tra, sự cố đã xử lý hoàn tất.\",\n  \"target_channels\": [\"email\", \"discord\"],\n  \"timestamp\": \"{{tsResolved}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('evResolved', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Resolved event returns 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Custom target_channels delivered cleanly', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('sent', true);",
+                  "  pm.expect(json).to.have.property('status', 'delivered');",
+                  "  pm.expect(json.target_channels).to.eql(['email', 'discord']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC05 - GET /notifications - list notification logs filtered by alert_id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?alert_id={{happyAlertId}}&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "alert_id", "value": "{{happyAlertId}}" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response contains all 3 lifecycle events and pagination metadata', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  pm.expect(json.items.length).to.be.at.least(3);",
+                  "  pm.expect(json).to.have.property('has_more');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC06 - GET /notifications/recent - list recent notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/recent?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "recent"],
+              "query": [
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Recent items have valid channel enum', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "  pm.expect(json.items.length).to.be.at.least(1);",
+                  "  pm.expect(['telegram', 'email', 'discord', 'sms']).to.include(json.items[0].channel);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC07 - GET /notifications/{{notificationId}} - get notification detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "{{notificationId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response matches requested notification_id', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('notification_id', pm.collectionVariables.get('notificationId'));",
+                  "  pm.expect(json).to.have.property('retry_count');",
+                  "  pm.expect(json).to.have.property('error_detail');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC08 - POST /notifications/{{notificationId}}/retry - manual retry",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notificationId}}/retry",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "{{notificationId}}", "retry"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Retry count incremented to >= 1', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('notification_id', pm.collectionVariables.get('notificationId'));",
+                  "  pm.expect(json.retry_count).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02_Auth",
+      "item": [
+        {
+          "name": "TC09 - GET /notifications/recent - valid token accepted",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/recent?limit=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "recent"],
+              "query": [
+                { "key": "limit", "value": "1" }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Valid token returns 200', function () { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC10 - POST /notifications - missing token returns 401 ProblemDetails",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174077\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-auth-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-601\",\n  \"severity\": \"high\",\n  \"message\": \"Kiểm tra thiếu Authorization header\",\n  \"target_channels\": [\"telegram\"],\n  \"timestamp\": \"2026-11-13T12:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing token returns 401', function () { pm.expect(pm.response.code).to.eql(401); });",
+                  "pm.test('Unauthorized response follows ProblemDetails', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 401);",
+                  "  pm.expect(json).to.have.property('title');",
+                  "  pm.expect(json).to.have.property('type');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC11 - POST /notifications - invalid token returns 401 ProblemDetails",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer invalid-plugathon-token" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174078\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-auth-02\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-601\",\n  \"severity\": \"high\",\n  \"message\": \"Kiểm tra Bearer token không hợp lệ\",\n  \"target_channels\": [\"telegram\"],\n  \"timestamp\": \"2026-11-13T12:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid token returns 401 ProblemDetails', function () {",
+                  "  pm.expect(pm.response.code).to.eql(401);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 401);",
+                  "  pm.expect(json).to.have.property('title');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03_Negative",
+      "item": [
+        {
+          "name": "TC12 - POST /notifications - invalid payload returns 422 ProblemDetails",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174090\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-neg-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"BAD_ID\",\n  \"severity\": \"high\",\n  \"timestamp\": \"2026-11-13T12:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid payload returns 422', function () { pm.expect(pm.response.code).to.eql(422); });",
+                  "pm.test('Error follows RFC 9457 ProblemDetails', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('title');",
+                  "  pm.expect(json).to.have.property('status', 422);",
+                  "  pm.expect(json.errors).to.be.an('array').and.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC13 - POST /notifications - invalid channel (zalo) returns 422 ProblemDetails",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"123e4567-e89b-12d3-a456-426614174095\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-neg-02\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-601\",\n  \"severity\": \"high\",\n  \"message\": \"Kênh gửi zalo không nằm trong enum hỗ trợ\",\n  \"target_channels\": [\"zalo\"],\n  \"timestamp\": \"2026-11-13T12:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid channel returns 422', function () { pm.expect(pm.response.code).to.eql(422); });",
+                  "pm.test('Error response includes detail and errors', function () {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "  pm.expect(json).to.have.property('errors');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC14 - GET /notifications/{unknown} - returns 404 ProblemDetails",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "00000000-0000-0000-0000-000000000000"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unknown notification returns 404', function () { pm.expect(pm.response.code).to.eql(404); });",
+                  "pm.test('404 follows ProblemDetails', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 404);",
+                  "  pm.expect(json).to.have.property('title');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04_Boundary_Reliability",
+      "item": [
+        {
+          "name": "TC15 - POST /notifications - high severity auto-routing includes discord",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evBoundary}}\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-auto-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"{{autoAlertId}}\",\n  \"severity\": \"high\",\n  \"message\": \"Kiểm tra tự động định tuyến discord khi severity=high\",\n  \"timestamp\": \"{{tsResolved}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('evBoundary', pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.collectionVariables.set('autoAlertId', 'ALT-' + (9000 + Math.floor(Math.random() * 499)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Auto-routing returns 201', function () { pm.expect(pm.response.code).to.eql(201); });",
+                  "pm.test('High severity auto-routes to [telegram, email, discord]', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('sent', true);",
+                  "  pm.expect(json.target_channels).to.eql(['telegram', 'email', 'discord']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC16 - GET /notifications/recent - limit=101 returns 400 ProblemDetails",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/recent?limit=101",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "recent"],
+              "query": [
+                { "key": "limit", "value": "101" }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Limit=101 returns 400', function () { pm.expect(pm.response.code).to.eql(400); });",
+                  "pm.test('Boundary rejection follows ProblemDetails', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 400);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC17 - POST /notifications - duplicate event_id returns 409 Conflict",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evCreated}}\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-happy-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"{{happyAlertId}}\",\n  \"severity\": \"high\",\n  \"message\": \"Phát hiện sự cố an ninh khẩn cấp từ Core Business (Plug-a-thon)\",\n  \"target_channels\": [\"telegram\", \"email\", \"sms\"],\n  \"timestamp\": \"{{tsCreated}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate event_id returns 409 Conflict', function () { pm.expect(pm.response.code).to.eql(409); });",
+                  "pm.test('Conflict response follows ProblemDetails', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 409);",
+                  "  pm.expect(json).to.have.property('title');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC18 - POST /notifications - container latency under 1000ms",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evLatency}}\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-latency-01\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"ALT-6002\",\n  \"severity\": \"medium\",\n  \"message\": \"Kiểm tra độ trễ container Plug-a-thon\",\n  \"target_channels\": [\"telegram\"],\n  \"timestamp\": \"{{tsResolved}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('evLatency', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Container responds 201 under 1000ms', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "  pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC19a - POST /notifications (alert.resolved) - Q09 setup resolved alert",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evOooResolved}}\",\n  \"event_name\": \"alert.resolved\",\n  \"correlationId\": \"req-plugathon-q09\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"{{oooAlertId}}\",\n  \"resolution_note\": \"Q09: Sự cố đã xử lý trước khi alert.created tới.\",\n  \"timestamp\": \"2026-11-13T12:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('oooAlertId', 'ALT-' + (9500 + Math.floor(Math.random() * 499)));",
+                  "pm.collectionVariables.set('evOooResolved', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Q09 resolved baseline returns 201 delivered', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "  pm.expect(pm.response.json()).to.have.property('status', 'delivered');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "TC19b - POST /notifications (late alert.created) - Q09 suppressed out-of-order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"{{evOooLateCreated}}\",\n  \"event_name\": \"alert.created\",\n  \"correlationId\": \"req-plugathon-q09\",\n  \"source\": \"core-business\",\n  \"alert_id\": \"{{oooAlertId}}\",\n  \"severity\": \"critical\",\n  \"message\": \"Q09: Event tạo trễ cần bị SUPPRESSED_OUT_OF_ORDER\",\n  \"timestamp\": \"2026-11-13T11:50:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('evOooLateCreated', pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Late alert.created is suppressed cleanly without dispatch', function () {",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('status', 'duplicate_ignored');",
+                  "  pm.expect(json).to.have.property('sent', false);",
+                  "  pm.expect(json.error_detail).to.include('SUPPRESSED_OUT_OF_ORDER');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

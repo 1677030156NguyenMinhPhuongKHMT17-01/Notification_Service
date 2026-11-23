@@ -1,0 +1,128 @@
+# Pair-04 MQTT Handshake Evidence (Core Business -> Notification Service)
+# Captured at: 2026-11-13T11:47:21Z
+# Command: python scripts/core_business_simulator.py --scenario lifecycle --alert-id ALT-601 --correlation-id req-pair04-hs-4fe7c61e
+
+## 1. Producer Simulator Output
+[CB-SIM 1/3] broker=mqtt://127.0.0.1:1883 topic=campus.alerts event_name=alert.created alert_id=ALT-601 event_id=9f7d750c-fae7-4cce-bfdb-9bef54dc28a2
+[CB-SIM 2/3] broker=mqtt://127.0.0.1:1883 topic=campus.alerts event_name=alert.escalated alert_id=ALT-601 event_id=76c63220-6cbc-4210-ac5f-bab752ed158f
+[CB-SIM 3/3] broker=mqtt://127.0.0.1:1883 topic=campus.alerts event_name=alert.resolved alert_id=ALT-601 event_id=a685b2a5-4ff7-42a4-8934-8be8afba10e2
+
+## 2. Raw Broker Messages Observed on Topic `campus.alerts`
+[
+  {
+    "topic": "campus.alerts",
+    "observed_at": "2026-11-13T11:47:19Z",
+    "payload": {
+      "event_id": "9f7d750c-fae7-4cce-bfdb-9bef54dc28a2",
+      "event_name": "alert.created",
+      "correlationId": "req-pair04-hs-4fe7c61e",
+      "source": "core-business",
+      "alert_id": "ALT-601",
+      "severity": "high",
+      "message": "[Core Business Sim] Phát hiện sự cố mức high tại ALT-601 (auto-routing discord)",
+      "timestamp": "2026-11-13T11:46:59Z"
+    }
+  },
+  {
+    "topic": "campus.alerts",
+    "observed_at": "2026-11-13T11:47:19Z",
+    "payload": {
+      "event_id": "76c63220-6cbc-4210-ac5f-bab752ed158f",
+      "event_name": "alert.escalated",
+      "correlationId": "req-pair04-hs-4fe7c61e",
+      "source": "core-business",
+      "alert_id": "ALT-601",
+      "escalation_level": 3,
+      "severity": "critical",
+      "message": "[Core Business Sim] Cảnh báo ALT-601 leo thang cấp 3 (critical)",
+      "timestamp": "2026-11-13T11:47:09Z"
+    }
+  },
+  {
+    "topic": "campus.alerts",
+    "observed_at": "2026-11-13T11:47:20Z",
+    "payload": {
+      "event_id": "a685b2a5-4ff7-42a4-8934-8be8afba10e2",
+      "event_name": "alert.resolved",
+      "correlationId": "req-pair04-hs-4fe7c61e",
+      "source": "core-business",
+      "alert_id": "ALT-601",
+      "resolution_note": "Đội trực ban Core Business xác nhận đã khắc phục sự cố.",
+      "target_channels": [
+        "email",
+        "discord"
+      ],
+      "timestamp": "2026-11-13T11:47:19Z"
+    }
+  }
+]
+
+## 3. Consumer Persisted Records via REST `GET /notifications?alert_id=ALT-601` (matching correlationId=req-pair04-hs-4fe7c61e)
+[
+  {
+    "notification_id": "b82fe52c-d164-4433-9636-0d7cb6117ddf",
+    "event_id": "a685b2a5-4ff7-42a4-8934-8be8afba10e2",
+    "event_name": "alert.resolved",
+    "correlationId": "req-pair04-hs-4fe7c61e",
+    "source": "core-business",
+    "alert_id": "ALT-601",
+    "severity": "critical",
+    "message": "Cảnh báo ALT-601 đã được xử lý: Đội trực ban Core Business xác nhận đã khắc phục sự cố.",
+    "channel": "email",
+    "target_channels": [
+      "email",
+      "discord"
+    ],
+    "sent": true,
+    "status": "delivered",
+    "retry_count": 0,
+    "error_detail": null,
+    "created_at": "2026-11-13T11:47:20Z",
+    "delivered_at": "2026-11-13T11:47:20Z"
+  },
+  {
+    "notification_id": "8930c764-a36a-4bdc-a712-29358c47958f",
+    "event_id": "76c63220-6cbc-4210-ac5f-bab752ed158f",
+    "event_name": "alert.escalated",
+    "correlationId": "req-pair04-hs-4fe7c61e",
+    "source": "core-business",
+    "alert_id": "ALT-601",
+    "severity": "critical",
+    "message": "[Core Business Sim] Cảnh báo ALT-601 leo thang cấp 3 (critical)",
+    "channel": "telegram",
+    "target_channels": [
+      "telegram",
+      "email",
+      "discord",
+      "sms"
+    ],
+    "sent": true,
+    "status": "delivered",
+    "retry_count": 0,
+    "error_detail": null,
+    "created_at": "2026-11-13T11:47:19Z",
+    "delivered_at": "2026-11-13T11:47:19Z"
+  },
+  {
+    "notification_id": "357cd533-1858-4b54-96eb-9758637dfda5",
+    "event_id": "9f7d750c-fae7-4cce-bfdb-9bef54dc28a2",
+    "event_name": "alert.created",
+    "correlationId": "req-pair04-hs-4fe7c61e",
+    "source": "core-business",
+    "alert_id": "ALT-601",
+    "severity": "high",
+    "message": "[Core Business Sim] Phát hiện sự cố mức high tại ALT-601 (auto-routing discord)",
+    "channel": "telegram",
+    "target_channels": [
+      "telegram",
+      "email",
+      "discord"
+    ],
+    "sent": true,
+    "status": "delivered",
+    "retry_count": 0,
+    "error_detail": null,
+    "created_at": "2026-11-13T11:47:19Z",
+    "delivered_at": "2026-11-13T11:47:19Z"
+  }
+]
